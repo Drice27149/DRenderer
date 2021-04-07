@@ -5,11 +5,15 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("DRenderer")
 
+file(GLOB_RECURSE MY_CPP ${CMAKE_SOURCE_DIR}/src/*.cpp)
+
+include_directories(${CMAKE_SOURCE_DIR}/include) # include
+
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include) # include
 
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib) # lib
 
-add_executable (DRenderer ${CMAKE_SOURCE_DIR}/src/DRenderer.cpp ${CMAKE_SOURCE_DIR}/src/DRenderer.h ${CMAKE_SOURCE_DIR}/thirdparty/glad.c)
+add_executable (DRenderer ${MY_CPP} ${CMAKE_SOURCE_DIR}/thirdparty/glad.c)
 
 target_link_libraries(DRenderer assimp-vc142-mt)
 
