@@ -1,10 +1,13 @@
 #pragma once
 #include "Global.hpp"
-#include "Mesh.hpp"
+
+class Mesh;
 
 namespace GraphicAPI {
 
-void myPrint();
+void LoadMeshToGPU(Mesh& mesh, GraphicData& gd);
 
-unsigned int LoadMeshToGPU(Mesh*);
+// 临时函数, 仅用于验证 assimp 导入模型成功
+void Temp_DrawMesh(Mesh& mesh); 
+
 }

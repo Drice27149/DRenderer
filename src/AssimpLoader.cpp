@@ -34,7 +34,7 @@ void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene)
 void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
 {
     // 只有 mVertice 和 mFace 是总存在的, 其他属性都可能为 null
-    // 不同的 mesh 顶点索引和纹理贴图 都可能不一样...
+    // 不同的 mesh 顶点索引和纹理贴图是不一样的
     meshCnt++;
     for(int i = 0; i < mesh->mNumVertices; i++){
         Vertex v;

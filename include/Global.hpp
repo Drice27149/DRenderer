@@ -20,6 +20,7 @@ using std::vector;
 using std::string;
 using std::cout;
 
+// TODO: 解耦纹理和 opengl texture 的绑定
 // diffuse: texture0
 // depthmap: texture1
 // nomalmap: texture2
@@ -34,4 +35,10 @@ struct Vertex {
     vec2 vt;    // 顶点纹理坐标
     vec3 tg;    // tagent, 定点切线
     vec3 bg;    // bitTagent, 同上
+};
+
+struct GraphicData {
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
 };
