@@ -53,7 +53,7 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
             ids.push_back(mesh->mFaces[i].mIndices[j]);
         }
     }
-    printf("meshCnt = %d, have_vn = %d, have_vt = %d\n", meshCnt, mesh->mNormals!=nullptr, mesh->mTextureCoords[0]!=nullptr);
+    // printf("meshCnt = %d, have_vn = %d, have_vt = %d\n", meshCnt, mesh->mNormals!=nullptr, mesh->mTextureCoords[0]!=nullptr);
     // TODO: 加载纹理
 }
 

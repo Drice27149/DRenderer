@@ -13,7 +13,7 @@ std::string readFile(std::string filename){
 Shader::Shader(std::string vertexShader, std::string fragmentShader){
 	std::string vtString = readFile(vertexShader);
 	std::string fragString = readFile(fragmentShader);
-	
+
 	const char* vtSource = vtString.c_str();
 	const char* fragSource = fragString.c_str();
 	
