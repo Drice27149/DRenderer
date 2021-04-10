@@ -3,48 +3,19 @@
 #include "AssimpLoader.hpp"
 #include "Mesh.hpp"
 #include "Object.hpp"
+#include "DEngine.hpp"
 
- void framebuffer_size_callback(GLFWwindow* window, int width, int height)
- {
-     glViewport(0, 0, width, height);
- }
-
- GLFWwindow* InitOpenGL(int width, int height) {
-     glfwInit();
-     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-     GLFWwindow* window = glfwCreateWindow(width, height, "DRenderer", NULL, NULL);
-     if (window == NULL)
-     {
-         std::cout << "fail to create window" << std::endl;
-         glfwTerminate();
-         return NULL;
-     }
-
-     glfwMakeContextCurrent(window);
-
-     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-     {
-         std::cout << "Failed to initialize GLAD" << std::endl;
-         return NULL;
-     }
-
-     glViewport(0, 0, width, height);
-     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
-     // glfwSetCursorPosCallback(window, mouseCallBack);
-
-     return window;
- }
+DEngine* DEngine::instance = nullptr;
 
 int main()
 {
-    // 必须进行设置, 配置好gl运行环境
-    GLFWwindow* window = InitOpenGL(800, 600);
-    assert(window != NULL);
-
+    // 先启动引擎, 因为 opengl 的鼠标回调会调用输入管理器
+    DEngine::Launch();
+    assert(DEngine::instance != nullptr);
+    printf("Engine launched\n");
+    // 必须进行设置, 配置好gl运行环境, 否则运行gl函数会崩溃
+    GLFWwindow* window = GraphicAPI::InitOpenGL(800, 600);
+    assert(window != nullptr);
     printf("Init GL window done\n");
 
     string cyborg  = "../assets/cyborg-ray-fisher/source/Cyborg_HeroPose.fbx";
@@ -57,7 +28,7 @@ int main()
 
     Mesh* mesh = new Mesh(ld->vs, ld->ids, ld->texs, ld->mask);
 
-    printf("Load Mesh done\n");
+    printf("Mesh loaded\n");
 
     string vs_s = "../shaders/tvs.glsl";
     string fs_s = "../shaders/tfs.glsl";
@@ -65,6 +36,8 @@ int main()
     Shader sh(vs_s, fs_s);
 
     GraphicAPI::Temp_DrawMesh(*mesh, sh, window);
+
+    
 
     return 0;
 }

@@ -1,4 +1,4 @@
-﻿// #include <glad/glad.h>
+// #include <glad/glad.h>
 // #include <GLFW/glfw3.h>
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -159,7 +159,7 @@
 //         }
 //         camera.processInput(window);
 
-//         // 物体随时间旋转
+//         // 物体随时间旋�?
 //         // obj.Transform(glm::rotate(glm::mat4(1.0), 0.0012f, vec3(0, 1.0, 0)));
 
 //         r.ShadowPass(&shadowShader);

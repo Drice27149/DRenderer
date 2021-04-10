@@ -63,37 +63,47 @@ void Camera::updateDirection(){
 // use input to adjust camera's postion and rotation
 void Camera::processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
+    // if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    // {
+    //     glfwSetWindowShouldClose(window, true);
+    // }
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        moveY(1.0f);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        moveY(-1.0f);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        moveX(1.0f);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        moveX(-1.0f);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        moveZ(1.0f);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        moveZ(-1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    //     moveY(1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    //     moveY(-1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    //     moveX(1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    //     moveX(-1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    //     moveZ(1.0f);
+    // if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    //     moveZ(-1.0f);
 
-    float rspeed = 0.1;
+    // float rspeed = 0.1;
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        rotateYaw(-1.0f * rspeed);
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        rotateYaw(1.0f * rspeed);
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        rotatePitch(1.0f * rspeed);
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        rotatePitch(-1.0f * rspeed);
+    // if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    //     rotateYaw(-1.0f * rspeed);
+    // if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    //     rotateYaw(1.0f * rspeed);
+    // if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    //     rotatePitch(1.0f * rspeed);
+    // if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    //     rotatePitch(-1.0f * rspeed);
 }
 
 vec3 Camera::getOrigin(){
     updateDirection();
     return origin;
+}
+
+void Camera::SetMSpeed(float speed)
+{
+    this->moveSpeed = speed;
+}
+
+void Camera::SetRSpeed(float speed)
+{
+    this->rotateSpeed = speed;
 }

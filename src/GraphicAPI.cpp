@@ -4,6 +4,82 @@
 #include "Mesh.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "DEngine.hpp"
+
+GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
+     glfwInit();
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+     GLFWwindow* window = glfwCreateWindow(width, height, "DRenderer", NULL, NULL);
+     if (window == NULL)
+     {
+         std::cout << "fail to create window" << std::endl;
+         glfwTerminate();
+         return NULL;
+     }
+
+     glfwMakeContextCurrent(window);
+
+     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+     {
+         std::cout << "Failed to initialize GLAD" << std::endl;
+         return NULL;
+     }
+
+    glViewport(0, 0, width, height);
+    glfwSetFramebufferSizeCallback(window, GraphicAPI::FramebufferSizeCallback);
+    glfwSetMouseButtonCallback(window, GraphicAPI::MouseButtonCallBack);
+    glfwSetCursorPosCallback(window, GraphicAPI::MouseMoveCallBack);
+    glfwSetKeyCallback(window, GraphicAPI::KeyCallBack);
+
+     return window;
+}
+
+void GraphicAPI::MouseMoveCallBack(GLFWwindow* window, double x, double y)
+{
+    InputMgr& inputMgr = DEngine::GetInputMgr();
+    inputMgr.Tick(x, y);
+}
+
+void GraphicAPI::MouseButtonCallBack(GLFWwindow* window, int button, int action, int mods)
+{
+    InputMgr& inputMgr = DEngine::GetInputMgr();
+    if(button == GLFW_MOUSE_BUTTON_LEFT){
+        if(GLFW_PRESS == action) 
+            inputMgr.OnLMouseDown();
+        else
+            inputMgr.OnLMouseRelease();
+    }
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT){
+        if(GLFW_PRESS == action) 
+            inputMgr.OnRMouseDown();
+        else
+            inputMgr.OnRMouseRelease();
+    }
+    else{
+        // 不处理
+    }
+}
+
+void GraphicAPI::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void GraphicAPI::KeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if(action == GLFW_PRESS){
+        if(key == GLFW_KEY_W){
+            // TODO: 修正值
+            DEngine::GetCamMgr().ZoomCam(1.0);
+        }
+        if(key == GLFW_KEY_S){
+            DEngine::GetCamMgr().ZoomCam(-1.0);
+        }
+    }
+}
 
 void GraphicAPI::LoadMesh(Mesh& mesh)
 {
@@ -53,12 +129,16 @@ void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh, GLFWwindow* window)
     glBindVertexArray(mesh.gd.VAO);
 
     mat4 model = glm::mat4(1.0);
+    mat4 view = DEngine::GetCamMgr().GetCamera().getCamTransform();
     mat4 projection = glm::perspective(90.0, 1.0, 0.1, 2000.0);
+    
     sh.use();
     // 模型变换和透视投影变换
-    sh.setMat4("m", model);
-    sh.setMat4("vp", projection);
+    sh.setMat4("model", model);
+    sh.setMat4("view", view);
+    sh.setMat4("proj", projection);
     // 定位纹理贴图
+    // TODO: 还有很多纹理贴图
     int texNum = 0;
     if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
         glActiveTexture(GL_TEXTURE0 + texNum);

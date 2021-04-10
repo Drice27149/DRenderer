@@ -30,8 +30,9 @@
 // 	TBN = mat3(T, B, N);
 // }
 
-uniform mat4 m; 	// 模型变换
-uniform mat4 vp;	// 相机变换, 透视投影变换
+uniform mat4 model; 	// 模型变换
+uniform mat4 view;		// 相机变换
+uniform mat4 proj;		// 透视投影变换
 
 layout (location = 0) in vec3 v;
 layout (location = 1) in vec3 vn;
@@ -41,6 +42,6 @@ out vec2 fvt;
 
 void main()
 {
-	gl_Position = vp * m * vec4(v.xyz, 1.0); 
+	gl_Position = proj * view * model * vec4(v.xyz, 1.0); 
 	fvt = vt;
 }

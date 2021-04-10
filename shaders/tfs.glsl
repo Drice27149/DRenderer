@@ -60,7 +60,7 @@
 //     gColor = blingFong();
 // 	// FragColor = gColor;
 // }
-// 模型纹理贴图
+// 妯″瀷绾圭悊璐村浘
 struct ModelTexture{
 	sampler2D diffuse;
 	sampler2D normal;
