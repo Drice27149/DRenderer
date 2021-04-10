@@ -9,7 +9,7 @@ AssimpLoader::AssimpLoader()
 void AssimpLoader::LoadFile(string fn)
 {
     Assimp::Importer import;
-    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs);	
+    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure);	
 	
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
     {
@@ -55,6 +55,20 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     }
     // printf("meshCnt = %d, have_vn = %d, have_vt = %d\n", meshCnt, mesh->mNormals!=nullptr, mesh->mTextureCoords[0]!=nullptr);
     // TODO: 加载纹理
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    ProcessMaterial(material);
+}
+
+void AssimpLoader::ProcessMaterial(aiMaterial* mat)
+{
+    for(int tex = aiTextureType_NONE ; tex <= aiTextureType_UNKNOWN; tex++){
+        aiTextureType type = static_cast<aiTextureType>(tex); //making the int value into the enum value
+
+        //If there are any textures of the given type in the material
+        if(mat->GetTextureCount(type) > 0 ){
+            printf("yep\n");
+        }
+    }
 }
 
 

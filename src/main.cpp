@@ -41,13 +41,16 @@
 
 int main()
 {
-    // ������ִ�г�ʼ��, ���ܵ��� gl ����, ��������г���
+    // 必须进行设置, 配置好gl运行环境
     GLFWwindow* window = InitOpenGL(800, 600);
     assert(window != NULL);
 
+    string t_fn = "../assets/cyborg-ray-fisher/source/Cyborg_HeroPose.fbx";
+    string car_fn = "../assets/fallout_car_2/scene.gltf";
+    string cfn = "../assets/spot/spot_triangulated_good.obj";
     string fn = "../assets/backpack/backpack.obj";
     AssimpLoader* ld = new AssimpLoader();
-    ld->LoadFile(fn);
+    ld->LoadFile(car_fn);
 
     Mesh* mesh = new Mesh(ld->vs, ld->ids);
 
@@ -57,7 +60,8 @@ int main()
     string fs_s = "../shaders/tfs.glsl";
 
     Shader sh(vs_s, fs_s);
-    sh.use();
+
+    GraphicAPI::Temp_DrawMesh(*mesh, sh, window);
 
     return 0;
 }

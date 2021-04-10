@@ -4,7 +4,7 @@
 
 class Shader {
 public:
-	// TODO: ½âñî vs, fs µÄ attach ºÍ link
+	// TODO: è§£è€¦ attach shader
 	Shader(std::string vertexShader, std::string fragmentShader);
 	void setInt(const char* name, int value);
 	void setFloat(const char* name, float value);

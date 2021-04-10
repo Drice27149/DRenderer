@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 #include "Object.hpp"
 
 
@@ -38,18 +38,18 @@ void Object::LoadModel(std::string filename)
 
 void Object::LoadTexture(std::string filename)
 {   
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);  // reverse picture upside down
-    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D); 
-    }
-    else{
-        std::cout << "Failed to load texture" << std::endl;
-    }
+    // glGenTextures(1, &textureID);
+    // glBindTexture(GL_TEXTURE_2D, textureID);
+    // int width, height, nrChannels;
+    // stbi_set_flip_vertically_on_load(true);  // reverse picture upside down
+    // unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+    // if (data) {
+    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    //     glGenerateMipmap(GL_TEXTURE_2D); 
+    // }
+    // else{
+    //     std::cout << "Failed to load texture" << std::endl;
+    // }
 }
 
 void Object::Transform(glm::mat4 trans)
@@ -76,16 +76,16 @@ void Object::draw(Shader* shader)
 
 void Object::LoadNormal(std::string filename)
 {
-    glGenTextures(1, &normalID);
-    glBindTexture(GL_TEXTURE_2D, normalID);
-    int width, height, nrChannels;
-    // stbi_set_flip_vertically_on_load(true);  // reverse picture upside down
-    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D); 
-    }
-    else{
-        std::cout << "Failed to load texture" << std::endl;
-    }
+    // glGenTextures(1, &normalID);
+    // glBindTexture(GL_TEXTURE_2D, normalID);
+    // int width, height, nrChannels;
+    // // stbi_set_flip_vertically_on_load(true);  // reverse picture upside down
+    // unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+    // if (data) {
+    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    //     glGenerateMipmap(GL_TEXTURE_2D); 
+    // }
+    // else{
+    //     std::cout << "Failed to load texture" << std::endl;
+    // }
 }

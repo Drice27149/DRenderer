@@ -2,12 +2,13 @@
 #include "Global.hpp"
 
 class Mesh;
+class Shader;
 
 namespace GraphicAPI {
 
-void LoadMeshToGPU(Mesh& mesh, GraphicData& gd);
+void LoadMeshToGPU(Mesh& mesh);
 
-// 临时函数, 仅用于验证 assimp 导入模型成功
-void Temp_DrawMesh(Mesh& mesh); 
+// 娴嬭瘯鍑芥暟
+void Temp_DrawMesh(Mesh& mesh, Shader& sh,  GLFWwindow* window); 
 
 }
