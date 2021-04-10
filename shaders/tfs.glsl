@@ -60,9 +60,19 @@
 //     gColor = blingFong();
 // 	// FragColor = gColor;
 // }
+// Ä£ÐÍÎÆÀíÌùÍ¼
+struct ModelTexture{
+	sampler2D diffuse;
+	sampler2D normal;
+};
+
+uniform ModelTexture modelTex;
+
+in vec2 fvt;
+
 out vec4 FragColor;
 
 void main()
 {
-	FragColor = vec4(1.0);
+	FragColor = texture(modelTex.diffuse, fvt);
 }

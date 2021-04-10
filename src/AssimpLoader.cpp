@@ -8,6 +8,19 @@ AssimpLoader::AssimpLoader()
 
 void AssimpLoader::LoadFile(string fn)
 {
+    // 获得模型文件的文件夹路径
+    fpath = "";
+    int p = 0;
+    while (p < fn.size()) {
+        if (fn[p] != '/') fpath.push_back(fn[p++]);
+        else {
+            fpath.push_back(fn[p++]);
+            int np = p;
+            while (np < fn.size() && fn[np] != '/') np++;
+            if (np == fn.size()) break;
+        }
+    }
+
     Assimp::Importer import;
     const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure);	
 	
@@ -53,20 +66,27 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
             ids.push_back(mesh->mFaces[i].mIndices[j]);
         }
     }
-    // printf("meshCnt = %d, have_vn = %d, have_vt = %d\n", meshCnt, mesh->mNormals!=nullptr, mesh->mTextureCoords[0]!=nullptr);
-    // TODO: 加载纹理
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     ProcessMaterial(material);
 }
 
 void AssimpLoader::ProcessMaterial(aiMaterial* mat)
 {
-    for(int tex = aiTextureType_NONE ; tex <= aiTextureType_UNKNOWN; tex++){
-        aiTextureType type = static_cast<aiTextureType>(tex); //making the int value into the enum value
+    texs.resize(aiTextureType_UNKNOWN + 1);
+    // 遍历所有纹理类型, 看是否有对应的纹理贴图
+    mask = 0;
+    for(int it = aiTextureType_NONE ; it <= aiTextureType_UNKNOWN; it++){
+        aiTextureType texType = static_cast<aiTextureType>(it); 
+        if(mat->GetTextureCount(texType)){
+            mask |= 1 << it;
+            // 只取第一张贴图, 因为多出来的大概率是重复的同一个
+            aiString texn;
+            mat->GetTexture(texType, 0, &texn);
+            string fulltexn = fpath + string(texn.C_Str());
 
-        //If there are any textures of the given type in the material
-        if(mat->GetTextureCount(type) > 0 ){
-            printf("yep\n");
+            cout << "it = " << it << ", " << fulltexn << "\n";
+
+            texs[it] = fulltexn;
         }
     }
 }

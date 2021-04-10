@@ -45,14 +45,17 @@ int main()
     GLFWwindow* window = InitOpenGL(800, 600);
     assert(window != NULL);
 
-    string t_fn = "../assets/cyborg-ray-fisher/source/Cyborg_HeroPose.fbx";
-    string car_fn = "../assets/fallout_car_2/scene.gltf";
-    string cfn = "../assets/spot/spot_triangulated_good.obj";
-    string fn = "../assets/backpack/backpack.obj";
-    AssimpLoader* ld = new AssimpLoader();
-    ld->LoadFile(car_fn);
+    printf("Init GL window done\n");
 
-    Mesh* mesh = new Mesh(ld->vs, ld->ids);
+    string cyborg  = "../assets/cyborg-ray-fisher/source/Cyborg_HeroPose.fbx";
+    string car = "../assets/fallout_car_2/scene.gltf";
+    string spot = "../assets/spot/spot_triangulated_good.obj";
+    string backpack = "../assets/backpack/backpack.obj";
+
+    AssimpLoader* ld = new AssimpLoader();
+    ld->LoadFile(car);
+
+    Mesh* mesh = new Mesh(ld->vs, ld->ids, ld->texs, ld->mask);
 
     printf("Load Mesh done\n");
 

@@ -6,8 +6,7 @@ class Texture
 {
 public:
     Texture();
-    void LoadTexture(string fn, bool vflip = false);
-private:
+public:
     unsigned int id;
 };
 
