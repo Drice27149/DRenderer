@@ -12,6 +12,10 @@ public:
     void OnLMouseRelease(){ lmouse = false; }
     void OnRMouseDown(){ rmouse = true; }
     void OnRMouseRelease(){ rmouse = false; }
+    void OnZoomIn();
+    void OnZoomOut();
+    void OnMoveLeft();
+    void OnMoveRight();
 private:
     // Êó±êµÄ×ø±ê
     float x, y;

@@ -35,9 +35,30 @@ int main()
 
     Shader sh(vs_s, fs_s);
 
-    GraphicAPI::Temp_DrawMesh(*mesh, sh, window);
+    vec2 a(-1000, 1000);
+    vec2 b(1000, 1000);
+    vec2 c(1000, -1000);
+    vec2 d(-1000, -1000);
 
+    Grid* grid = new Grid(a, b, c, d, 20);
+
+    string l_vs = "../shaders/grid/line.vs";
+    string l_fs = "../shaders/grid/line.fs";
     
+    Shader l_sh(l_vs, l_fs);
+
+    glEnable(GL_DEPTH_TEST);
+
+    // TODO: 把渲染循环放在别处
+    while(!glfwWindowShouldClose(window)){
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        GraphicAPI::Temp_DrawGrid(*grid, l_sh);
+        GraphicAPI::Temp_DrawMesh(*mesh, sh);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 
     return 0;
 }

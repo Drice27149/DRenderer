@@ -7,7 +7,7 @@
 // TODO: 左键位移, 右键旋转
 class Camera {
 public:
-    Camera(vec3 origin = vec3(0,0,0), vec3 firstGaze = vec3(0,0,1), float rSpeed = 1.0f, float mSpeed = 1.0f);
+    Camera(vec3 origin = vec3(0,100,-100), float rSpeed = 1.0f, float mSpeed = 10.0f);
     void moveX(float direciton); 
     void moveY(float direction); 
     void moveZ(float direction); 
@@ -15,7 +15,6 @@ public:
     void rotatePitch(float delta);
     void rotateYaw(float delta);
     void updateDirection();
-    void processInput(GLFWwindow*);
     void SetMSpeed(float speed);
     void SetRSpeed(float speed);
     mat4 getCamTransform();

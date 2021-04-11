@@ -5,6 +5,7 @@
 
 class Mesh{
 public:
+    Mesh();
     Mesh(vector<Vertex> vs, vector<unsigned int> ids, vector<string> texs, int mask); // TODO: 列表复制使用右值引用
 public:
     vector<Vertex> vs;          // 顶点数组
@@ -14,4 +15,9 @@ public:
     vector<Texture> texs;
     // openGL 相关数据
     GraphicData gd;
+};
+
+class Grid: public Mesh{
+public:
+    Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines);
 };

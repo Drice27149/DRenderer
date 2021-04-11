@@ -33,6 +33,7 @@ GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
     glfwSetMouseButtonCallback(window, GraphicAPI::MouseButtonCallBack);
     glfwSetCursorPosCallback(window, GraphicAPI::MouseMoveCallBack);
     glfwSetKeyCallback(window, GraphicAPI::KeyCallBack);
+    glfwSetScrollCallback(window, GraphicAPI::ScrollCallBack);
 
      return window;
 }
@@ -63,6 +64,14 @@ void GraphicAPI::MouseButtonCallBack(GLFWwindow* window, int button, int action,
     }
 }
 
+void GraphicAPI::ScrollCallBack(GLFWwindow* window, double dx, double dy)
+{
+    if(dy > 0)
+        DEngine::GetInputMgr().OnZoomIn();
+    else
+        DEngine::GetInputMgr().OnZoomOut();
+}
+
 void GraphicAPI::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -70,13 +79,19 @@ void GraphicAPI::FramebufferSizeCallback(GLFWwindow* window, int width, int heig
 
 void GraphicAPI::KeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if(action == GLFW_PRESS){
+    if(action == GLFW_PRESS || GLFW_REPEAT == action){
         if(key == GLFW_KEY_W){
-            // TODO: 修正值
-            DEngine::GetCamMgr().ZoomCam(1.0);
+            // TODO: 修正移动的具体值
+            DEngine::GetInputMgr().OnZoomIn();
         }
         if(key == GLFW_KEY_S){
-            DEngine::GetCamMgr().ZoomCam(-1.0);
+            DEngine::GetInputMgr().OnZoomOut();
+        }
+        if(key == GLFW_KEY_A){
+            DEngine::GetInputMgr().OnMoveLeft();
+        }
+        if(key == GLFW_KEY_D){
+            DEngine::GetInputMgr().OnMoveRight();
         }
     }
 }
@@ -124,7 +139,7 @@ void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
     }
 }
 
-void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh, GLFWwindow* window)
+void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
 {
     glBindVertexArray(mesh.gd.VAO);
 
@@ -153,17 +168,23 @@ void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh, GLFWwindow* window)
         texNum++;
     }
 
-    // 开启深度测试
-    glEnable(GL_DEPTH_TEST);
+    glDrawElements(GL_TRIANGLES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
+}
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glClear(GL_DEPTH_BUFFER_BIT |GL_COLOR_BUFFER_BIT);
+void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
+{
+    glBindVertexArray(mesh.gd.VAO);
 
-        glDrawElements(GL_TRIANGLES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
+    mat4 model = glm::mat4(1.0);
+    mat4 view = DEngine::GetCamMgr().GetCamera().getCamTransform();
+    mat4 projection = glm::perspective(90.0, 1.0, 0.1, 2000.0);
+    
+    sh.use();
+    // 模型变换和透视投影变换
+    sh.setMat4("model", model);
+    sh.setMat4("view", view);
+    sh.setMat4("proj", projection);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+    glDrawElements(GL_LINES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
 }
 

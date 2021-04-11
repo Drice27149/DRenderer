@@ -92,112 +92,112 @@ void Renderer::InitRender()
 
 void Renderer::SSAOPass(Shader* shader)
 {
-    shader->use();
-    glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    // GBuffer
-    shader->setVec2("screenSize", vec2(width, height));
-    shader->setInt("gPosition", 3);
-    shader->setInt("gNormal", 4);
-    shader->setInt("gColor", 5);
-    // init ssao sampler
-    for(int i = 0; i < 64; i++){
-        std::string name = "RandomSample[" + std::to_string(i) + "]";
-        shader->setVec3(name.c_str(), ssaoKernel[i]);
-    }
-    // render
-    glm::mat4 trans = projection * camera->getCamTransform();
-    shader->setMat4("trans", trans);
-    for(Object* object: scene->objects){
-        object->draw(shader);
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, ssaoTex);
+    // shader->use();
+    // glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST);
+    // // GBuffer
+    // shader->setVec2("screenSize", vec2(width, height));
+    // shader->setInt("gPosition", 3);
+    // shader->setInt("gNormal", 4);
+    // shader->setInt("gColor", 5);
+    // // init ssao sampler
+    // for(int i = 0; i < 64; i++){
+    //     std::string name = "RandomSample[" + std::to_string(i) + "]";
+    //     shader->setVec3(name.c_str(), ssaoKernel[i]);
+    // }
+    // // render
+    // glm::mat4 trans = projection * camera->getCamTransform();
+    // shader->setMat4("trans", trans);
+    // for(Object* object: scene->objects){
+    //     object->draw(shader);
+    // }
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // glActiveTexture(GL_TEXTURE6);
+    // glBindTexture(GL_TEXTURE_2D, ssaoTex);
 }
 
 void Renderer::GPass(Shader* shader)
 {
-    shader->use();
-    glBindFramebuffer(GL_FRAMEBUFFER, gFBO);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
+    // shader->use();
+    // glBindFramebuffer(GL_FRAMEBUFFER, gFBO);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST);
 
-    glm::mat4 view = camera->getCamTransform();
-    glm::mat4 trans = projection * view;
-    shader->setMat4("trans", trans);
-    shader->setVec3("eyePos",camera->getOrigin());
-    shader->setVec3("inten", scene->lights[0][2]);
-    shader->setVec3("inten_a", scene->inten_a);
-    shader->setVec3("lightPos", scene->lights[0][0]);
-    for(Object* object: scene->objects){
-        object->draw(shader);
-    }
+    // glm::mat4 view = camera->getCamTransform();
+    // glm::mat4 trans = projection * view;
+    // shader->setMat4("trans", trans);
+    // shader->setVec3("eyePos",camera->getOrigin());
+    // shader->setVec3("inten", scene->lights[0][2]);
+    // shader->setVec3("inten_a", scene->inten_a);
+    // shader->setVec3("lightPos", scene->lights[0][0]);
+    // for(Object* object: scene->objects){
+    //     object->draw(shader);
+    // }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // save result
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, coordTex);
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, normalTex);
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, colorTex);
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // // save result
+    // glActiveTexture(GL_TEXTURE3);
+    // glBindTexture(GL_TEXTURE_2D, coordTex);
+    // glActiveTexture(GL_TEXTURE4);
+    // glBindTexture(GL_TEXTURE_2D, normalTex);
+    // glActiveTexture(GL_TEXTURE5);
+    // glBindTexture(GL_TEXTURE_2D, colorTex);
 }
 
 void Renderer::ShadowPass(Shader* shader)
 {
-    shader->use();
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    // shader->use();
     // glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST); 
-    Camera lightCam(scene->lights[0][0], scene->lights[0][1]);
-    glm::mat4 trans =  projection * lightCam.getCamTransform();
-    shader->setMat4("trans", trans);
-    for(Object* object: scene->objects){
-        object->draw(shader);
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // save shadow map texture 
-    glActiveTexture(GL_TEXTURE1); 
-    glBindTexture(GL_TEXTURE_2D, shadowTex);
-    // // stuff
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
+    // // glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+    // glClear(GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST); 
+    // Camera lightCam(scene->lights[0][0], scene->lights[0][1]);
+    // glm::mat4 trans =  projection * lightCam.getCamTransform();
+    // shader->setMat4("trans", trans);
+    // for(Object* object: scene->objects){
+    //     object->draw(shader);
+    // }
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // // save shadow map texture 
+    // glActiveTexture(GL_TEXTURE1); 
+    // glBindTexture(GL_TEXTURE_2D, shadowTex);
+    // // // stuff
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    // float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
 }
 
 void Renderer::Render(Shader* shader)
 {
-    shader->use();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    // assume only one light here
-    // {position, direction, intensity}
-    // transform related to camera and eye 
-    // init texture
-    shader->setInt("depthMap", 1);
-    shader->setInt("ssaoMap", 6);
-    shader->setInt("gPostion", 3);
-    shader->setInt("gNormal", 4);
-    shader->setInt("gColor", 5);
-    // init vector
-    glm::mat4 view = camera->getCamTransform();
-    glm::mat4 trans = projection * view;
-    shader->setMat4("trans", trans);
-    shader->setVec3("eyePos",camera->getOrigin());
-    shader->setVec3("inten", scene->lights[0][2]);
-    shader->setVec3("inten_a", scene->inten_a);
-    shader->setVec3("lightPos", scene->lights[0][0]);
-    shader->setVec2("screenSize", vec2(scene->width, scene->height));
-    Camera lightCam(scene->lights[0][0], scene->lights[0][1]);
-    glm::mat4 lightTrans =  projection * lightCam.getCamTransform();
-    shader->setMat4("lightTrans", lightTrans);
-    for(Object* object: scene->objects){
-        object->draw(shader);
-    }
+    // shader->use();
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST);
+    // // assume only one light here
+    // // {position, direction, intensity}
+    // // transform related to camera and eye 
+    // // init texture
+    // shader->setInt("depthMap", 1);
+    // shader->setInt("ssaoMap", 6);
+    // shader->setInt("gPostion", 3);
+    // shader->setInt("gNormal", 4);
+    // shader->setInt("gColor", 5);
+    // // init vector
+    // glm::mat4 view = camera->getCamTransform();
+    // glm::mat4 trans = projection * view;
+    // shader->setMat4("trans", trans);
+    // shader->setVec3("eyePos",camera->getOrigin());
+    // shader->setVec3("inten", scene->lights[0][2]);
+    // shader->setVec3("inten_a", scene->inten_a);
+    // shader->setVec3("lightPos", scene->lights[0][0]);
+    // shader->setVec2("screenSize", vec2(scene->width, scene->height));
+    // Camera lightCam(scene->lights[0][0], scene->lights[0][1]);
+    // glm::mat4 lightTrans =  projection * lightCam.getCamTransform();
+    // shader->setMat4("lightTrans", lightTrans);
+    // for(Object* object: scene->objects){
+    //     object->draw(shader);
+    // }
 }
 
 float lerp(float a, float b, float f)
@@ -207,18 +207,18 @@ float lerp(float a, float b, float f)
 
 void Renderer::InitSSAO()
 {
-    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-    std::default_random_engine generator;
-    for (unsigned int i = 0; i < 64; ++i)
-    {
-        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-        sample = glm::normalize(sample);
-        sample *= randomFloats(generator);
-        float scale = float(i) / 64.0;
+    // std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+    // std::default_random_engine generator;
+    // for (unsigned int i = 0; i < 64; ++i)
+    // {
+    //     glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+    //     sample = glm::normalize(sample);
+    //     sample *= randomFloats(generator);
+    //     float scale = float(i) / 64.0;
 
-        // scale samples s.t. they're more aligned to center of kernel
-        scale = lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        ssaoKernel.push_back(sample);
-    }
+    //     // scale samples s.t. they're more aligned to center of kernel
+    //     scale = lerp(0.1f, 1.0f, scale * scale);
+    //     sample *= scale;
+    //     ssaoKernel.push_back(sample);
+    // }
 }

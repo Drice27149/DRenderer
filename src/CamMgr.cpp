@@ -12,8 +12,8 @@ void CamMgr::ZoomCam(float dz)
 
 void CamMgr::MoveCam(float dx, float dy)
 {
-    camera.moveX(dx);
-    camera.moveY(dy);
+    if(std::abs(dx) > std::abs(dy)) camera.moveX(dx);
+    else camera.moveY(dy);
 }
 
 void CamMgr::RotateCam(float dx, float dy)

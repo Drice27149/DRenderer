@@ -1,19 +1,17 @@
 #include "Camera.hpp"
-#include <iostream>
-#include <cmath>
 
-Camera::Camera(vec3 origin, vec3 firstGaze, float rotateSpeed, float moveSpeed):
-origin(origin), firstGaze(firstGaze), rotateSpeed(rotateSpeed), moveSpeed(moveSpeed)
+Camera::Camera(vec3 origin, float rotateSpeed, float moveSpeed):
+origin(origin), rotateSpeed(rotateSpeed), moveSpeed(moveSpeed)
 {
-    firstGaze = glm::normalize(firstGaze);
-    yaw = 0;
-    pitch = 0;
+    yaw = -90.0;
+    pitch = 0.0;
 }
 
 void Camera::moveX(float direction){
     updateDirection();
     vec3 hv = glm::normalize(glm::cross(up, gaze));
     origin += hv * direction * moveSpeed;
+    
 }
 
 void Camera::moveY(float direction){
@@ -37,6 +35,10 @@ mat4 Camera::getCamTransform(){
 
 void Camera::rotatePitch(float delta){
     pitch += delta * rotateSpeed;
+    if(pitch < -89.0) 
+        pitch = -89.0;
+    if(pitch > 89.0)
+        pitch = 89.0;
 }
 
 void Camera::rotateYaw(float delta){
@@ -44,53 +46,13 @@ void Camera::rotateYaw(float delta){
 }
 
 void Camera::updateDirection(){
-    mat3 Rx(
-        1.0f,          0,           0,
-           0, cos(pitch), -sin(pitch),
-           0, sin(pitch),  cos(pitch)
-    ); 
-    mat3 Ry(
-        cos(yaw), 0, sin(yaw),
-        0, 1.0f, 0,
-        -sin(yaw), 0, cos(yaw)
-    );
-    gaze = Ry * Rx * firstGaze;
-    vec3 worldUp = vec3(0, 1.0f, 0);
-    vec3 right = glm::cross(gaze, worldUp);
-    up = glm::cross(right, gaze);
-}
-
-// use input to adjust camera's postion and rotation
-void Camera::processInput(GLFWwindow *window)
-{
-    // if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    // {
-    //     glfwSetWindowShouldClose(window, true);
-    // }
-
-    // if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    //     moveY(1.0f);
-    // if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    //     moveY(-1.0f);
-    // if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    //     moveX(1.0f);
-    // if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    //     moveX(-1.0f);
-    // if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    //     moveZ(1.0f);
-    // if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-    //     moveZ(-1.0f);
-
-    // float rspeed = 0.1;
-
-    // if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-    //     rotateYaw(-1.0f * rspeed);
-    // if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-    //     rotateYaw(1.0f * rspeed);
-    // if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-    //     rotatePitch(1.0f * rspeed);
-    // if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-    //     rotatePitch(-1.0f * rspeed);
+    gaze.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    gaze.y = sin(glm::radians(pitch));
+    gaze.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    gaze = glm::normalize(gaze);
+    vec3 worldUp = glm::normalize(glm::vec3(0, 1.0f, 0));
+    vec3 right = glm::normalize(glm::cross(gaze, worldUp));
+    up = glm::normalize(glm::cross(right, gaze));
 }
 
 vec3 Camera::getOrigin(){
