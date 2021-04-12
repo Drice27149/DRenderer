@@ -32,11 +32,11 @@ using std::cout;
 // ssao: 6
 
 struct Vertex {
-    vec3 v;     // 顶点坐标
-    vec3 vn;    // 顶点法线
-    vec2 vt;    // 顶点纹理坐标
-    vec3 tg;    // tagent, 定点切线
-    vec3 bg;    // bitTagent, 同上
+    vec3 vertex;     // 顶点坐标
+    vec3 normal;    // 顶点法线
+    vec2 texCoord;    // 顶点纹理坐标
+    vec3 tangent;    // tagent, 定点切线
+    vec3 bitangent;    // bitTagent, 同上
 };
 
 struct GraphicData {

@@ -35,10 +35,10 @@ int main()
 
     Shader sh(vs_s, fs_s);
 
-    vec2 a(-1000, 1000);
-    vec2 b(1000, 1000);
-    vec2 c(1000, -1000);
-    vec2 d(-1000, -1000);
+    vec2 a(-2000, 2000);
+    vec2 b(2000, 2000);
+    vec2 c(2000, -2000);
+    vec2 d(-2000, -2000);
 
     Grid* grid = new Grid(a, b, c, d, 20);
 

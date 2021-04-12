@@ -21,3 +21,19 @@ void CamMgr::RotateCam(float dx, float dy)
     camera.rotatePitch(dy);
     camera.rotateYaw(dx);
 }
+
+mat4 CamMgr::GetViewTransform()
+{
+    return camera.getCamTransform();
+}
+
+mat4 CamMgr::GetProjectionTransform()
+{
+    // TODO: 看看 unity 的相机设置
+    return glm::perspective(45.0, 1.0, 5.0, 2000.0);
+}
+
+vec3 CamMgr::GetViewPos()
+{
+    return camera.getOrigin();
+}

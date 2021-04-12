@@ -31,8 +31,8 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     vec2 up = a;
     vec2 down = d;
     for(int i = 0; i < lines; i++){
-        vs[2*i].v = (vec3(up.x,0,up.y));
-        vs[2*i+1].v = (vec3(down.x,0,down.y));
+        vs[2*i].vertex = (vec3(up.x,0,up.y));
+        vs[2*i+1].vertex = (vec3(down.x,0,down.y));
         up += dx;
         down += dx;
     }
@@ -40,8 +40,8 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     vec2 left = a;
     vec2 right = b;
     for(int i = 0; i < lines; i++){
-        vs[2*i+2*lines].v = (vec3(left.x,0,left.y));
-        vs[2*i+1+2*lines].v = (vec3(right.x,0,right.y));
+        vs[2*i+2*lines].vertex = (vec3(left.x,0,left.y));
+        vs[2*i+1+2*lines].vertex = (vec3(right.x,0,right.y));
         left += dy;
         right += dy;
     }

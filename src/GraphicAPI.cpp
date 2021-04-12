@@ -112,14 +112,19 @@ void GraphicAPI::LoadMesh(Mesh& mesh)
     // 配置顶点属性, 用于shader中读取
     // 顶点坐标
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vertex));
     // 顶点法线
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vn));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     // 纹理坐标
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vt));
-    // TODO: tagent, bitagent
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+    // 切线方向
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+    // b切线方向
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 }
 
 void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
@@ -139,19 +144,23 @@ void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
     }
 }
 
+// TODO: 定义 RenderMgr
 void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
 {
     glBindVertexArray(mesh.gd.VAO);
 
     mat4 model = glm::mat4(1.0);
-    mat4 view = DEngine::GetCamMgr().GetCamera().getCamTransform();
-    mat4 projection = glm::perspective(90.0, 1.0, 0.1, 2000.0);
+    mat4 view = DEngine::GetCamMgr().GetViewTransform();
+    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
     
     sh.use();
     // 模型变换和透视投影变换
     sh.setMat4("model", model);
     sh.setMat4("view", view);
     sh.setMat4("proj", projection);
+    sh.setFloat("gloss", 128.0);
+    sh.setVec3("light0.color", vec3(1.0, 1.0, 1.0));
+    sh.setVec3("viewPos", DEngine::GetCamMgr().GetViewPos());
     // 定位纹理贴图
     // TODO: 还有很多纹理贴图
     int texNum = 0;
@@ -176,8 +185,8 @@ void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
     glBindVertexArray(mesh.gd.VAO);
 
     mat4 model = glm::mat4(1.0);
-    mat4 view = DEngine::GetCamMgr().GetCamera().getCamTransform();
-    mat4 projection = glm::perspective(90.0, 1.0, 0.1, 2000.0);
+    mat4 view = DEngine::GetCamMgr().GetViewTransform();
+    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
     
     sh.use();
     // 模型变换和透视投影变换

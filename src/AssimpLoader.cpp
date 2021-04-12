@@ -51,13 +51,14 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     meshCnt++;
     for(int i = 0; i < mesh->mNumVertices; i++){
         Vertex v;
-        v.v = vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        v.vertex = vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         if(mesh->mNormals){ 
-            v.vn = vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            v.normal = vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
         if(mesh->mTextureCoords[0]){
-            v.vt = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-            // TODO: 加载切线
+            v.texCoord = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+            v.tangent = vec3(mesh->mTangents->x, mesh->mTangents->y, mesh->mTangents->z);
+            v.bitangent = vec3(mesh->mBitangents->x, mesh->mBitangents->y, mesh->mBitangents->z);
         }
         vs.push_back(v);
     }

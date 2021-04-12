@@ -34,14 +34,20 @@ uniform mat4 model; 	// 模型变换
 uniform mat4 view;		// 相机变换
 uniform mat4 proj;		// 透视投影变换
 
-layout (location = 0) in vec3 v;
-layout (location = 1) in vec3 vn;
-layout (location = 2) in vec2 vt;
+layout (location = 0) in vec3 vertex;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoord;
+layout (location = 3) in vec3 tangent;
+layout (location = 4) in vec3 bitangent;
 
-out vec2 fvt;
+out vec2 uv;
+out vec3 worldPos;
+out mat3 TBN;
 
 void main()
 {
-	gl_Position = proj * view * model * vec4(v.xyz, 1.0); 
-	fvt = vt;
+	gl_Position = proj * view * model * vec4(vertex, 1.0); 
+	uv = texCoord;
+	worldPos = vertex;
+	TBN = mat3(normalize(tangent), normalize(bitangent), normalize(normal));
 }
