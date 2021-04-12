@@ -44,6 +44,7 @@ out vec2 uv;
 out vec3 worldPos;
 out mat3 TBN;
 
+
 void main()
 {
 	gl_Position = proj * view * model * vec4(vertex, 1.0); 
