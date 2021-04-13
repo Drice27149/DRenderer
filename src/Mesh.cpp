@@ -1,5 +1,6 @@
 #include "Mesh.hpp"
 #include "GraphicAPI.hpp"
+#include "DEngine.hpp"
 
 Mesh::Mesh()
 {
@@ -15,7 +16,7 @@ vs(vs), ids(ids), texns(texns), mask(mask)
     texs.resize(aiTextureType_UNKNOWN + 1);
     for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
         if (mask & (1 << it)) {
-            GraphicAPI::LoadImageTexture(texs[it], texns[it]);
+            texs[it] = DEngine::GetTexMgr().GetTextureByFileName(texns[it]);
         }
     }
 }

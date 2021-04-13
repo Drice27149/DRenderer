@@ -2,11 +2,12 @@
 
 #include "Global.hpp"
 #include "Texture.hpp"
+#include "Object.hpp"
 
 class AssimpLoader{
 public:
     AssimpLoader();
-    void LoadFile(string filename);
+    Object* LoadFile(string filename);
 private:
     void ProcessNode(aiNode *node, const aiScene *scene);
     void ProcessMesh(aiMesh *mesh, const aiScene *scene);
@@ -21,4 +22,5 @@ public:
     bool have_vt;   // 有顶点纹理坐标
 private:
     string fpath;
+    Object* obj;
 };

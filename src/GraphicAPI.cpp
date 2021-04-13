@@ -5,6 +5,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "DEngine.hpp"
+#include "Object.hpp"
 
 GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
      glfwInit();
@@ -104,11 +105,11 @@ void GraphicAPI::LoadMesh(Mesh& mesh)
     // 顶点缓冲
     glGenBuffers(1, &(gd.VBO));
     glBindBuffer(GL_ARRAY_BUFFER, gd.VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * (mesh.vs.size()), &(mesh.vs[0]), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * (mesh.vs.size()), mesh.vs.data(), GL_STATIC_DRAW);
     // 索引缓冲
     glGenBuffers(1, &(gd.EBO));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gd.EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * (mesh.ids.size()), &(mesh.ids[0]), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * (mesh.ids.size()), mesh.ids.data(), GL_STATIC_DRAW);
     // 配置顶点属性, 用于shader中读取
     // 顶点坐标
     glEnableVertexAttribArray(0);
@@ -131,12 +132,27 @@ void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
 {
     glGenTextures(1, &(tex.id));
     glBindTexture(GL_TEXTURE_2D, tex.id);
-    int width, height, nrChannels;
+    int width = 0, height = 0, nrChannels = 0;
     // 竖直反转
     if (vflip) stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(fn.c_str(), &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    if (data && nrChannels > 0) {
+        if (nrChannels == 1) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 2) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 3) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 4) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+        else {
+            int channelsOutOfBounds = 1;
+            assert(channelsOutOfBounds);
+        }
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else {
@@ -195,5 +211,12 @@ void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
     sh.setMat4("proj", projection);
 
     glDrawElements(GL_LINES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
+}
+
+void GraphicAPI::Temp_DrawObject(Object& obj, Shader& sh)
+{
+    for (Mesh& mesh : obj.meshes) {
+        GraphicAPI::Temp_DrawMesh(mesh, sh);
+    }
 }
 

@@ -4,6 +4,7 @@
 class Mesh;
 class Shader;
 class Texture;
+class Object;
 
 namespace GraphicAPI {
 
@@ -28,5 +29,7 @@ void Temp_DrawGrid(Mesh& mesh, Shader& sh);
 
 // 测试函数
 void Temp_DrawMesh(Mesh& mesh, Shader& sh); 
+
+void Temp_DrawObject(Object& object, Shader& sh);
 
 }

@@ -4,6 +4,7 @@
 #include "Mesh.hpp"
 #include "Object.hpp"
 #include "DEngine.hpp"
+#include "Shader.hpp"
 
 DEngine* DEngine::instance = nullptr;
 
@@ -18,17 +19,17 @@ int main()
     assert(window != nullptr);
     printf("Init GL window done\n");
 
-    string cyborg  = "../assets/cyborg-ray-fisher/source/Cyborg_HeroPose.fbx";
+    string cyborg  = "../assets/hulkbuster/scene.gltf";
     string car = "../assets/fallout_car_2/scene.gltf";
     string spot = "../assets/spot/spot_triangulated_good.obj";
     string backpack = "../assets/backpack/backpack.obj";
 
     AssimpLoader* ld = new AssimpLoader();
-    ld->LoadFile(car);
+    Object* obj = ld->LoadFile(cyborg);
 
-    Mesh* mesh = new Mesh(ld->vs, ld->ids, ld->texs, ld->mask);
+    assert(obj);
 
-    printf("Mesh loaded\n");
+    printf("Object imported\n");
 
     string vs_s = "../shaders/tvs.glsl";
     string fs_s = "../shaders/tfs.glsl";
@@ -49,12 +50,14 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+    printf("Shaders compiled\n");
+
     // TODO: 把渲染循环放在别处
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         GraphicAPI::Temp_DrawGrid(*grid, l_sh);
-        GraphicAPI::Temp_DrawMesh(*mesh, sh);
+        GraphicAPI::Temp_DrawObject(*obj, sh);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

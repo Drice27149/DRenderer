@@ -3,11 +3,13 @@
 AssimpLoader::AssimpLoader()
 {
     meshCnt = 0;
-    have_vn = have_vt = 0;
 }
 
-void AssimpLoader::LoadFile(string fn)
+Object* AssimpLoader::LoadFile(string fn)
 {
+    // TODO: 内存管理
+    obj = new Object();
+
     // 获得模型文件的文件夹路径
     fpath = "";
     int p = 0;
@@ -27,10 +29,12 @@ void AssimpLoader::LoadFile(string fn)
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
     {
         cout << "ERROR::ASSIMP::" << import.GetErrorString() << "\n";
-        return;
+        return nullptr;
     }
 
     ProcessNode(scene->mRootNode, scene);
+
+    return obj;
 }
 
 void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene)
@@ -49,6 +53,12 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     // 只有 mVertice 和 mFace 是总存在的, 其他属性都可能为 null
     // 不同的 mesh 顶点索引和纹理贴图是不一样的
     meshCnt++;
+    vs.clear();
+    ids.clear();
+    texs.clear();
+    texs.resize(aiTextureType_UNKNOWN + 1);
+    mask = 0;
+
     for(int i = 0; i < mesh->mNumVertices; i++){
         Vertex v;
         v.vertex = vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
@@ -69,13 +79,14 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     }
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     ProcessMaterial(material);
+    
+    Mesh* newMesh = new Mesh(vs, ids, texs, mask);
+    obj->meshes.push_back(*newMesh);
 }
 
 void AssimpLoader::ProcessMaterial(aiMaterial* mat)
 {
-    texs.resize(aiTextureType_UNKNOWN + 1);
     // 遍历所有纹理类型, 看是否有对应的纹理贴图
-    mask = 0;
     for(int it = aiTextureType_NONE ; it <= aiTextureType_UNKNOWN; it++){
         aiTextureType texType = static_cast<aiTextureType>(it); 
         if(mat->GetTextureCount(texType)){
@@ -85,7 +96,7 @@ void AssimpLoader::ProcessMaterial(aiMaterial* mat)
             mat->GetTexture(texType, 0, &texn);
             string fulltexn = fpath + string(texn.C_Str());
 
-            cout << "it = " << it << ", " << fulltexn << "\n";
+            // cout << "it = " << it << ", " << fulltexn << "\n";
 
             texs[it] = fulltexn;
         }
