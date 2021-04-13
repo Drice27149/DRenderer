@@ -46,7 +46,7 @@ float GetLightAmbient()
 
 vec4 BlingFong()
 {
-	vec3 albedo = texture(modelTex.diffuse, uv).rgb;
+	vec3 albedo = vec3(1.0); // texture(modelTex.diffuse, uv).rgb;
 	vec3 normal = GetNormal();
 	vec3 viewDir = normalize(viewPos - worldPos);
 	vec3 lightDir = normalize(GetLightDir());

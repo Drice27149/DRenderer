@@ -7,7 +7,9 @@ class Object{
 public:
 	Object();
 	vector<Mesh> meshes;
-private:
+	void Transform(mat4 trans);
+public:
+	mat4 model;
 //    void LoadModel(std::string filename);
 //    void LoadTexture(std::string filename);
 //    void LoadNormal(std::string filename);

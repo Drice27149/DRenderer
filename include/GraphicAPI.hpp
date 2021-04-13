@@ -5,6 +5,7 @@ class Mesh;
 class Shader;
 class Texture;
 class Object;
+class CubeMap;
 
 namespace GraphicAPI {
 
@@ -24,8 +25,12 @@ void LoadMesh(Mesh& mesh);
 
 void LoadImageTexture(Texture& tex, string fn, bool vflip = false);
 
+void LoadImageCubeMap(CubeMap& cube, vector<string> fns);
+
 // 顺时针
 void Temp_DrawGrid(Mesh& mesh, Shader& sh);
+
+void Temp_DrawSkyBox(CubeMap& cube, Shader& sh);
 
 // 测试函数
 void Temp_DrawMesh(Mesh& mesh, Shader& sh); 

@@ -7,6 +7,51 @@
 #include "DEngine.hpp"
 #include "Object.hpp"
 
+float skyv[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+};
+
 GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
      glfwInit();
      glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -160,6 +205,37 @@ void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
     }
 }
 
+void GraphicAPI::LoadImageCubeMap(CubeMap& cube, vector<string> faces)
+{
+    assert(faces.size() == 6);
+    
+    glGenTextures(1, &(cube.id));
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+}
+
 // TODO: 定义 RenderMgr
 void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
 {
@@ -171,7 +247,6 @@ void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
     
     sh.use();
     // 模型变换和透视投影变换
-    sh.setMat4("model", model);
     sh.setMat4("view", view);
     sh.setMat4("proj", projection);
     sh.setFloat("gloss", 128.0);
@@ -215,8 +290,46 @@ void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
 
 void GraphicAPI::Temp_DrawObject(Object& obj, Shader& sh)
 {
+    sh.use();
+    sh.setMat4("model", obj.model);
     for (Mesh& mesh : obj.meshes) {
         GraphicAPI::Temp_DrawMesh(mesh, sh);
     }
 }
+
+void GraphicAPI::Temp_DrawSkyBox(CubeMap& cube, Shader& sh)
+{
+    // very temp, will be fixed by RenderMgr
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*36*3, skyv, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float)*3, (void*)0);
+
+    mat4 model = glm::mat4(1.0);
+    mat4 view = DEngine::GetCamMgr().GetViewTransform();
+    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
+
+    sh.use();
+    // 模型变换和透视投影变换
+    sh.setMat4("model", model);
+    sh.setMat4("view", view);
+    sh.setMat4("proj", projection);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
+    sh.setInt("skybox", 0);
+
+    glDepthMask(GL_FALSE);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDepthMask(GL_TRUE);
+}
+
+
 
