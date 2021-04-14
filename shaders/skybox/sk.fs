@@ -2,11 +2,11 @@
 
 uniform samplerCube skybox;
 
-in vec3 worldPos;
+in vec3 uv;
 
 out vec4 FragColor;
 
 void main()
 {
-	FragColor = texture(skybox, worldPos);
+	FragColor = texture(skybox, uv);
 }

@@ -11,6 +11,8 @@ namespace GraphicAPI {
 
 GLFWwindow* InitOpenGL(int width, int height);
 
+void BindInputEvent();
+
 void MouseMoveCallBack(GLFWwindow* window, double x, double y);
 
 void MouseButtonCallBack(GLFWwindow* window, int button, int action, int mods);
@@ -26,6 +28,10 @@ void LoadMesh(Mesh& mesh);
 void LoadImageTexture(Texture& tex, string fn, bool vflip = false);
 
 void LoadImageCubeMap(CubeMap& cube, vector<string> fns);
+
+void BeforeRendering();
+
+void AfterRendering();
 
 // 顺时针
 void Temp_DrawGrid(Mesh& mesh, Shader& sh);

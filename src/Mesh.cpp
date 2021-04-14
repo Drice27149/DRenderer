@@ -49,7 +49,11 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     ids.resize(vs.size());
     for(int i = 0; i < vs.size(); i++) ids[i] = i;
 
+    printf("test\n");
+
     GraphicAPI::LoadMesh(*this);
+
+    printf("done\n");
 }
 
 

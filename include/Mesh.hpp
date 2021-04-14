@@ -18,5 +18,5 @@ public:
 
 class Grid: public Mesh{
 public:
-    Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines);
+    Grid(vec2 a = vec2(-2000, 2000), vec2 b = vec2(2000, 2000), vec2 c = vec2(2000, -2000), vec2 d = vec2(-2000, -2000), int lines = 20);
 };

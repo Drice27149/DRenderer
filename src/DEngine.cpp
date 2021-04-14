@@ -13,6 +13,11 @@ void DEngine::Launch()
     }
 }
 
+void DEngine::Tick()
+{
+    instance->GetRenderMgr().Render();
+}
+
 
 
 

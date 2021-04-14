@@ -75,13 +75,16 @@ GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
      }
 
     glViewport(0, 0, width, height);
-    glfwSetFramebufferSizeCallback(window, GraphicAPI::FramebufferSizeCallback);
-    glfwSetMouseButtonCallback(window, GraphicAPI::MouseButtonCallBack);
-    glfwSetCursorPosCallback(window, GraphicAPI::MouseMoveCallBack);
-    glfwSetKeyCallback(window, GraphicAPI::KeyCallBack);
-    glfwSetScrollCallback(window, GraphicAPI::ScrollCallBack);
 
-     return window;
+    return window;
+}
+
+void GraphicAPI::BindInputEvent(){
+    glfwSetFramebufferSizeCallback(DEngine::window, GraphicAPI::FramebufferSizeCallback);
+    glfwSetMouseButtonCallback(DEngine::window, GraphicAPI::MouseButtonCallBack);
+    glfwSetCursorPosCallback(DEngine::window, GraphicAPI::MouseMoveCallBack);
+    glfwSetKeyCallback(DEngine::window, GraphicAPI::KeyCallBack);
+    glfwSetScrollCallback(DEngine::window, GraphicAPI::ScrollCallBack);
 }
 
 void GraphicAPI::MouseMoveCallBack(GLFWwindow* window, double x, double y)
@@ -234,6 +237,30 @@ void GraphicAPI::LoadImageCubeMap(CubeMap& cube, vector<string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // 天空盒的三角形片
+    glGenVertexArrays(1, &(cube.vao));
+    glBindVertexArray(cube.vao);
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*36*3, skyv, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float)*3, (void*)0);
+}
+
+void GraphicAPI::BeforeRendering()
+{
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GraphicAPI::AfterRendering()
+{
+    glfwSwapBuffers(DEngine::window);
+    glfwPollEvents();
 }
 
 // TODO: 定义 RenderMgr
@@ -299,18 +326,7 @@ void GraphicAPI::Temp_DrawObject(Object& obj, Shader& sh)
 
 void GraphicAPI::Temp_DrawSkyBox(CubeMap& cube, Shader& sh)
 {
-    // very temp, will be fixed by RenderMgr
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*36*3, skyv, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float)*3, (void*)0);
+    glBindVertexArray(cube.vao);
 
     mat4 model = glm::mat4(1.0);
     mat4 view = DEngine::GetCamMgr().GetViewTransform();
@@ -318,7 +334,7 @@ void GraphicAPI::Temp_DrawSkyBox(CubeMap& cube, Shader& sh)
 
     sh.use();
     // 模型变换和透视投影变换
-    sh.setMat4("model", model);
+    sh.setMat4("model", glm::inverse(view));
     sh.setMat4("view", view);
     sh.setMat4("proj", projection);
 

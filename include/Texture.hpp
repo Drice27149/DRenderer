@@ -14,5 +14,7 @@ class CubeMap: public Texture
 {
 public:
     CubeMap();
+public:
+    unsigned int vao;
 };
 
