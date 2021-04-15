@@ -49,5 +49,6 @@ void main()
 	gl_Position = proj * view * model * vec4(vertex, 1.0); 
 	uv = texCoord;
 	worldPos = vertex;
-	TBN = mat3(normalize(tangent), normalize(bitangent), normalize(normal));
+	vec3 worldNormal = inverse(transpose(mat3(model))) * (normal);
+	TBN = mat3(normalize(tangent), normalize(bitangent), normalize(worldNormal));
 }

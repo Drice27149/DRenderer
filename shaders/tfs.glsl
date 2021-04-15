@@ -1,7 +1,8 @@
 #version 330 core
 struct ModelTexture{
-	sampler2D diffuse;
+	sampler2D baseColor;
 	sampler2D normal;
+	sampler2D metallicRoughness;
 };
 
 struct Light{

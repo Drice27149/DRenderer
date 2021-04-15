@@ -31,6 +31,7 @@ int main()
     string car = "../assets/fallout_car_2/scene.gltf";
     string spot = "../assets/spot/spot_triangulated_good.obj";
     string backpack = "../assets/backpack/backpack.obj";
+    string sphere = "../assets/sphere/scene.gltf";
 
     AssimpLoader* ld = new AssimpLoader();
     Object* obj = ld->LoadFile(cyborg);
@@ -38,6 +39,7 @@ int main()
     obj->Transform(rotTrans);
     rotTrans = glm::rotate(glm::mat4(1.0), (float)(180.0*0.5/PI), vec3(0.0, -1.0, 0.0));
     obj->Transform(rotTrans);
+
 
     assert(obj);
 

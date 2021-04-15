@@ -185,6 +185,9 @@ void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
     if (vflip) stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(fn.c_str(), &width, &height, &nrChannels, 0);
     if (data && nrChannels > 0) {
+
+        printf("channels = %d\n", nrChannels);
+
         if (nrChannels == 1) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
         }
@@ -285,13 +288,19 @@ void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
     if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
         glActiveTexture(GL_TEXTURE0 + texNum);
         glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_DIFFUSE].id);
-        sh.setInt("modelTex.diffuse", texNum);
+        sh.setInt("modelTex.baseColor", texNum);
         texNum++;
     }
     if (mesh.mask & (1 << aiTextureType_NORMALS)) {
         glActiveTexture(GL_TEXTURE0 + texNum);
         glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_NORMALS].id);
         sh.setInt("modelTex.normal", texNum);
+        texNum++;
+    }
+    if(mesh.mask & (1 << aiTextureType_LIGHTMAP)){
+        glActiveTexture(GL_TEXTURE0 + texNum);
+        glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_LIGHTMAP].id);
+        sh.setInt("modelTex.metallicRoughness", texNum);
         texNum++;
     }
 

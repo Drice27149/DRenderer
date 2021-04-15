@@ -34,19 +34,19 @@ void RenderMgr::PreInit()
     }
 
     string b_vn = "../shaders/tvs.glsl";
-    string b_fn = "../shaders/tfs.glsl";
+    string b_fn = "../shaders/forward/pbr.fs";
 
     base_sh = new Shader(b_vn, b_fn);
 }
 
 void RenderMgr::PrePass()
 {
-    if(bgrid){
-        GraphicAPI::Temp_DrawGrid(*grid, *g_sh);
-    }
-    
     if(bskybox){
         GraphicAPI::Temp_DrawSkyBox(*skybox, *sk_sh);
+    }
+
+    if(bgrid){
+        GraphicAPI::Temp_DrawGrid(*grid, *g_sh);
     }
 }
 
