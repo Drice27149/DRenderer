@@ -28,13 +28,12 @@ vec3 GetNormal()
 	vec3 n = texture(modelTex.normal, uv).rgb;
 	n = normalize(n*2.0 - 1.0);
 	n = normalize(TBN * n);
-    // vec3 n = normalize(TBN[2]);
 	return n;
 }
 
 vec3 GetLightDir()
 {
-	return normalize(vec3(0.0, 1.0, 1.0));
+	return normalize(vec3(-1.0, 1.0, 1.0));
 }
 
 float distributionGGX (vec3 N, vec3 H, float roughness){
@@ -60,14 +59,12 @@ vec3 fresnelSchlick (float cosTheta, vec3 F0){
 }
 
 void main(){
-    // TODO: gamma correction
     vec3 albedo = pow(texture(modelTex.baseColor, uv).rgb, vec3(2.2));
-    vec3 normal = GetNormal();
     float ao = texture(modelTex.metallicRoughness, uv).r;
     float metallic = texture(modelTex.metallicRoughness, uv).b;
     float roughness = texture(modelTex.metallicRoughness, uv).g;
 
-    vec3 N = normalize(normal);
+    vec3 N = normalize(GetNormal());
     vec3 V = normalize(viewPos - worldPos);
     vec3 L = normalize(GetLightDir());
     vec3 H = normalize (V + L);
@@ -78,14 +75,16 @@ void main(){
     float G   = geometrySmith(N, V, L, roughness);
     vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);        
     vec3  kD  = vec3(1.0) - F;
-    kD *= 1.0 - metallic;	  
+    kD *= 1.0 - metallic;
                 
     vec3  numerator   = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
     vec3  specular    = numerator / max(denominator, 0.001);  
                     
+    float lightCC = 3.0;
+
     float NdotL = max(dot(N, L), 0.0);                
-    vec3  color = /*lightColor*/ (kD*albedo/PI + specular) * (NdotL);
+    vec3  color = lightCC * (kD*albedo/PI + specular) * (NdotL);
     vec3 ambient = vec3(0.03) * albedo * ao;
     color = color + ambient;
 

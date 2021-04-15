@@ -271,7 +271,6 @@ void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
 {
     glBindVertexArray(mesh.gd.VAO);
 
-    mat4 model = glm::mat4(1.0);
     mat4 view = DEngine::GetCamMgr().GetViewTransform();
     mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
     

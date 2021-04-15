@@ -34,7 +34,7 @@ void RenderMgr::PreInit()
     }
 
     string b_vn = "../shaders/tvs.glsl";
-    string b_fn = "../shaders/forward/pbr.fs";
+    string b_fn = "../shaders/forward/pbr.glsl";
 
     base_sh = new Shader(b_vn, b_fn);
 }
@@ -42,7 +42,7 @@ void RenderMgr::PreInit()
 void RenderMgr::PrePass()
 {
     if(bskybox){
-        GraphicAPI::Temp_DrawSkyBox(*skybox, *sk_sh);
+        // GraphicAPI::Temp_DrawSkyBox(*skybox, *sk_sh);
     }
 
     if(bgrid){
