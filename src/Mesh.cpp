@@ -10,15 +10,15 @@ Mesh::Mesh()
 Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids, vector<string> texns, int mask):
 vs(vs), ids(ids), texns(texns), mask(mask)
 {
-    // 加载顶点以及顶点数据
-    GraphicAPI::LoadMesh(*this);
-    // 加载纹理贴图
-    texs.resize(aiTextureType_UNKNOWN + 1);
-    for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
-        if (mask & (1 << it)) {
-            texs[it] = DEngine::GetTexMgr().GetTextureByFileName(texns[it]);
-        }
-    }
+    // // 加载顶点以及顶点数据
+    // GraphicAPI::LoadMesh(*this);
+    // // 加载纹理贴图
+    // texs.resize(aiTextureType_UNKNOWN + 1);
+    // for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
+    //     if (mask & (1 << it)) {
+    //         texs[it] = DEngine::GetTexMgr().GetTextureByFileName(texns[it]);
+    //     }
+    // }
 }
 
 Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)

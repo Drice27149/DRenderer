@@ -6,6 +6,7 @@
 #include "TextureMgr.hpp"
 #include "RenderMgr.hpp"
 #include "SceneMgr.hpp"
+#include "Object.hpp"
 
 class DEngine{
 public:
@@ -20,6 +21,7 @@ public:
 public:
     static DEngine* instance;
     static GLFWwindow* window;
+    static Object* gobj;
     CamMgr camMgr;
     InputMgr inputMgr;
     TextureMgr texMgr;

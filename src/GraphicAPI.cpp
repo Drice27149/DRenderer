@@ -176,6 +176,11 @@ void GraphicAPI::LoadMesh(Mesh& mesh)
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 }
 
+void* GraphicAPI::FuckImage(string fn, int& width, int& height, int& channels)
+{
+    return stbi_load(fn.c_str(), &width, &height, &channels, 0);
+}
+
 void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
 {
     glGenTextures(1, &(tex.id));

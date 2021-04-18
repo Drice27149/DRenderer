@@ -17,7 +17,6 @@ public:
     void OnMoveLeft();
     void OnMoveRight();
 private:
-    // 鼠标的坐标
     float x, y;
     // 上一帧鼠标的坐标
     float lx, ly;

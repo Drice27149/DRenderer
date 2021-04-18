@@ -5,8 +5,6 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("DRenderer")
 
-
-
 file(GLOB_RECURSE MY_CPP ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/d3dApp/*.cpp)

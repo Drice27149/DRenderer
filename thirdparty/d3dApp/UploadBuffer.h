@@ -1,6 +1,7 @@
 #pragma once
 
 #include "d3dUtil.h"
+#include "Global.hpp"
 
 template<typename T>
 class UploadBuffer
@@ -53,6 +54,11 @@ public:
     void CopyData(int elementIndex, const T& data)
     {
         memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
+    }
+    
+    template<typename TT> void CopyData(int elementIndex, const TT& data)
+    {
+        memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(TT));
     }
 
 private:

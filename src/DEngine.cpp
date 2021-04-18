@@ -1,7 +1,5 @@
 #include "DEngine.hpp"
 
-DEngine* DEngine::instance = nullptr;
-
 GLFWwindow* DEngine::window = nullptr;
 
 DEngine::DEngine()

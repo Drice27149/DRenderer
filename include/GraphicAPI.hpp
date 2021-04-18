@@ -33,6 +33,8 @@ void BeforeRendering();
 
 void AfterRendering();
 
+void* FuckImage(string fn, int& width, int& height, int& channels);
+
 // 顺时针
 void Temp_DrawGrid(Mesh& mesh, Shader& sh);
 

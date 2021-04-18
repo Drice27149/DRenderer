@@ -263,7 +263,7 @@ struct Material
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };
 
-struct Texture
+struct TTexture
 {
 	// Unique material name for lookup.
 	std::string Name;

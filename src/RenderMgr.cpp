@@ -5,38 +5,38 @@
 
 RenderMgr::RenderMgr()
 {
-    PreInit();
+    // PreInit();
 }
 
 void RenderMgr::PreInit()
 {
-    if(bgrid){
-        grid = new Grid();
-        string l_vs = "../shaders/grid/line.vs";
-        string l_fs = "../shaders/grid/line.fs";
-        g_sh = new Shader(l_vs, l_fs);
-    }
+    // if(bgrid){
+    //     grid = new Grid();
+    //     string l_vs = "../shaders/grid/line.vs";
+    //     string l_fs = "../shaders/grid/line.fs";
+    //     g_sh = new Shader(l_vs, l_fs);
+    // }
     
-    if(bskybox){
-        vector<string> fns = {
-            "../assets/skybox/right.jpg",
-            "../assets/skybox/left.jpg",
-            "../assets/skybox/top.jpg",
-            "../assets/skybox/bottom.jpg",
-            "../assets/skybox/front.jpg",
-            "../assets/skybox/back.jpg"
-        };
-        skybox = new CubeMap();
-        GraphicAPI::LoadImageCubeMap(*skybox, fns);
-        string c_vs = "../shaders/skybox/sk.vs";
-        string c_fs = "../shaders/skybox/sk.fs";
-        sk_sh = new Shader(c_vs, c_fs);
-    }
+    // if(bskybox){
+    //     vector<string> fns = {
+    //         "../assets/skybox/right.jpg",
+    //         "../assets/skybox/left.jpg",
+    //         "../assets/skybox/top.jpg",
+    //         "../assets/skybox/bottom.jpg",
+    //         "../assets/skybox/front.jpg",
+    //         "../assets/skybox/back.jpg"
+    //     };
+    //     skybox = new CubeMap();
+    //     GraphicAPI::LoadImageCubeMap(*skybox, fns);
+    //     string c_vs = "../shaders/skybox/sk.vs";
+    //     string c_fs = "../shaders/skybox/sk.fs";
+    //     sk_sh = new Shader(c_vs, c_fs);
+    // }
 
-    string b_vn = "../shaders/tvs.glsl";
-    string b_fn = "../shaders/forward/pbr.glsl";
+    // string b_vn = "../shaders/tvs.glsl";
+    // string b_fn = "../shaders/forward/pbr.glsl";
 
-    base_sh = new Shader(b_vn, b_fn);
+    // base_sh = new Shader(b_vn, b_fn);
 }
 
 void RenderMgr::PrePass()
