@@ -21,7 +21,7 @@ bool BoxApp::Initialize()
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
  
-    LoadTexture();
+    LoadAssets();
 
     BuildDescriptorHeaps();
 	BuildConstantBuffers();
@@ -152,20 +152,37 @@ void BoxApp::BuildDescriptorHeaps()
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(&mCbvHeap)));
 
-	auto woodCrateTex = MyTex.Resource;
+	// auto woodCrateTex = MyTex.Resource;
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = woodCrateTex->GetDesc().Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = woodCrateTex->GetDesc().MipLevels;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	// D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	// srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	// srvDesc.Format = woodCrateTex->GetDesc().Format;
+	// srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	// srvDesc.Texture2D.MostDetailedMip = 0;
+	// srvDesc.Texture2D.MipLevels = woodCrateTex->GetDesc().MipLevels;
+	// srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-    // CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-    // hDescriptor.Offset(md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    // // CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    // // hDescriptor.Offset(md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 
-	md3dDevice->CreateShaderResourceView(woodCrateTex.Get(), &srvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+	// md3dDevice->CreateShaderResourceView(woodCrateTex.Get(), &srvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    for(TTexture& texture: textures){
+        auto tex = texture.Resource;
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = tex->GetDesc().Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+        md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc,hDescriptor);
+
+        hDescriptor.Offset(mCbvSrvUavDescriptorSize);
+    }
 }
 
 void BoxApp::BuildConstantBuffers()
@@ -199,7 +216,7 @@ void BoxApp::BuildRootSignature()
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size(), 0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 	// Create a single descriptor table of CBVs.
 	// CD3DX12_DESCRIPTOR_RANGE descRange[2];
@@ -244,8 +261,9 @@ void BoxApp::BuildShadersAndInputLayout()
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, vertex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texCoord), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, tangent), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     };
 }
 
@@ -321,6 +339,23 @@ void BoxApp::BuildPSO()
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
 
+void BoxApp::LoadAssets()
+{
+    if(DEngine::gobj == nullptr) return ;
+    // 目前, 假设只有一个 mesh
+    const Mesh& mesh = DEngine::gobj->meshes[0];
+    if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
+        TTexture baseColorTex;
+        CreateTextureFromImage(mesh.texns[aiTextureType_DIFFUSE], baseColorTex.Resource, baseColorTex.UploadHeap);
+        textures.push_back(baseColorTex);
+    }
+    if (mesh.mask & (1 << aiTextureType_NORMALS)) {
+        TTexture normalTex;
+        CreateTextureFromImage(mesh.texns[aiTextureType_NORMALS], normalTex.Resource, normalTex.UploadHeap);
+        textures.push_back(normalTex);
+    }
+}
+
 void BoxApp::LoadTexture()
 {
 	MyTex.Name = "woodCrateTex";
@@ -328,63 +363,53 @@ void BoxApp::LoadTexture()
 	// ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 	// 	mCommandList.Get(), MyTex.Filename.c_str(),
 	// 	MyTex.Resource, MyTex.UploadHeap));
-	CreateTextureFromImage(MyTex.Resource, MyTex.UploadHeap);
+    string fn = "../assets/fallout_car_2/textures/default_baseColor.png";
+	CreateTextureFromImage(fn, MyTex.Resource, MyTex.UploadHeap);
 }
 
-std::vector<UINT8> GenerateTextureData(int TextureWidth, int TextureHeight, int TexturePixelSize)
+void PrintToLog(std::string s)
 {
-    const UINT rowPitch = TextureWidth * TexturePixelSize;
-    const UINT cellPitch = rowPitch >> 3;        // The width of a cell in the checkboard texture.
-    const UINT cellHeight = TextureWidth >> 3;    // The height of a cell in the checkerboard texture.
-    const UINT textureSize = rowPitch * TextureHeight;
+    freopen("log.txt", "w", stdout);
 
-    std::vector<UINT8> data(textureSize);
-    UINT8* pData = &data[0];
+    std::cout << s <<"\n";
 
-    for (UINT n = 0; n < textureSize; n += TexturePixelSize)
-    {
-        UINT x = n % rowPitch;
-        UINT y = n / rowPitch;
-        UINT i = x / cellPitch;
-        UINT j = y / cellHeight;
-
-        if (i % 2 == j % 2)
-        {
-            pData[n] = 0x00;        // R
-            pData[n + 1] = 0x00;    // G
-            pData[n + 2] = 0x00;    // B
-            pData[n + 3] = 0xff;    // A
-        }
-        else
-        {
-            pData[n] = 0xff;        // R
-            pData[n + 1] = 0xff;    // G
-            pData[n + 2] = 0xff;    // B
-            pData[n + 3] = 0xff;    // A
-        }
-    }
-
-    return data;
+    fclose(stdout);
 }
 
+void PrintToLog(int s)
+{
+    freopen("log.txt", "w", stdout);
 
-void BoxApp::CreateTextureFromImage(ComPtr<ID3D12Resource>&m_texture, ComPtr<ID3D12Resource>&textureUploadHeap)
+    std::cout << s <<"\n";
+
+    fclose(stdout);
+}
+
+// TODO: improve load speed, too slow now 
+void BoxApp::CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>&m_texture, ComPtr<ID3D12Resource>&textureUploadHeap)
 {
 	int TextureWidth, TextureHeight;
 	int TexturePixelSize;
 
-	string fn = "../assets/fallout_car_2/textures/default_baseColor.png";
+	stbi_uc* fkImage = stbi_load(fn.c_str(), &TextureWidth, &TextureHeight, &TexturePixelSize, 0);
 
-	// int channels;
-    // std::vector<UINT8> texture = GenerateTextureData(256, 256, 4);
-	stbi_uc* fkImage = stbi_load(fn.c_str(), &TextureWidth, &TextureHeight, &TexturePixelSize, STBI_rgb_alpha);
-	TexturePixelSize = 4;
+    if(TexturePixelSize == 3){
+        fkImage = stbi_load(fn.c_str(), &TextureWidth, &TextureHeight, &TexturePixelSize, 4);
+        TexturePixelSize = 4;
+    }
     // Create the texture.
     {
         // Describe and create a Texture2D.
         D3D12_RESOURCE_DESC textureDesc = {};
         textureDesc.MipLevels = 1;
-        textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+       
+        if(TexturePixelSize == 4) 
+            textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        else if(TexturePixelSize == 2)
+            textureDesc.Format = DXGI_FORMAT_R8G8_UNORM;
+        else
+            textureDesc.Format = DXGI_FORMAT_R8_UNORM;
+
         textureDesc.Width = TextureWidth;
         textureDesc.Height = TextureHeight;
         textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;

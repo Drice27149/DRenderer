@@ -35,8 +35,9 @@ private:
     virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
     virtual void OnMouseZoom(WPARAM state)override;
 
+    void LoadAssets();
     void LoadTexture();
-    void CreateTextureFromImage(ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
+    void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
     void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
     void BuildRootSignature();
@@ -70,6 +71,8 @@ private:
     float mTheta = 1.5f*XM_PI;
     float mPhi = XM_PIDIV4;
     float mRadius = 5.0f;
+
+    std::vector<TTexture> textures;
 
     TTexture MyTex;
     POINT mLastMousePos;
