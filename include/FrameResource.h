@@ -1,13 +1,14 @@
-// #pragma once
+#pragma once
 
-// #include "d3dUtil.h"
-// #include "MathHelper.h"
-// #include "UploadBuffer.h"
+#include <glm/glm.hpp>
+#include "d3dUtil.h"
+#include "MathHelper.h"
+#include "UploadBuffer.h"
 
 // struct ObjectConstants
 // {
-//     DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
-// 	DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
+//      DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+// 	    DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 // };
 
 // struct PassConstants
@@ -40,32 +41,45 @@
 // {
 //     DirectX::XMFLOAT3 Pos;
 //     DirectX::XMFLOAT3 Normal;
-// 	DirectX::XMFLOAT2 TexC;
+// 	   DirectX::XMFLOAT2 TexC;
 // };
 
-// // Stores the resources needed for the CPU to build the command lists
-// // for a frame.  
-// struct FrameResource
-// {
-// public:
-    
-//     FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount);
-//     FrameResource(const FrameResource& rhs) = delete;
-//     FrameResource& operator=(const FrameResource& rhs) = delete;
-//     ~FrameResource();
+// Stores the resources needed for the CPU to build the command lists
+// for a frame.  
 
-//     // We cannot reset the allocator until the GPU is done processing the commands.
-//     // So each frame needs their own allocator.
-//     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc;
+struct PassUniform
+{
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
-//     // We cannot update a cbuffer until the GPU is done processing the commands
-//     // that reference it.  So each frame needs their own cbuffers.
-//    // std::unique_ptr<UploadBuffer<FrameConstants>> FrameCB = nullptr;
-//     std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
-//     std::unique_ptr<UploadBuffer<MaterialConstants>> MaterialCB = nullptr;
-//     std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+struct ObjectUniform
+{
+    glm::mat4 model;
+};
 
-//     // Fence value to mark commands up to this fence point.  This lets us
-//     // check if these frame resources are still in use by the GPU.
-//     UINT64 Fence = 0;
-// };
+struct FrameResource
+{
+public:
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount);
+    FrameResource(const FrameResource& rhs) = delete;
+    FrameResource& operator=(const FrameResource& rhs) = delete;
+    ~FrameResource();
+
+    // We cannot reset the allocator until the GPU is done processing the commands.
+    // So each frame needs their own allocator.
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc;
+
+    // We cannot update a cbuffer until the GPU is done processing the commands
+    // that reference it.  So each frame needs their own cbuffers.
+   // std::unique_ptr<UploadBuffer<FrameConstants>> FrameCB = nullptr;
+    // std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+    // std::unique_ptr<UploadBuffer<MaterialConstants>> MaterialCB = nullptr;
+    // std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+    std::unique_ptr<UploadBuffer<PassUniform>> PassCB = nullptr;
+    std::unique_ptr<UploadBuffer<ObjectUniform>> ObjectCB = nullptr;
+
+    // Fence value to mark commands up to this fence point.  This lets us
+    // check if these frame resources are still in use by the GPU.
+    UINT64 Fence = 0;
+};

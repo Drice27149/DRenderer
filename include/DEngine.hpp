@@ -23,6 +23,7 @@ public:
     static DEngine* instance;
     static GLFWwindow* window;
     static Object* gobj;
+    static vector<Object*> gobjs;
     CamMgr camMgr;
     InputMgr inputMgr;
     TextureMgr texMgr;

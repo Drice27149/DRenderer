@@ -3,6 +3,7 @@
 #include "GraphicAPI.hpp"
 #include "stb_image.h"
 
+const int FrameCount = 3;
 
 BoxApp::BoxApp(HINSTANCE hInstance)
 : D3DApp(hInstance) 
@@ -307,6 +308,41 @@ void BoxApp::BuildBoxGeometry()
 	submesh.BaseVertexLocation = 0;
 
 	mBoxGeo->DrawArgs["box"] = submesh;
+
+    vector<Vertex> vs;
+    vector<unsigned int> ids;
+    for(Object* obj: DEngine::gobjs){
+        for(Mesh mesh: obj->meshes){
+            mMeshIndex.push_back(mesh.vs.size());
+            mMeshIndex.push_back(ids.size());
+            mMeshIndex.push_back(vs.size());
+
+            for(Vertex v: mesh.vs) vs.push_back(v);
+            for(unsigned int id: mesh.ids) ids.push_back(id);
+        }
+    }
+
+    int vsSize = sizeof(Vertex) * vs.size();
+    int idsSize = sizeof(unsigned int) * ids.size();
+
+    mMeshGeo = std::make_unique<MeshGeometry>();
+    
+    ThrowIfFailed(D3DCreateBlob(vsSize, &mMeshGeo->VertexBufferCPU));
+	CopyMemory(mMeshGeo->VertexBufferCPU->GetBufferPointer(), vs.data(), vsSize);
+
+	ThrowIfFailed(D3DCreateBlob(idsSize, &mMeshGeo->IndexBufferCPU));
+	CopyMemory(mMeshGeo->IndexBufferCPU->GetBufferPointer(), ids.data(), idsSize);
+
+	mMeshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), vs.data(), vsSize, mMeshGeo->VertexBufferUploader);
+
+	mMeshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), ids.data(), idsSize, mMeshGeo->IndexBufferUploader);
+
+	mMeshGeo->VertexByteStride = sizeof(Vertex);
+	mMeshGeo->VertexBufferByteSize = vsSize;
+	mMeshGeo->IndexFormat = DXGI_FORMAT_R32_UINT;
+	mMeshGeo->IndexBufferByteSize = idsSize;
 }
 
 void BoxApp::BuildPSO()
@@ -366,24 +402,6 @@ void BoxApp::LoadTexture()
 	// 	MyTex.Resource, MyTex.UploadHeap));
     string fn = "../assets/fallout_car_2/textures/default_baseColor.png";
 	CreateTextureFromImage(fn, MyTex.Resource, MyTex.UploadHeap);
-}
-
-void PrintToLog(std::string s)
-{
-    freopen("log.txt", "w", stdout);
-
-    std::cout << s <<"\n";
-
-    fclose(stdout);
-}
-
-void PrintToLog(int s)
-{
-    freopen("log.txt", "w", stdout);
-
-    std::cout << s <<"\n";
-
-    fclose(stdout);
 }
 
 // TODO: improve load speed, too slow now 
@@ -575,4 +593,11 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
     mLastMousePos.x = x;
     mLastMousePos.y = y;
+}
+
+void BoxApp::BuildFrameResources()
+{
+    for(int i = 0; i < FrameCount; i++){
+        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, 1));
+    }
 }

@@ -1,6 +1,7 @@
 #include "d3dApp.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
+#include "FrameResource.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -11,6 +12,7 @@ struct ObjectConstants
     XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
 };
 
+
 class BoxApp : public D3DApp
 {
 public:
@@ -18,8 +20,6 @@ public:
     BoxApp(const BoxApp& rhs) = delete;
     BoxApp& operator=(const BoxApp& rhs) = delete;
 	~BoxApp();
-
-
 
 	virtual bool Initialize()override;
 
@@ -44,6 +44,7 @@ private:
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
     void BuildPSO();
+    void BuildFrameResources();
 
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
@@ -76,4 +77,8 @@ private:
 
     TTexture MyTex;
     POINT mLastMousePos;
+
+    std::vector<std::unique_ptr<FrameResource>> mFrameResources;
+    std::unique_ptr<MeshGeometry> mMeshGeo = nullptr;
+    std::vector<unsigned int> mMeshIndex;
 };
