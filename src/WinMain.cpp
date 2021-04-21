@@ -18,7 +18,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
     try
     {
-
         DEngine::Launch();
 
         BoxApp theApp(hInstance);

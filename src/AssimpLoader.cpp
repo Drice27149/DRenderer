@@ -1,4 +1,5 @@
 #include "AssimpLoader.hpp"
+#include "DEngine.hpp"
 
 AssimpLoader::AssimpLoader()
 {

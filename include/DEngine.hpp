@@ -18,6 +18,7 @@ public:
     static RenderMgr& GetRenderMgr(){ return instance->renderMgr; }
     static SceneMgr& GetSceneMgr(){ return instance->sceneMgr; }
     static void Tick();
+    static void LogError(string s);
 public:
     static DEngine* instance;
     static GLFWwindow* window;

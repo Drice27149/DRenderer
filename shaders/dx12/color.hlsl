@@ -13,6 +13,7 @@ struct VertexIn
 	float3 normal: NORMAL;
     float2 texcoord: TEXCOORD;
 	float3 tangent: TANGENT;
+	float3 bitangent: COLOR;
 };
 
 struct VertexOut
@@ -31,27 +32,35 @@ VertexOut VS(VertexIn vin)
 	vout.pos = mul(float4(vin.vertex, 1.0f), gWorldViewProj);
 	// uv
 	vout.uv = vin.texcoord;
-    vout.T = normalize(vin.tangent);
-	vout.N = normalize(vin.normal);
-
+    vout.T = vin.tangent;
+	vout.N = vin.normal;
     return vout;
 }
 
-float3 tangentToWorldNormal(float3 n, float3 T, float3 N)
+float3 tangentToWorldNormal(float3 normal, float3 N, float3 T)
 {
-	float3 B = normalize(cross(T,N));
-	float3x3 TBN = float3x3(T,B,N);
-	return mul(TBN, n);
+	N = normalize(N);
+    T = normalize(T - dot(T, N)*(N));
+    float3 B = cross(N, T);
+    float3x3 TBN = float3x3(T, B, N);
+	return mul(TBN, normal);
+}
+
+float3 GetLightDir()
+{
+	return float3(1.0, 1.0, 1.0);
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
 	float4 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv);
-	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv);
-	normal = normal*2.0 + 1.0;
-	normal = tangentToWorldNormal(normal, pin.T, pin.N);
+	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
+	normal = normal*2.0 - 1.0;
+	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+	float3 lightDir = normalize(float3(1.0, 1.0, 1.0));
+	float lightRate = dot(lightDir, normal);
 
-	baseColor = float4(normal, 1.0);
+	baseColor =	float4((baseColor.rgb) * lightRate, 1.0);
 
     return baseColor;
 }

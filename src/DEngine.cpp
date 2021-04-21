@@ -20,6 +20,15 @@ void DEngine::Tick()
     instance->GetRenderMgr().Render();
 }
 
+void DEngine::LogError(string s)
+{
+    freopen("log.txt", "w", stdout);
+
+    std::cout << s <<"\n";
+
+    fclose(stdout);
+}
+
 
 
 
