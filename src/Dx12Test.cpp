@@ -25,8 +25,9 @@ bool BoxApp::Initialize()
     LoadAssets();
 
     BuildDescriptorHeaps();
-	BuildConstantBuffers();
     BuildFrameResources();
+	BuildConstantBuffers();
+    // BuildConstantBufferView();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -67,7 +68,11 @@ void BoxApp::UpdateObjUniform()
 
 void BoxApp::UpdatePassUniform()
 {
-    auto objCB = mFrameResources[CurrentFrame]->PassCB.get();
+    auto passCB = mFrameResources[CurrentFrame]->PassCB.get();
+    PassUniform temp;
+    temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
+    temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    passCB->CopyData(0, temp);
 }
 
 void BoxApp::Update(const GameTimer& gt)
@@ -124,22 +129,39 @@ void BoxApp::Draw(const GameTimer& gt)
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mSbvHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+    mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+
 	mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
 	mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    
-    mCommandList->SetGraphicsRootDescriptorTable(1, mSbvHeap->GetGPUDescriptorHandleForHeapStart());
-    mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+    mCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 
-    mCommandList->DrawIndexedInstanced(
-		mBoxGeo->DrawArgs["box"].IndexCount, 
-		1, 0, 0, 0);
-	
+    // // 暂时, 先不开启流水
+    // CurrentFrame = 0;
+    // UpdateObjUniform();
+    // UpdatePassUniform();
+
+    // mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
+    // mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
+    // mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    // // 替纹理贴图 offset 的空间要加上
+    // unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()+1) + textures.size();
+    // handle.Offset(handleID * mCbvSrvUavDescriptorSize);
+
+    // for(int i = 0; i < DEngine::gobjs.size(); i++){
+    //     mCommandList->SetGraphicsRootDescriptorTable(2, handle);
+    //     mCommandList->DrawIndexedInstanced(mMeshIndex[3*i], 1, mMeshIndex[3*i+1], mMeshIndex[3*i+2], 0);
+    //     handle.Offset(mCbvSrvUavDescriptorSize);
+    // }
+
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -163,23 +185,16 @@ void BoxApp::Draw(const GameTimer& gt)
 
 void BoxApp::BuildDescriptorHeaps()
 {
-    D3D12_DESCRIPTOR_HEAP_DESC sbvHeapDesc;
-    sbvHeapDesc.NumDescriptors = 2;
-    sbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    sbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	sbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&sbvHeapDesc,
-        IID_PPV_ARGS(&mSbvHeap)));
-
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = (DEngine::gobjs.size() + 1) * FrameCount;
+    cbvHeapDesc.NumDescriptors = 2 + (DEngine::gobjs.size() + 1) * FrameCount;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(&mCbvHeap)));
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSbvHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+
     for(TTexture& texture: textures){
         auto tex = texture.Resource;
 
@@ -220,6 +235,7 @@ void BoxApp::BuildConstantBuffers()
 void BoxApp::BuildConstantBufferView()
 {
     auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    handle.Offset(2, mCbvSrvUavDescriptorSize);
 
     int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
     int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
@@ -262,22 +278,21 @@ void BoxApp::BuildRootSignature()
 
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
-	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size(), 0);
-	slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
     slotRootParameter[0].InitAsConstantBufferView(0);
 
-    CD3DX12_DESCRIPTOR_RANGE cbvTable0;
-    cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
-
-    slotRootParameter[2].InitAsDescriptorTable(1, &cbvTable0);
+    // 材质描述符表
+    CD3DX12_DESCRIPTOR_RANGE texTable;
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size(), 0);
+    slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    // 常量描述符表
+    CD3DX12_DESCRIPTOR_RANGE uniformTable;
+    uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, DEngine::gobjs.size() + 1, 1);
+    slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
 
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter,
-		(UINT)staticSamplers.size(), staticSamplers.data(),
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -359,7 +374,7 @@ void BoxApp::BuildBoxGeometry()
     vector<unsigned int> ids;
     for(Object* obj: DEngine::gobjs){
         for(Mesh mesh: obj->meshes){
-            mMeshIndex.push_back(mesh.vs.size());
+            mMeshIndex.push_back(mesh.ids.size());
             mMeshIndex.push_back(ids.size());
             mMeshIndex.push_back(vs.size());
 
@@ -379,11 +394,9 @@ void BoxApp::BuildBoxGeometry()
 	ThrowIfFailed(D3DCreateBlob(idsSize, &mMeshGeo->IndexBufferCPU));
 	CopyMemory(mMeshGeo->IndexBufferCPU->GetBufferPointer(), ids.data(), idsSize);
 
-	mMeshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vs.data(), vsSize, mMeshGeo->VertexBufferUploader);
+	mMeshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), vs.data(), vsSize, mMeshGeo->VertexBufferUploader);
 
-	mMeshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), ids.data(), idsSize, mMeshGeo->IndexBufferUploader);
+	mMeshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), ids.data(), idsSize, mMeshGeo->IndexBufferUploader);
 
 	mMeshGeo->VertexByteStride = sizeof(Vertex);
 	mMeshGeo->VertexBufferByteSize = vsSize;

@@ -4,8 +4,13 @@ SamplerState gsamLinear: register(s0);
 
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 gWorldViewProj; 
+	float4x4 viewProj; 
 };
+
+cbuffer ObjectCB: register(b1)
+{
+	float4x4 model;
+}
 
 struct VertexIn
 {
@@ -29,7 +34,9 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	vout.pos = mul(float4(vin.vertex, 1.0f), gWorldViewProj);
+	float4x4 mvp = viewProj/* * model*/;
+
+	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
 	// uv
 	vout.uv = vin.texcoord;
     vout.T = vin.tangent;
