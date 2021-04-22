@@ -26,6 +26,7 @@ bool BoxApp::Initialize()
 
     BuildDescriptorHeaps();
 	BuildConstantBuffers();
+    BuildFrameResources();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -50,6 +51,23 @@ void BoxApp::OnResize()
     // The window resized, so update the aspect ratio and recompute the projection matrix.
     XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
     XMStoreFloat4x4(&mProj, P);
+}
+
+void BoxApp::UpdateObjUniform()
+{
+    auto objCB = mFrameResources[CurrentFrame]->ObjectCB.get();
+    int index = 0;
+    for(Object* obj: DEngine::gobjs){
+        ObjectUniform temp;
+        temp.model = glm::transpose(obj->model);
+        objCB->CopyData(index, temp);
+        index++;
+    }
+}
+
+void BoxApp::UpdatePassUniform()
+{
+    auto objCB = mFrameResources[CurrentFrame]->PassCB.get();
 }
 
 void BoxApp::Update(const GameTimer& gt)
@@ -106,7 +124,7 @@ void BoxApp::Draw(const GameTimer& gt)
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mSbvHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
@@ -115,7 +133,7 @@ void BoxApp::Draw(const GameTimer& gt)
 	mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     
-    mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    mCommandList->SetGraphicsRootDescriptorTable(1, mSbvHeap->GetGPUDescriptorHandleForHeapStart());
     mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
 
     mCommandList->DrawIndexedInstanced(
@@ -145,30 +163,23 @@ void BoxApp::Draw(const GameTimer& gt)
 
 void BoxApp::BuildDescriptorHeaps()
 {
+    D3D12_DESCRIPTOR_HEAP_DESC sbvHeapDesc;
+    sbvHeapDesc.NumDescriptors = 2;
+    sbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    sbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	sbvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&sbvHeapDesc,
+        IID_PPV_ARGS(&mSbvHeap)));
+
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 2;
+    cbvHeapDesc.NumDescriptors = (DEngine::gobjs.size() + 1) * FrameCount;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(&mCbvHeap)));
 
-	// auto woodCrateTex = MyTex.Resource;
-
-	// D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	// srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	// srvDesc.Format = woodCrateTex->GetDesc().Format;
-	// srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	// srvDesc.Texture2D.MostDetailedMip = 0;
-	// srvDesc.Texture2D.MipLevels = woodCrateTex->GetDesc().MipLevels;
-	// srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-    // // CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-    // // hDescriptor.Offset(md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-
-	// md3dDevice->CreateShaderResourceView(woodCrateTex.Get(), &srvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSbvHeap->GetCPUDescriptorHandleForHeapStart());
     for(TTexture& texture: textures){
         auto tex = texture.Resource;
 
@@ -206,6 +217,41 @@ void BoxApp::BuildConstantBuffers()
 	// 	mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
+void BoxApp::BuildConstantBufferView()
+{
+    auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+    int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+
+    for(int i = 0; i < FrameCount; i++){
+        auto objectCB = mFrameResources[i]->ObjectCB->Resource();
+        int objectAddress = objectCB->GetGPUVirtualAddress();
+        for(int j = 0; j < DEngine::gobjs.size(); j++){
+            // 每个帧的每个物体常量, 绑定一个描述符
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+            cbvDesc.BufferLocation = objectAddress;
+            cbvDesc.SizeInBytes = objByteSize;
+
+            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+
+            handle.Offset(mCbvSrvUavDescriptorSize);
+            objectAddress += objByteSize;
+        }
+
+        auto passCB = mFrameResources[i]->PassCB->Resource();
+        int passAddress = passCB->GetGPUVirtualAddress();
+        // 每个帧的每个帧常量, 绑定一个描述符
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+        cbvDesc.BufferLocation = passAddress;
+        cbvDesc.SizeInBytes = passByteSize;
+
+        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+
+        handle.Offset(mCbvSrvUavDescriptorSize);
+    }
+}
+
 void BoxApp::BuildRootSignature()
 {
 	// Shader programs typically require resources as input (constant buffers,
@@ -215,16 +261,16 @@ void BoxApp::BuildRootSignature()
 	// thought of as defining the function signature.  
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
 	CD3DX12_DESCRIPTOR_RANGE texTable;
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size(), 0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	// Create a single descriptor table of CBVs.
-	// CD3DX12_DESCRIPTOR_RANGE descRange[2];
-	// descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, 0);
-	// descRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 1);
-	// slotRootParameter[0].InitAsDescriptorTable(2, descRange, D3D12_SHADER_VISIBILITY_ALL);
     slotRootParameter[0].InitAsConstantBufferView(0);
+
+    CD3DX12_DESCRIPTOR_RANGE cbvTable0;
+    cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+    slotRootParameter[2].InitAsDescriptorTable(1, &cbvTable0);
 
 	auto staticSamplers = GetStaticSamplers();
 
@@ -598,6 +644,6 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 void BoxApp::BuildFrameResources()
 {
     for(int i = 0; i < FrameCount; i++){
-        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, 1));
+        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, DEngine::gobjs.size()));
     }
 }

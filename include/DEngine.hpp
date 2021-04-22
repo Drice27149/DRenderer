@@ -24,6 +24,7 @@ public:
     static GLFWwindow* window;
     static Object* gobj;
     static vector<Object*> gobjs;
+    static vector<Mesh*> meshes;
     CamMgr camMgr;
     InputMgr inputMgr;
     TextureMgr texMgr;

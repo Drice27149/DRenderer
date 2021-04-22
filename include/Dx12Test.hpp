@@ -38,8 +38,13 @@ private:
     void LoadAssets();
     void LoadTexture();
     void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
+
+    void UpdateObjUniform();
+    void UpdatePassUniform();
+
     void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
+    void BuildConstantBufferView();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
@@ -51,8 +56,8 @@ private:
 private:
     
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
+    ComPtr<ID3D12DescriptorHeap> mSbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 
     std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
 
@@ -81,4 +86,6 @@ private:
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
     std::unique_ptr<MeshGeometry> mMeshGeo = nullptr;
     std::vector<unsigned int> mMeshIndex;
+
+    int CurrentFrame;
 };
