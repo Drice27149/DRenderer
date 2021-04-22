@@ -12,6 +12,12 @@ cbuffer ObjectCB: register(b1)
 	float4x4 model;
 }
 
+cbuffer PassCB: register(b2)
+{
+	float4x4 View;
+	float4x4 Proj;
+}
+
 struct VertexIn
 {
 	float3 vertex: POSITION;
@@ -34,7 +40,7 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	float4x4 mvp = viewProj/* * model*/;
+	float4x4 mvp = mul(mul(model, View), Proj);
 
 	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
 	// uv
@@ -61,9 +67,11 @@ float3 GetLightDir()
 float4 PS(VertexOut pin) : SV_Target
 {
 	float4 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv);
+	baseColor = float4(1.0, 1.0, 1.0, 1.0);
 	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+	normal = normalize(pin.N);
 	float3 lightDir = normalize(float3(1.0, 1.0, 1.0));
 	float lightRate = dot(lightDir, normal);
 

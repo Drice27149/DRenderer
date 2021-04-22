@@ -41,6 +41,7 @@ private:
 
     void UpdateObjUniform();
     void UpdatePassUniform();
+    void UpdateLegacy();
 
     void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
@@ -86,5 +87,5 @@ private:
     std::unique_ptr<MeshGeometry> mMeshGeo = nullptr;
     std::vector<unsigned int> mMeshIndex;
 
-    int CurrentFrame;
+    int CurrentFrame = 0;
 };

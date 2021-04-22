@@ -22,17 +22,16 @@ bool BoxApp::Initialize()
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
  
-    LoadAssets();
+    // LoadAssets();
 
     BuildDescriptorHeaps();
     BuildFrameResources();
 	BuildConstantBuffers();
-    // BuildConstantBufferView();
+    BuildConstantBufferView();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
     BuildPSO();
-    
 
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
@@ -66,6 +65,7 @@ void BoxApp::UpdateObjUniform()
     }
 }
 
+// 放错位置了, TODO: 位置修一下
 void BoxApp::UpdatePassUniform()
 {
     auto passCB = mFrameResources[CurrentFrame]->PassCB.get();
@@ -75,7 +75,7 @@ void BoxApp::UpdatePassUniform()
     passCB->CopyData(0, temp);
 }
 
-void BoxApp::Update(const GameTimer& gt)
+void BoxApp::UpdateLegacy()
 {
     // Convert Spherical to Cartesian coordinates.
     float x = mRadius*sinf(mPhi)*cosf(mTheta);
@@ -105,15 +105,31 @@ void BoxApp::Update(const GameTimer& gt)
     mObjectCB->CopyData<mat4>(0, glm::transpose(mvp));
 }
 
+void BoxApp::Update(const GameTimer& gt)
+{
+    CurrentFrame = (CurrentFrame + 1)%FrameCount;
+    auto mCurFrameResource = mFrameResources[CurrentFrame].get();
+
+    if(mCurFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurFrameResource->Fence){
+        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(mFence->SetEventOnCompletion(mCurFrameResource->Fence, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
+    }
+
+    UpdatePassUniform();
+    UpdateObjUniform();
+}
+
 void BoxApp::Draw(const GameTimer& gt)
 {
     // Reuse the memory associated with command recording.
     // We can only reset when the associated command lists have finished execution on the GPU.
-	ThrowIfFailed(mDirectCmdListAlloc->Reset());
+	ThrowIfFailed(mFrameResources[CurrentFrame]->CmdListAlloc->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
     // Reusing the command list reuses memory.
-    ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
+    ThrowIfFailed(mCommandList->Reset(mFrameResources[CurrentFrame]->CmdListAlloc.Get(), mPSO.Get()));
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
@@ -137,30 +153,35 @@ void BoxApp::Draw(const GameTimer& gt)
     mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
     mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
-	mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
-	mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    mCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
+	// mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
+	// mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
+    // mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // mCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 
-    // // 暂时, 先不开启流水
+    // // // 暂时, 先不开启流水
     // CurrentFrame = 0;
     // UpdateObjUniform();
     // UpdatePassUniform();
 
-    // mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
-    // mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
-    // mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // // 替纹理贴图 offset 的空间要加上
-    // unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()+1) + textures.size();
-    // handle.Offset(handleID * mCbvSrvUavDescriptorSize);
+    auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    unsigned int passID = 2+CurrentFrame;
+    passHandle.Offset(passID * mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(3, passHandle);
 
-    // for(int i = 0; i < DEngine::gobjs.size(); i++){
-    //     mCommandList->SetGraphicsRootDescriptorTable(2, handle);
-    //     mCommandList->DrawIndexedInstanced(mMeshIndex[3*i], 1, mMeshIndex[3*i+1], mMeshIndex[3*i+2], 0);
-    //     handle.Offset(mCbvSrvUavDescriptorSize);
-    // }
+    auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    // 替纹理贴图 offset 的空间要加上
+    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 2 + FrameCount;
+    handle.Offset(handleID * mCbvSrvUavDescriptorSize);
+
+    for(int i = 0; i < DEngine::gobjs.size(); i++){
+        mCommandList->SetGraphicsRootDescriptorTable(2, handle);
+        mCommandList->DrawIndexedInstanced(mMeshIndex[3*i], 1, mMeshIndex[3*i+1], mMeshIndex[3*i+2], 0);
+        handle.Offset(mCbvSrvUavDescriptorSize);
+    }
 
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -177,10 +198,9 @@ void BoxApp::Draw(const GameTimer& gt)
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Wait until frame commands are complete.  This waiting is inefficient and is
-	// done for simplicity.  Later we will show how to organize our rendering code
-	// so we do not have to wait per frame.
-	FlushCommandQueue();
+    mFrameResources[CurrentFrame]->Fence = ++mCurrentFence;
+
+    mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
 void BoxApp::BuildDescriptorHeaps()
@@ -237,12 +257,24 @@ void BoxApp::BuildConstantBufferView()
     auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
     handle.Offset(2, mCbvSrvUavDescriptorSize);
 
-    int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
-    int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+    unsigned int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+    unsigned int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+
+    for(int i = 0; i < FrameCount; i++){
+        auto passCB = mFrameResources[i]->PassCB->Resource();
+        D3D12_GPU_VIRTUAL_ADDRESS passAddress = passCB->GetGPUVirtualAddress();
+        // 每个帧的每个帧常量, 绑定一个描述符
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+        cbvDesc.BufferLocation = passAddress;
+        cbvDesc.SizeInBytes = passByteSize;
+
+        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+        handle.Offset(mCbvSrvUavDescriptorSize);
+    }
 
     for(int i = 0; i < FrameCount; i++){
         auto objectCB = mFrameResources[i]->ObjectCB->Resource();
-        int objectAddress = objectCB->GetGPUVirtualAddress();
+        D3D12_GPU_VIRTUAL_ADDRESS objectAddress = objectCB->GetGPUVirtualAddress();
         for(int j = 0; j < DEngine::gobjs.size(); j++){
             // 每个帧的每个物体常量, 绑定一个描述符
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
@@ -254,17 +286,6 @@ void BoxApp::BuildConstantBufferView()
             handle.Offset(mCbvSrvUavDescriptorSize);
             objectAddress += objByteSize;
         }
-
-        auto passCB = mFrameResources[i]->PassCB->Resource();
-        int passAddress = passCB->GetGPUVirtualAddress();
-        // 每个帧的每个帧常量, 绑定一个描述符
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-        cbvDesc.BufferLocation = passAddress;
-        cbvDesc.SizeInBytes = passByteSize;
-
-        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-
-        handle.Offset(mCbvSrvUavDescriptorSize);
     }
 }
 
@@ -277,22 +298,26 @@ void BoxApp::BuildRootSignature()
 	// thought of as defining the function signature.  
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
     slotRootParameter[0].InitAsConstantBufferView(0);
 
     // 材质描述符表
     CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size(), 0);
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size()?textures.size():2, 0);
     slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
     // 常量描述符表
     CD3DX12_DESCRIPTOR_RANGE uniformTable;
-    uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, DEngine::gobjs.size() + 1, 1);
+    uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
     slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
+
+    CD3DX12_DESCRIPTOR_RANGE passTable;
+    passTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);
+    slotRootParameter[3].InitAsDescriptorTable(1, &passTable);
 
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;

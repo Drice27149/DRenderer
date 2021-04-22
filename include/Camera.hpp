@@ -7,7 +7,7 @@
 // TODO: 左键位移, 右键旋转
 class Camera {
 public:
-    Camera(vec3 origin = vec3(0, 100, 300), float rSpeed = 1.0f, float mSpeed = 10.0f);
+    Camera(vec3 origin = vec3(0, 100, 500), float rSpeed = 1.0f, float mSpeed = 10.0f);
     void moveX(float direciton); 
     void moveY(float direction); 
     void moveZ(float direction); 
