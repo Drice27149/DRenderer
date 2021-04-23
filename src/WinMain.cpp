@@ -23,14 +23,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         BoxApp theApp(hInstance);
 
-        string fn = "../assets/fallout_car_2/scene.gltf";
+        string fn = "../assets/corvette_stingray/scene.gltf";
         AssimpLoader* ld = new AssimpLoader();
         DEngine::gobj = ld->LoadFile(fn);
 
         DEngine::gobjs.clear();
 
-        for(int i = 0; i < 3; i++){
-            string fn = "../assets/fallout_car_2/scene.gltf";
+        for(int i = 0; i < 1; i++){
+            string fn = "../assets/corvette_stingray/scene.gltf";
             AssimpLoader* ld = new AssimpLoader();
             Object* nobj = ld->LoadFile(fn);
 

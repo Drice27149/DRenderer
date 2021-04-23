@@ -177,9 +177,14 @@ void BoxApp::Draw(const GameTimer& gt)
     unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 2 + FrameCount;
     handle.Offset(handleID * mCbvSrvUavDescriptorSize);
 
+    int meshPtr = 0;
+
     for(int i = 0; i < DEngine::gobjs.size(); i++){
         mCommandList->SetGraphicsRootDescriptorTable(2, handle);
-        mCommandList->DrawIndexedInstanced(mMeshIndex[3*i], 1, mMeshIndex[3*i+1], mMeshIndex[3*i+2], 0);
+        for (int j = 0; j < DEngine::gobjs[i]->meshes.size(); j++) {
+            mCommandList->DrawIndexedInstanced(mMeshIndex[3 * meshPtr], 1, mMeshIndex[3 * meshPtr + 1], mMeshIndex[3 * meshPtr + 2], 0);
+            meshPtr++;
+        }
         handle.Offset(mCbvSrvUavDescriptorSize);
     }
 
@@ -357,44 +362,6 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildBoxGeometry()
 {
-    vector<Vertex> vertices;
-    vector<unsigned int> indices;
-    if(DEngine::gobj != nullptr){
-        // 目前, 假设只有一个 mesh
-        vertices = (DEngine::gobj)->meshes[0].vs;
-        indices = (DEngine::gobj)->meshes[0].ids;
-    }
-
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(unsigned int);
-
-	mBoxGeo = std::make_unique<MeshGeometry>();
-	mBoxGeo->Name = "boxGeo";
-
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
-
-	mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
-
-	mBoxGeo->VertexByteStride = sizeof(Vertex);
-	mBoxGeo->VertexBufferByteSize = vbByteSize;
-	mBoxGeo->IndexFormat = DXGI_FORMAT_R32_UINT;
-	mBoxGeo->IndexBufferByteSize = ibByteSize;
-
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-
-	mBoxGeo->DrawArgs["box"] = submesh;
-
     vector<Vertex> vs;
     vector<unsigned int> ids;
     for(Object* obj: DEngine::gobjs){

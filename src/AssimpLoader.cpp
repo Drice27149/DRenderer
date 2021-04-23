@@ -68,8 +68,8 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
         }
         if(mesh->mTextureCoords[0]){
             v.texCoord = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-            v.tangent = vec3(mesh->mTangents->x, mesh->mTangents->y, mesh->mTangents->z);
-            v.bitangent = vec3(mesh->mBitangents->x, mesh->mBitangents->y, mesh->mBitangents->z);
+            if(mesh->mTangents) v.tangent = vec3(mesh->mTangents->x, mesh->mTangents->y, mesh->mTangents->z);
+            if(mesh->mBitangents) v.bitangent = vec3(mesh->mBitangents->x, mesh->mBitangents->y, mesh->mBitangents->z);
         }
         vs.push_back(v);
     }
