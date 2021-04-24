@@ -22,12 +22,15 @@ bool BoxApp::Initialize()
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
  
-    // LoadAssets();
+    LoadAssets();
+
+    LoadCubeMap();
 
     BuildDescriptorHeaps();
     BuildFrameResources();
 	BuildConstantBuffers();
     BuildConstantBufferView();
+    BuildShaderResourceView();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
@@ -65,14 +68,19 @@ void BoxApp::UpdateObjUniform()
     }
 }
 
-// 放错位置了, TODO: 位置修一下
 void BoxApp::UpdatePassUniform()
 {
+    glm::mat4 tempLight = glm::lookAt(vec3(-8.0, 8.0, 0.0), vec3(0.0,0.0,0.0), vec3(0.0,1.0,0.0));
     auto passCB = mFrameResources[CurrentFrame]->PassCB.get();
     PassUniform temp;
-    temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
+    temp.view = glm::transpose(tempLight); // glm::transpose(DEngine::GetCamMgr().GetViewTransform());
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     passCB->CopyData(0, temp);
+    temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
+    temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    temp.SMView = glm::transpose(tempLight);
+    temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    passCB->CopyData(1, temp);
 }
 
 void BoxApp::UpdateLegacy()
@@ -131,6 +139,15 @@ void BoxApp::Draw(const GameTimer& gt)
     // Reusing the command list reuses memory.
     ThrowIfFailed(mCommandList->Reset(mFrameResources[CurrentFrame]->CmdListAlloc.Get(), mPSO.Get()));
 
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+    DrawShadowMap();
+
+    mCommandList->SetPipelineState(mPSO.Get());
+
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
@@ -144,53 +161,24 @@ void BoxApp::Draw(const GameTimer& gt)
 	
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
-    mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+    // 纹理贴图
     mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-
-	// mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
-	// mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
-    // mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    // mCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
-
-    // // // 暂时, 先不开启流水
-    // CurrentFrame = 0;
-    // UpdateObjUniform();
-    // UpdatePassUniform();
-
-    mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // 常量已经没用
+    mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+    // shadow map 纹理
+    mCommandList->SetGraphicsRootDescriptorTable(4, GPUSMHandle);
 
     auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    unsigned int passID = 2+CurrentFrame;
+    unsigned int passID = 4 + CurrentFrame*PassCount + 1;
     passHandle.Offset(passID * mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootDescriptorTable(3, passHandle);
 
-    auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // 替纹理贴图 offset 的空间要加上
-    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 2 + FrameCount;
-    handle.Offset(handleID * mCbvSrvUavDescriptorSize);
+    DrawObjects();
 
-    int meshPtr = 0;
-
-    for(int i = 0; i < DEngine::gobjs.size(); i++){
-        mCommandList->SetGraphicsRootDescriptorTable(2, handle);
-        for (int j = 0; j < DEngine::gobjs[i]->meshes.size(); j++) {
-            mCommandList->DrawIndexedInstanced(mMeshIndex[3 * meshPtr], 1, mMeshIndex[3 * meshPtr + 1], mMeshIndex[3 * meshPtr + 2], 0);
-            meshPtr++;
-        }
-        handle.Offset(mCbvSrvUavDescriptorSize);
-    }
+    DrawSkyBox();
 
     // Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
     // Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
@@ -211,14 +199,45 @@ void BoxApp::Draw(const GameTimer& gt)
 void BoxApp::BuildDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 2 + (DEngine::gobjs.size() + 1) * FrameCount;
+    cbvHeapDesc.NumDescriptors = 4 + (DEngine::gobjs.size() + PassCount) * FrameCount;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(&mCbvHeap)));
 
+    // for shadow map
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+    dsvHeapDesc.NumDescriptors = 2;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    dsvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
+        &dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    SMHandle = hDescriptor;
+    GPUSMHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    // GPUSMHandle.Offset(2*mCbvSrvUavDescriptorSize);
+
+    hDescriptor.Offset(mCbvSrvUavDescriptorSize);
+
+    auto SkyTex = CubeTex.Resource;
+
+    assert(SkyTex);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.TextureCube.MostDetailedMip = 0;
+	srvDesc.TextureCube.MipLevels = SkyTex->GetDesc().MipLevels;
+	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+	srvDesc.Format = SkyTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(SkyTex.Get(), &srvDesc, hDescriptor);
+
+    hDescriptor.Offset(mCbvSrvUavDescriptorSize);
 
     for(TTexture& texture: textures){
         auto tex = texture.Resource;
@@ -260,7 +279,7 @@ void BoxApp::BuildConstantBuffers()
 void BoxApp::BuildConstantBufferView()
 {
     auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-    handle.Offset(2, mCbvSrvUavDescriptorSize);
+    handle.Offset(4, mCbvSrvUavDescriptorSize);
 
     unsigned int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
     unsigned int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
@@ -268,13 +287,16 @@ void BoxApp::BuildConstantBufferView()
     for(int i = 0; i < FrameCount; i++){
         auto passCB = mFrameResources[i]->PassCB->Resource();
         D3D12_GPU_VIRTUAL_ADDRESS passAddress = passCB->GetGPUVirtualAddress();
-        // 每个帧的每个帧常量, 绑定一个描述符
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-        cbvDesc.BufferLocation = passAddress;
-        cbvDesc.SizeInBytes = passByteSize;
+        for(int j = 0; j < PassCount; j++){
+            // 每个帧的每个pass常量, 绑定一个描述符
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+            cbvDesc.BufferLocation = passAddress;
+            cbvDesc.SizeInBytes = passByteSize;
 
-        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-        handle.Offset(mCbvSrvUavDescriptorSize);
+            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+            handle.Offset(mCbvSrvUavDescriptorSize);
+            passAddress += passByteSize;
+        }
     }
 
     for(int i = 0; i < FrameCount; i++){
@@ -303,12 +325,12 @@ void BoxApp::BuildRootSignature()
 	// thought of as defining the function signature.  
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
     slotRootParameter[0].InitAsConstantBufferView(0);
 
     // 材质描述符表
     CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, textures.size()?textures.size():2, 0);
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);
     slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
     // 常量描述符表
     CD3DX12_DESCRIPTOR_RANGE uniformTable;
@@ -319,10 +341,20 @@ void BoxApp::BuildRootSignature()
     passTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);
     slotRootParameter[3].InitAsDescriptorTable(1, &passTable);
 
+    // shadow map
+    CD3DX12_DESCRIPTOR_RANGE texTable1;
+    texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+    slotRootParameter[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
+
+    // sky box cube map
+    CD3DX12_DESCRIPTOR_RANGE texTable2;
+    texTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+    slotRootParameter[5].InitAsDescriptorTable(1, &texTable2, D3D12_SHADER_VISIBILITY_PIXEL);
+
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -347,8 +379,14 @@ void BoxApp::BuildShadersAndInputLayout()
 {
     HRESULT hr = S_OK;
     
-	mvsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "VS", "vs_5_0");
-	mpsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "PS", "ps_5_0");
+	mvsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "VS", "vs_5_1");
+	mpsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "PS", "ps_5_1");
+
+	shadowVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\shadow.hlsl", nullptr, "VS", "vs_5_1");
+	shadowPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\shadow.hlsl", nullptr, "PS", "ps_5_1");
+
+	skyVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "VS", "vs_5_1");
+	skyPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "PS", "ps_5_1");
 
     mInputLayout =
     {
@@ -374,6 +412,24 @@ void BoxApp::BuildBoxGeometry()
             for(unsigned int id: mesh.ids) ids.push_back(id);
         }
     }
+
+    Panel panel;
+
+    mMeshIndex.push_back(panel.ids.size());
+    mMeshIndex.push_back(ids.size());
+    mMeshIndex.push_back(vs.size());
+
+    for(Vertex v: panel.vs) vs.push_back(v);
+    for(unsigned int id: panel.ids) ids.push_back(id);
+
+    SkyBox skybox;
+
+    mMeshIndex.push_back(skybox.ids.size());
+    mMeshIndex.push_back(ids.size());
+    mMeshIndex.push_back(vs.size());
+
+    for(Vertex v: skybox.vs) vs.push_back(v);
+    for(unsigned int id: skybox.ids) ids.push_back(id);
 
     int vsSize = sizeof(Vertex) * vs.size();
     int idsSize = sizeof(unsigned int) * ids.size();
@@ -415,6 +471,7 @@ void BoxApp::BuildPSO()
 
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = true;
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.SampleMask = UINT_MAX;
@@ -425,6 +482,38 @@ void BoxApp::BuildPSO()
     psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
     psoDesc.DSVFormat = mDepthStencilFormat;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+
+    // shadow map's pipeline state
+    psoDesc.VS = 
+    {
+		reinterpret_cast<BYTE*>(shadowVS->GetBufferPointer()), 
+		shadowVS->GetBufferSize() 
+    };
+    psoDesc.PS = 
+    {
+		reinterpret_cast<BYTE*>(shadowPS->GetBufferPointer()), 
+		shadowPS->GetBufferSize() 
+    };
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+    psoDesc.NumRenderTargets = 0;
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&SMPSO)));
+
+    // skybox texture
+    psoDesc.VS = 
+    {
+		reinterpret_cast<BYTE*>(skyVS->GetBufferPointer()), 
+		skyVS->GetBufferSize() 
+    };
+    psoDesc.PS = 
+    {
+		reinterpret_cast<BYTE*>(skyPS->GetBufferPointer()), 
+		skyPS->GetBufferSize() 
+    };
+    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = mBackBufferFormat;
+
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&SkyPSO)));
 }
 
 void BoxApp::LoadAssets()
@@ -649,6 +738,80 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 void BoxApp::BuildFrameResources()
 {
     for(int i = 0; i < FrameCount; i++){
-        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, DEngine::gobjs.size()));
+        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), PassCount, DEngine::gobjs.size()));
     }
+}
+
+void BoxApp::BuildShaderResourceView()
+{   
+    shadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
+    shadowMap->BuildDescriptors(SMHandle, GPUSMHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart()));
+}
+
+void BoxApp::DrawShadowMap()
+{
+    mCommandList->RSSetViewports(1, &shadowMap->Viewport());
+    mCommandList->RSSetScissorRects(1, &shadowMap->ScissorRect());
+
+    // Change to DEPTH_WRITE.
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),
+        D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+    // Clear the back buffer and depth buffer.
+    mCommandList->ClearDepthStencilView(shadowMap->Dsv(), 
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // // Set null render target because we are only going to draw to
+    // // depth buffer.  Setting a null render target will disable color writes.
+    // // Note the active PSO also must specify a render target count of 0.
+    mCommandList->OMSetRenderTargets(0, nullptr, false, &shadowMap->Dsv());
+
+    mCommandList->SetPipelineState(SMPSO.Get());
+
+    auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    unsigned int passID = 4 + CurrentFrame*PassCount;
+    passHandle.Offset(passID * mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(3, passHandle);
+
+    DrawObjects();
+
+    // Change back to GENERIC_READ so we can read the texture in a shader.
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+}
+
+void BoxApp::DrawObjects()
+{
+    mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    // 替纹理贴图 offset 的空间要加上
+    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 4 + FrameCount*PassCount;
+    handle.Offset(handleID * mCbvSrvUavDescriptorSize);
+
+    int meshPtr = 0;
+    mCommandList->SetGraphicsRootDescriptorTable(2, handle);
+
+    while(meshPtr+3 < mMeshIndex.size())
+    {
+        mCommandList->DrawIndexedInstanced(mMeshIndex[meshPtr], 1, mMeshIndex[meshPtr + 1], mMeshIndex[meshPtr + 2], 0);
+        meshPtr += 3;
+    }
+}
+
+void BoxApp::LoadCubeMap()
+{
+    auto fn = L"..\\assets\\cubeMap\\grasscube1024.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(), mCommandList.Get(), L"..\\assets\\cubeMap\\grasscube1024.dds", CubeTex.Resource, CubeTex.UploadHeap));
+}
+
+void BoxApp::DrawSkyBox()
+{
+    mCommandList->SetPipelineState(SkyPSO.Get());
+    auto skyHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    skyHandle.Offset(mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(5, skyHandle);
+    int drawIndex = mMeshIndex.size() - 3;
+    mCommandList->DrawIndexedInstanced(mMeshIndex[drawIndex], 1, mMeshIndex[drawIndex + 1], mMeshIndex[drawIndex + 2], 0);
 }

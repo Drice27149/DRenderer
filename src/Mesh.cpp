@@ -50,7 +50,58 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     for(int i = 0; i < vs.size(); i++) ids[i] = i;
 
     GraphicAPI::LoadMesh(*this);
+}
 
+Panel::Panel(vec3 a, vec3 b, vec3 c, vec3 d)
+{
+    vs.resize(4);
+    vs[0].vertex = a;
+    vs[1].vertex = b;
+    vs[2].vertex = c;
+    vs[3].vertex = d;
+    for(Vertex& v: vs) v.normal = vec3(0, 1.0, 0);
+
+    ids.resize(6);
+    // a, d, b
+    ids[0] = 0;
+    ids[1] = 3;
+    ids[2] = 1;
+    // d, c, b
+    ids[3] = 3;
+    ids[4] = 2;
+    ids[5] = 1;
+}
+
+SkyBox::SkyBox(float up, float down, float left, float right, float front, float back)
+{
+    vec3 a[8];
+    a[0] = vec3(left, up, front);
+    a[1] = vec3(left, up, back);
+    a[2] = vec3(right, up, front);
+    a[3] = vec3(right, up, back);
+    a[4] = vec3(left, down, front);
+    a[5] = vec3(left, down, back);
+    a[6] = vec3(right, down, front);
+    a[7] = vec3(right, down, back);
+
+    vs.resize(8);
+    for(int i = 0; i < 8; i++){
+        vs[i].vertex = a[i];
+    }
+    ids = {
+        1,0,2,
+        2,3,1,
+        1,5,7,
+        7,3,1,
+        0,4,6,
+        6,2,0,
+        5,4,6,
+        6,7,5,
+        0,4,5,
+        5,1,0,
+        2,6,7,
+        7,3,2
+    };
 }
 
 

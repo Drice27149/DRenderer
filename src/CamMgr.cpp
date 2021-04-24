@@ -30,7 +30,7 @@ mat4 CamMgr::GetViewTransform()
 mat4 CamMgr::GetProjectionTransform()
 {
     // TODO: 看看 unity 的相机设置
-    return glm::perspective(45.0, 1.0, 0.1, 2000.0);
+    return glm::perspective(45.0, 1.0, 1.0, 1000.0);
 }
 
 vec3 CamMgr::GetViewPos()

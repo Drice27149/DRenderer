@@ -1,0 +1,3181 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 62613,
+      "max": [
+        1.2384099960327148,
+        2.9583299160003662,
+        1.2597700357437134
+      ],
+      "min": [
+        -1.2384099960327148,
+        -3.7459299564361572,
+        -0.47613000869750977
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 751356,
+      "componentType": 5126,
+      "count": 62613,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 62613,
+      "max": [
+        1,
+        1,
+        0.99986571073532104,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -0.99991613626480103,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 62613,
+      "max": [
+        0.99136000871658325,
+        0.99124997854232788
+      ],
+      "min": [
+        -1.5690599679946899,
+        0.0091599998995661736
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 327456,
+      "max": [
+        62612
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1502712,
+      "componentType": 5126,
+      "count": 2252,
+      "max": [
+        1.0499199628829956,
+        1.724869966506958,
+        0.96965998411178589
+      ],
+      "min": [
+        -1.0499199628829956,
+        -1.6116100549697876,
+        0.39368999004364014
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1529736,
+      "componentType": 5126,
+      "count": 2252,
+      "max": [
+        0.98548001050949097,
+        0.99980610609054565,
+        0.98785054683685303
+      ],
+      "min": [
+        -0.98548001050949097,
+        -0.99991929531097412,
+        -0.91149312257766724
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1001808,
+      "componentType": 5126,
+      "count": 2252,
+      "max": [
+        0.99982178211212158,
+        0.99999761581420898,
+        0.83295559883117676,
+        1
+      ],
+      "min": [
+        -0.99982178211212158,
+        -0.85213804244995117,
+        -0.96471971273422241,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 500904,
+      "componentType": 5126,
+      "count": 2252,
+      "max": [
+        0.21918000280857086,
+        0.68239998817443848
+      ],
+      "min": [
+        0.0069900001399219036,
+        0.21976000070571899
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1309824,
+      "componentType": 5125,
+      "count": 12096,
+      "max": [
+        2251
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1556760,
+      "componentType": 5126,
+      "count": 1186,
+      "max": [
+        1.0720800161361694,
+        1.8151400089263916,
+        0.5443500280380249
+      ],
+      "min": [
+        -1.075410008430481,
+        -1.8316700458526611,
+        -0.84289002418518066
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1570992,
+      "componentType": 5126,
+      "count": 1186,
+      "max": [
+        1,
+        0.99779236316680908,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -0.97626852989196777
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1037840,
+      "componentType": 5126,
+      "count": 1186,
+      "max": [
+        1,
+        0.99872893095016479,
+        1,
+        1
+      ],
+      "min": [
+        -0.99999374151229858,
+        -0.99937319755554199,
+        -1,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 518920,
+      "componentType": 5126,
+      "count": 1186,
+      "max": [
+        0.97924000024795532,
+        0.95288997888565063
+      ],
+      "min": [
+        0.020759999752044678,
+        0.033509999513626099
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1358208,
+      "componentType": 5125,
+      "count": 3852,
+      "max": [
+        1185
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1585224,
+      "componentType": 5126,
+      "count": 7484,
+      "max": [
+        0.71306002140045166,
+        0.11349999904632568,
+        0.15263000130653381
+      ],
+      "min": [
+        -0.71306002140045166,
+        -0.11349999904632568,
+        -0.051199998706579208
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1675032,
+      "componentType": 5126,
+      "count": 7484,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1056816,
+      "componentType": 5126,
+      "count": 7484,
+      "max": [
+        0.97893619537353516,
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -0.9785008430480957,
+        -1,
+        -1,
+        1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 528408,
+      "componentType": 5126,
+      "count": 7484,
+      "max": [
+        0.99766999483108521,
+        0.98707002401351929
+      ],
+      "min": [
+        0.0064500002190470695,
+        0.017349999397993088
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1373616,
+      "componentType": 5125,
+      "count": 37632,
+      "max": [
+        7483
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1764840,
+      "componentType": 5126,
+      "count": 2088,
+      "max": [
+        1.0871399641036987,
+        0.039319999516010284,
+        0.04081999883055687
+      ],
+      "min": [
+        -0.03319999948143959,
+        -0.038430001586675644,
+        -0.04081999883055687
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1789896,
+      "componentType": 5126,
+      "count": 2088,
+      "max": [
+        0.99881595373153687,
+        0.99947375059127808,
+        0.99506324529647827
+      ],
+      "min": [
+        -0.99997752904891968,
+        -0.99823307991027832,
+        -0.99506109952926636
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1524144,
+      "componentType": 5125,
+      "count": 11616,
+      "max": [
+        2087
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1814952,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.1818699985742569,
+        0.39678999781608582,
+        0.39678999781608582
+      ],
+      "min": [
+        -0.17293000221252441,
+        -0.39678999781608582,
+        -0.39678999781608582
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2013012,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -0.99999779462814331,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1176560,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99973380565643311,
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -0.99974292516708374,
+        -0.99999523162841797,
+        -0.99999970197677612,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 588280,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.98535001277923584,
+        0.98789000511169434
+      ],
+      "min": [
+        0.015449999831616879,
+        0.0063299997709691525
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1570608,
+      "componentType": 5125,
+      "count": 94074,
+      "max": [
+        16504
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2211072,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.17293000221252441,
+        0.39678999781608582,
+        0.39678999781608582
+      ],
+      "min": [
+        -0.1818699985742569,
+        -0.39678999781608582,
+        -0.39678999781608582
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2409132,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99999779462814331,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1440640,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99974292516708374,
+        0.99999523162841797,
+        1,
+        1
+      ],
+      "min": [
+        -0.99973380565643311,
+        -1,
+        -0.99999970197677612,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 720320,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.98535001277923584,
+        0.98789000511169434
+      ],
+      "min": [
+        0.015449999831616879,
+        0.0063299997709691525
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1946904,
+      "componentType": 5125,
+      "count": 94074,
+      "max": [
+        16504
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2607192,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.1818699985742569,
+        0.39678999781608582,
+        0.39678999781608582
+      ],
+      "min": [
+        -0.17293000221252441,
+        -0.39678999781608582,
+        -0.39678999781608582
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2805252,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -0.99999779462814331,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1704720,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99973380565643311,
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -0.99974292516708374,
+        -0.99999523162841797,
+        -0.99999970197677612,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 852360,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.98535001277923584,
+        0.98789000511169434
+      ],
+      "min": [
+        0.015449999831616879,
+        0.0063299997709691525
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 2323200,
+      "componentType": 5125,
+      "count": 94074,
+      "max": [
+        16504
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3003312,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.17293000221252441,
+        0.39678999781608582,
+        0.39678999781608582
+      ],
+      "min": [
+        -0.1818699985742569,
+        -0.39678999781608582,
+        -0.39678999781608582
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3201372,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99999779462814331,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1968800,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.99974292516708374,
+        0.99999523162841797,
+        1,
+        1
+      ],
+      "min": [
+        -0.99973380565643311,
+        -1,
+        -0.99999970197677612,
+        -1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 984400,
+      "componentType": 5126,
+      "count": 16505,
+      "max": [
+        0.98535001277923584,
+        0.98789000511169434
+      ],
+      "min": [
+        0.015449999831616879,
+        0.0063299997709691525
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 2699496,
+      "componentType": 5125,
+      "count": 94074,
+      "max": [
+        16504
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3399432,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        0.19634999334812164,
+        0.19492000341415405
+      ],
+      "min": [
+        0,
+        -0.19634999334812164,
+        -0.19492000341415405
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3399756,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        1,
+        0,
+        0
+      ],
+      "min": [
+        1,
+        0,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 2232880,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        1,
+        6.3624429458286613e-05,
+        1
+      ],
+      "min": [
+        0,
+        1,
+        -6.3623374444432557e-05,
+        1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1116440,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0.45096999406814575,
+        0.90592998266220093
+      ],
+      "min": [
+        0.047860000282526016,
+        0.50576001405715942
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 3075792,
+      "componentType": 5125,
+      "count": 78,
+      "max": [
+        26
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3400080,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        0.19634999334812164,
+        0.19492000341415405
+      ],
+      "min": [
+        0,
+        -0.19634999334812164,
+        -0.19492000341415405
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3400404,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        -1,
+        -0,
+        -0
+      ],
+      "min": [
+        -1,
+        -0,
+        -0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 2233312,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        -1,
+        6.3624429458286613e-05,
+        1
+      ],
+      "min": [
+        0,
+        -1,
+        -6.3623374444432557e-05,
+        1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1116656,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0.45096999406814575,
+        0.90592998266220093
+      ],
+      "min": [
+        0.047860000282526016,
+        0.50576001405715942
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 3076104,
+      "componentType": 5125,
+      "count": 78,
+      "max": [
+        26
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3400728,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        0.19634999334812164,
+        0.19492000341415405
+      ],
+      "min": [
+        0,
+        -0.19634999334812164,
+        -0.19492000341415405
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3401052,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        1,
+        0,
+        0
+      ],
+      "min": [
+        1,
+        0,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 2233744,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        1,
+        6.3624429458286613e-05,
+        1
+      ],
+      "min": [
+        0,
+        1,
+        -6.3623374444432557e-05,
+        1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1116872,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0.45096999406814575,
+        0.90592998266220093
+      ],
+      "min": [
+        0.047860000282526016,
+        0.50576001405715942
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 3076416,
+      "componentType": 5125,
+      "count": 78,
+      "max": [
+        26
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3401376,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        0.19634999334812164,
+        0.19492000341415405
+      ],
+      "min": [
+        0,
+        -0.19634999334812164,
+        -0.19492000341415405
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3401700,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        -1,
+        -0,
+        -0
+      ],
+      "min": [
+        -1,
+        -0,
+        -0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 2234176,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0,
+        -1,
+        6.3624429458286613e-05,
+        1
+      ],
+      "min": [
+        0,
+        -1,
+        -6.3623374444432557e-05,
+        1
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1117088,
+      "componentType": 5126,
+      "count": 27,
+      "max": [
+        0.45096999406814575,
+        0.90592998266220093
+      ],
+      "min": [
+        0.047860000282526016,
+        0.50576001405715942
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 3076728,
+      "componentType": 5125,
+      "count": 78,
+      "max": [
+        26
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 64,
+      "max": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.2078200578689575,
+        3.5921399593353271,
+        0.39873999357223511,
+        1
+      ],
+      "min": [
+        -1,
+        0,
+        0,
+        0,
+        -1,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        0,
+        -3.5921399593353271,
+        -6.5880899429321289,
+        -2.6042599678039551,
+        1
+      ],
+      "type": "MAT4"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "jeandiz (https://sketchfab.com/jeandiz)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/police-car-9166b13b6ae341f4bfc093edb71d74f4",
+      "title": "Police car"
+    },
+    "generator": "Sketchfab-5.67.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 3077040,
+      "byteOffset": 0,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1117304,
+      "byteOffset": 3077040,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 3402024,
+      "byteOffset": 4194344,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2234608,
+      "byteOffset": 7596368,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4096,
+      "byteOffset": 9830976,
+      "byteStride": 64,
+      "name": "floatBufferViews"
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 9835072,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/body_baseColor.png"
+    },
+    {
+      "uri": "textures/body_metallicRoughness.png"
+    },
+    {
+      "uri": "textures/interior_baseColor.png"
+    },
+    {
+      "uri": "textures/interior_emissive.png"
+    },
+    {
+      "uri": "textures/roof_light_bar_baseColor.png"
+    },
+    {
+      "uri": "textures/roof_light_bar_metallicRoughness.png"
+    },
+    {
+      "uri": "textures/wheel_baseColor.png"
+    },
+    {
+      "uri": "textures/brake_baseColor.jpeg"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "body",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 0
+        },
+        "metallicFactor": 0.53125,
+        "metallicRoughnessTexture": {
+          "index": 1,
+          "texCoord": 0
+        },
+        "roughnessFactor": 1
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "glass",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.040112326099999998,
+          0.040112326099999998,
+          0.040112326099999998,
+          0.0625
+        ],
+        "metallicFactor": 0.13125000000000001,
+        "roughnessFactor": 0
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ],
+      "emissiveTexture": {
+        "index": 3,
+        "texCoord": 0
+      },
+      "name": "interior",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.30625000000000002,
+          0.30625000000000002,
+          0.30625000000000002,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 2,
+          "texCoord": 0
+        },
+        "metallicFactor": 0.66874999999999996,
+        "roughnessFactor": 0.91249999999999998
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "roof_light_bar",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 4,
+          "texCoord": 0
+        },
+        "metallicFactor": 1,
+        "metallicRoughnessTexture": {
+          "index": 5,
+          "texCoord": 0
+        },
+        "roughnessFactor": 0.20000000000000001
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "roof_lights",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.35260612689999998,
+          0.35260612689999998,
+          0.35260612689999998,
+          1
+        ],
+        "metallicFactor": 1,
+        "roughnessFactor": 0.13125000000000001
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "wheel",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.88749999999999996,
+          0.88749999999999996,
+          0.88749999999999996,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 6,
+          "texCoord": 0
+        },
+        "metallicFactor": 0.97499999999999998,
+        "roughnessFactor": 0.45624999999999999
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "brake",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 7,
+          "texCoord": 0
+        },
+        "metallicFactor": 0.8125,
+        "roughnessFactor": 0.19375000000000001
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "CrownVic.Body_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "windows glass_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 6,
+            "POSITION": 5,
+            "TANGENT": 7,
+            "TEXCOORD_0": 8
+          },
+          "indices": 9,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "interior_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 11,
+            "POSITION": 10,
+            "TANGENT": 12,
+            "TEXCOORD_0": 13
+          },
+          "indices": 14,
+          "material": 2,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Roof light bar_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 16,
+            "POSITION": 15,
+            "TANGENT": 17,
+            "TEXCOORD_0": 18
+          },
+          "indices": 19,
+          "material": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "roof lights_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 21,
+            "POSITION": 20
+          },
+          "indices": 22,
+          "material": 4,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.Wheel.Ft.L_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 24,
+            "POSITION": 23,
+            "TANGENT": 25,
+            "TEXCOORD_0": 26
+          },
+          "indices": 27,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.Wheel.Ft.R_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 29,
+            "POSITION": 28,
+            "TANGENT": 30,
+            "TEXCOORD_0": 31
+          },
+          "indices": 32,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.Wheel.Bk.L_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 34,
+            "POSITION": 33,
+            "TANGENT": 35,
+            "TEXCOORD_0": 36
+          },
+          "indices": 37,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.Wheel.Bk.R_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 39,
+            "POSITION": 38,
+            "TANGENT": 40,
+            "TEXCOORD_0": 41
+          },
+          "indices": 42,
+          "material": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.WheelBrake.Ft.L_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 44,
+            "POSITION": 43,
+            "TANGENT": 45,
+            "TEXCOORD_0": 46
+          },
+          "indices": 47,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.WheelBrake.Ft.R_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 49,
+            "POSITION": 48,
+            "TANGENT": 50,
+            "TEXCOORD_0": 51
+          },
+          "indices": 52,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.WheelBrake.Bk.L_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 54,
+            "POSITION": 53,
+            "TANGENT": 55,
+            "TEXCOORD_0": 56
+          },
+          "indices": 57,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "CrownVic.WheelBrake.Bk.R_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 59,
+            "POSITION": 58,
+            "TANGENT": 60,
+            "TEXCOORD_0": 61
+          },
+          "indices": 62,
+          "material": 6,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "name": "RootNode (gltf orientation matrix)",
+      "rotation": [
+        -0.70710678118654746,
+        -0,
+        -0,
+        0.70710678118654757
+      ]
+    },
+    {
+      "children": [
+        2
+      ],
+      "name": "RootNode (model correction matrix)"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "Root"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.43583000000000005,
+        1.7238100000000001,
+        0.020480000000000005,
+        1
+      ],
+      "name": "Car Rig"
+    },
+    {
+      "children": [
+        5,
+        16,
+        19,
+        22,
+        25,
+        28,
+        31,
+        34,
+        37,
+        40,
+        88,
+        89,
+        90,
+        91,
+        92
+      ],
+      "name": "Car Rig_rootJoint"
+    },
+    {
+      "children": [
+        6
+      ],
+      "name": "DEF-Body_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0,
+        -1.246940016746521,
+        0.72571998834609985
+      ]
+    },
+    {
+      "children": [
+        7,
+        8,
+        10,
+        12
+      ],
+      "name": "CrownVic.Body"
+    },
+    {
+      "mesh": 0,
+      "name": "CrownVic.Body_0"
+    },
+    {
+      "children": [
+        9
+      ],
+      "name": "windows glass"
+    },
+    {
+      "mesh": 1,
+      "name": "windows glass_0"
+    },
+    {
+      "children": [
+        11
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.0011000000000000003,
+        0.012210000000000002,
+        0.38735000000000008,
+        1
+      ],
+      "name": "interior"
+    },
+    {
+      "mesh": 2,
+      "name": "interior_0"
+    },
+    {
+      "children": [
+        13,
+        14
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.0088400000000000024,
+        -0.15759000000000004,
+        1.0515099999999999,
+        1
+      ],
+      "name": "Roof light bar"
+    },
+    {
+      "mesh": 3,
+      "name": "Roof light bar_0"
+    },
+    {
+      "children": [
+        15
+      ],
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.54981000000000002,
+        0.0065400000000000024,
+        0.097500000000000031,
+        1
+      ],
+      "name": "roof lights"
+    },
+    {
+      "mesh": 4,
+      "name": "roof lights_0"
+    },
+    {
+      "children": [
+        17
+      ],
+      "name": "DEF-Wheel.Ft.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.94287002086639404,
+        -3.5920100212097168,
+        0.39998000860214233
+      ]
+    },
+    {
+      "children": [
+        18
+      ],
+      "name": "CrownVic.Wheel.Ft.L"
+    },
+    {
+      "mesh": 5,
+      "name": "CrownVic.Wheel.Ft.L_0"
+    },
+    {
+      "children": [
+        20
+      ],
+      "name": "DEF-Wheel.Ft.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.92625999450683594,
+        -3.5920100212097168,
+        0.39998000860214233
+      ]
+    },
+    {
+      "children": [
+        21
+      ],
+      "name": "CrownVic.Wheel.Ft.R"
+    },
+    {
+      "mesh": 6,
+      "name": "CrownVic.Wheel.Ft.R_0"
+    },
+    {
+      "children": [
+        23
+      ],
+      "name": "DEF-Wheel.Bk.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.94287002086639404,
+        0.00014000000373926014,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        24
+      ],
+      "name": "CrownVic.Wheel.Bk.L"
+    },
+    {
+      "mesh": 7,
+      "name": "CrownVic.Wheel.Bk.L_0"
+    },
+    {
+      "children": [
+        26
+      ],
+      "name": "DEF-Wheel.Bk.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.92625999450683594,
+        0.00014000000373926014,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        27
+      ],
+      "name": "CrownVic.Wheel.Bk.R"
+    },
+    {
+      "mesh": 8,
+      "name": "CrownVic.Wheel.Bk.R_0"
+    },
+    {
+      "children": [
+        29
+      ],
+      "name": "DEF-WheelBrake.Ft.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.97280997037887573,
+        -3.5906798839569092,
+        0.39794999361038208
+      ]
+    },
+    {
+      "children": [
+        30
+      ],
+      "name": "CrownVic.WheelBrake.Ft.L"
+    },
+    {
+      "mesh": 9,
+      "name": "CrownVic.WheelBrake.Ft.L_0"
+    },
+    {
+      "children": [
+        32
+      ],
+      "name": "DEF-WheelBrake.Ft.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.89632999897003174,
+        -3.5906798839569092,
+        0.39794999361038208
+      ]
+    },
+    {
+      "children": [
+        33
+      ],
+      "name": "CrownVic.WheelBrake.Ft.R"
+    },
+    {
+      "mesh": 10,
+      "name": "CrownVic.WheelBrake.Ft.R_0"
+    },
+    {
+      "children": [
+        35
+      ],
+      "name": "DEF-WheelBrake.Bk.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.97280997037887573,
+        0.0015300000086426735,
+        0.39671000838279724
+      ]
+    },
+    {
+      "children": [
+        36
+      ],
+      "name": "CrownVic.WheelBrake.Bk.L"
+    },
+    {
+      "mesh": 11,
+      "name": "CrownVic.WheelBrake.Bk.L_0"
+    },
+    {
+      "children": [
+        38
+      ],
+      "name": "DEF-WheelBrake.Bk.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.89632999897003174,
+        0.0015300000086426735,
+        0.39671000838279724
+      ]
+    },
+    {
+      "children": [
+        39
+      ],
+      "name": "CrownVic.WheelBrake.Bk.R"
+    },
+    {
+      "mesh": 12,
+      "name": "CrownVic.WheelBrake.Bk.R_0"
+    },
+    {
+      "children": [
+        41,
+        42,
+        84
+      ],
+      "name": "Root_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "SHP-Root_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -1.6409900188446045,
+        0.0099999997764825821
+      ]
+    },
+    {
+      "children": [
+        43
+      ],
+      "name": "Drift_Car_Rig",
+      "rotation": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        44,
+        45
+      ],
+      "name": "GroundSensor.Axle.Bk_Car_Rig",
+      "rotation": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -3.5921399593353271,
+        0
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Axle.Bk_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "children": [
+        46,
+        47,
+        55,
+        62,
+        70,
+        77,
+        78,
+        79,
+        80
+      ],
+      "name": "MCH-Root.Axle.Bk_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-Drift_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        2.1817300319671631,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        48,
+        49,
+        50,
+        52,
+        53
+      ],
+      "name": "GroundSensor.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.94735002517700195,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Wheel.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.0044700000435113907,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        51
+      ],
+      "name": "MCH-WheelBrake.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.025459999218583107,
+        0.0013299999991431832,
+        -0.0020300000905990601
+      ]
+    },
+    {
+      "name": "WheelBrake.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.19162000715732574,
+        -0.0013299999991431832,
+        0.0020300000905990601
+      ]
+    },
+    {
+      "name": "Wheel.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.21707999706268311,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        54
+      ],
+      "name": "WheelDamper.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.2770799994468689,
+        0,
+        0.19936999678611755
+      ]
+    },
+    {
+      "name": "MCH-WheelDamper.Ft.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.28156000375747681,
+        0,
+        -0.19936999678611755
+      ]
+    },
+    {
+      "children": [
+        56,
+        57,
+        58,
+        59,
+        60
+      ],
+      "name": "GroundSensor.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.93073999881744385,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Wheel.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.0044700000435113907,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "MCH-WheelBrake.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.034409999847412109,
+        0.0013299999991431832,
+        -0.0020300000905990601
+      ]
+    },
+    {
+      "name": "Wheel.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.21707999706268311,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        61
+      ],
+      "name": "WheelDamper.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.2770799994468689,
+        0,
+        0.19936999678611755
+      ]
+    },
+    {
+      "name": "MCH-WheelDamper.Ft.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.28156000375747681,
+        0,
+        -0.19936999678611755
+      ]
+    },
+    {
+      "children": [
+        63,
+        64,
+        65,
+        67,
+        68
+      ],
+      "name": "GroundSensor.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.94735002517700195,
+        0,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Wheel.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.0044700000435113907,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        66
+      ],
+      "name": "MCH-WheelBrake.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.025459999218583107,
+        0.0013899999903514981,
+        -0.0020300000905990601
+      ]
+    },
+    {
+      "name": "WheelBrake.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.19162000715732574,
+        -0.0013899999903514981,
+        0.0020300000905990601
+      ]
+    },
+    {
+      "name": "Wheel.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.21707999706268311,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        69
+      ],
+      "name": "WheelDamper.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.2770799994468689,
+        0,
+        0.19936999678611755
+      ]
+    },
+    {
+      "name": "MCH-WheelDamper.Bk.L_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.28156000375747681,
+        0,
+        -0.19936999678611755
+      ]
+    },
+    {
+      "children": [
+        71,
+        72,
+        73,
+        74,
+        75
+      ],
+      "name": "GroundSensor.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.93073999881744385,
+        0,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Wheel.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.0044700000435113907,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "MCH-WheelBrake.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.034409999847412109,
+        0.0013899999903514981,
+        -0.0020300000905990601
+      ]
+    },
+    {
+      "name": "Wheel.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.21707999706268311,
+        0,
+        0
+      ]
+    },
+    {
+      "children": [
+        76
+      ],
+      "name": "WheelDamper.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.2770799994468689,
+        0,
+        0.19936999678611755
+      ]
+    },
+    {
+      "name": "MCH-WheelDamper.Bk.R_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0.28156000375747681,
+        0,
+        -0.19936999678611755
+      ]
+    },
+    {
+      "name": "MCH-Axis.Ft_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        -0.7071068286895752,
+        0.7071068286895752
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.92625999450683594,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "MCH-Axis.Bk_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        -0.7071068286895752,
+        0.7071068286895752
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        -0.92625999450683594,
+        0,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "MCH-Suspension.Bk_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        81
+      ],
+      "name": "MCH-Suspension.Ft_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        82,
+        83
+      ],
+      "name": "MCH-Axis_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "MCH-Body_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        2.3449499607086182,
+        0.32655000686645508
+      ]
+    },
+    {
+      "name": "Suspension_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        2.3449499607086182,
+        2.2055199146270752
+      ]
+    },
+    {
+      "children": [
+        85,
+        86,
+        87
+      ],
+      "name": "GroundSensor.Axle.Ft_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "SHP-GroundSensor.Axle.Ft_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Root.Axle.Ft_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        -0.39774000644683838
+      ]
+    },
+    {
+      "name": "MCH-Steering_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "MCH-Wheel.rotation.Ft.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.94287002086639404,
+        -3.5920100212097168,
+        0.39998000860214233
+      ]
+    },
+    {
+      "name": "MCH-Wheel.rotation.Ft.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.92625999450683594,
+        -3.5920100212097168,
+        0.39998000860214233
+      ]
+    },
+    {
+      "name": "MCH-Wheel.rotation.Bk.L_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0.94287002086639404,
+        0.00014000000373926014,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "MCH-Wheel.rotation.Bk.R_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        -0.92625999450683594,
+        0.00014000000373926014,
+        0.39873999357223511
+      ]
+    },
+    {
+      "children": [
+        93
+      ],
+      "name": "MCH-Steering.rotation_Car_Rig",
+      "rotation": [
+        -0.00017499999376013875,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1.0000001192092896,
+        1.0000001192092896
+      ],
+      "translation": [
+        0,
+        -3.5921399593353271,
+        0.39873999357223511
+      ]
+    },
+    {
+      "name": "Steering_Car_Rig",
+      "rotation": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "translation": [
+        0,
+        -2.9959399700164795,
+        0
+      ]
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "OSG_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "skins": [
+    {
+      "inverseBindMatrices": 63,
+      "joints": [
+        4,
+        5,
+        16,
+        19,
+        22,
+        25,
+        28,
+        31,
+        34,
+        37,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93
+      ],
+      "skeleton": 4
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    },
+    {
+      "sampler": 0,
+      "source": 3
+    },
+    {
+      "sampler": 0,
+      "source": 4
+    },
+    {
+      "sampler": 0,
+      "source": 5
+    },
+    {
+      "sampler": 0,
+      "source": 6
+    },
+    {
+      "sampler": 0,
+      "source": 7
+    }
+  ]
+}
+

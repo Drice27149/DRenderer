@@ -51,6 +51,8 @@ struct PassUniform
 {
     glm::mat4 view;
     glm::mat4 proj;
+    glm::mat4 SMView;
+    glm::mat4 SMProj;
 };
 
 struct ObjectUniform
