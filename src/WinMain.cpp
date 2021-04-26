@@ -3,7 +3,7 @@
 #include "Object.hpp"
 #include "AssimpLoader.hpp"
 #include "DEngine.hpp"
-#include "Dx12Test.hpp"
+#include "Graphics.hpp"
 
 Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
@@ -21,7 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
     {
         DEngine::Launch();
 
-        BoxApp theApp(hInstance);
+        Graphics theApp(hInstance);
 
         string fn = "../assets/corvette_stingray/scene.gltf";
         AssimpLoader* ld = new AssimpLoader();
