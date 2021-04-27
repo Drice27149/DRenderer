@@ -11,6 +11,8 @@ file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/d3dApp/*.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include) # include
 
+include_directories(${CMAKE_SOURCE_DIR}/include/D3D12)
+
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include) # include
 
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/d3dApp) # include
