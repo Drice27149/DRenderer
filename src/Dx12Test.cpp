@@ -364,6 +364,7 @@ void BoxApp::BuildRootSignature()
 
 	if(errorBlob != nullptr)
 	{
+		// 
 		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	}
 	ThrowIfFailed(hr);

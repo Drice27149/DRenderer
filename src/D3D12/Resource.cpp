@@ -72,6 +72,10 @@ void Resource::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	                             CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
 	                             CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
 {
+	// CpuSrv 会被用来创建 shader resource view
+	// CpuXXv 会用来被创建对应的 view 类型, 用来写
+	// GpuSrv 会用来 setGraphics(), 用来读
+
 	// Save references to the descriptors. 
 	mhCpuSrv = hCpuSrv;
 	mhGpuSrv = hGpuSrv;

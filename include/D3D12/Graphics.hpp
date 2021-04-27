@@ -38,7 +38,6 @@ private:
     virtual void OnMouseZoom(WPARAM state)override;
 
     void LoadAssets();
-    void LoadTexture();
     void LoadCubeMap();
     void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
 
@@ -47,8 +46,6 @@ private:
     void UpdateLegacy();
 
     void BuildDescriptorHeaps();
-	void BuildConstantBuffers();
-    void BuildConstantBufferView();
     void BuildShaderResourceView();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
@@ -62,7 +59,8 @@ private:
 
     void InitDescriptorHeaps();
     void InitSRV();
-    void InitCBV();
+
+    void PreZPass();
 
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
@@ -114,6 +112,7 @@ private:
 
     int CurrentFrame = 0;
     int PassCount = 2;
+    int TextureCount = 8;
 
 //  -- begin of the new journey
 

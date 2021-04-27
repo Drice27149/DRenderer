@@ -20,11 +20,7 @@ public:
 	D3D12_VIEWPORT Viewport()const;
 	D3D12_RECT ScissorRect()const;
 
-	void BuildDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
-		CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
-
+	void BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
 	void OnResize(UINT newWidth, UINT newHeight);
 
 private:

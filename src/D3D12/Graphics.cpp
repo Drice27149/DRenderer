@@ -27,9 +27,10 @@ bool Graphics::Initialize()
     LoadCubeMap();
 
     BuildDescriptorHeaps();
+
+    InitSRV();
+
     BuildFrameResources();
-	BuildConstantBuffers();
-    BuildConstantBufferView();
     BuildShaderResourceView();
     BuildRootSignature();
     BuildShadersAndInputLayout();
@@ -144,6 +145,8 @@ void Graphics::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+    PreZPass();
+
     DrawShadowMap();
 
     mCommandList->SetPipelineState(mPSO.Get());
@@ -152,8 +155,7 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
     // Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     // Clear the back buffer and depth buffer.
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
@@ -162,16 +164,14 @@ void Graphics::Draw(const GameTimer& gt)
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
     // 纹理贴图
-    mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     // 常量已经没用
-    mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+    // mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
     // shadow map 纹理
     mCommandList->SetGraphicsRootDescriptorTable(4, GPUSMHandle);
 
-    auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    unsigned int passID = 4 + CurrentFrame*PassCount + 1;
-    passHandle.Offset(passID * mCbvSrvUavDescriptorSize);
-    mCommandList->SetGraphicsRootDescriptorTable(3, passHandle);
+    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
     DrawObjects();
 
@@ -199,16 +199,19 @@ void Graphics::Draw(const GameTimer& gt)
 void Graphics::BuildDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 4 + (DEngine::gobjs.size() + PassCount) * FrameCount;
+    cbvHeapDesc.NumDescriptors = 20;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(&mCbvHeap)));
 
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
+        IID_PPV_ARGS(&SrvHeap)));
+
     // for shadow map
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-    dsvHeapDesc.NumDescriptors = 2;
+    dsvHeapDesc.NumDescriptors = 5;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     dsvHeapDesc.NodeMask = 0;
@@ -256,66 +259,6 @@ void Graphics::BuildDescriptorHeaps()
     }
 }
 
-void Graphics::BuildConstantBuffers()
-{
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
-
-	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
-    // Offset to the ith object constant buffer in the buffer.
-    int boxCBufIndex = 0;
-	cbAddress += boxCBufIndex*objCBByteSize;
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = cbAddress;
-	cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-	// md3dDevice->CreateConstantBufferView(
-	// 	&cbvDesc,
-	// 	mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-}
-
-void Graphics::BuildConstantBufferView()
-{
-    auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-    handle.Offset(4, mCbvSrvUavDescriptorSize);
-
-    unsigned int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
-    unsigned int passByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
-
-    for(int i = 0; i < FrameCount; i++){
-        auto passCB = mFrameResources[i]->PassCB->Resource();
-        D3D12_GPU_VIRTUAL_ADDRESS passAddress = passCB->GetGPUVirtualAddress();
-        for(int j = 0; j < PassCount; j++){
-            // 每个帧的每个pass常量, 绑定一个描述符
-            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-            cbvDesc.BufferLocation = passAddress;
-            cbvDesc.SizeInBytes = passByteSize;
-
-            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-            handle.Offset(mCbvSrvUavDescriptorSize);
-            passAddress += passByteSize;
-        }
-    }
-
-    for(int i = 0; i < FrameCount; i++){
-        auto objectCB = mFrameResources[i]->ObjectCB->Resource();
-        D3D12_GPU_VIRTUAL_ADDRESS objectAddress = objectCB->GetGPUVirtualAddress();
-        for(int j = 0; j < DEngine::gobjs.size(); j++){
-            // 每个帧的每个物体常量, 绑定一个描述符
-            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-            cbvDesc.BufferLocation = objectAddress;
-            cbvDesc.SizeInBytes = objByteSize;
-
-            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-
-            handle.Offset(mCbvSrvUavDescriptorSize);
-            objectAddress += objByteSize;
-        }
-    }
-}
-
 void Graphics::BuildRootSignature()
 {
 	// Shader programs typically require resources as input (constant buffers,
@@ -325,17 +268,20 @@ void Graphics::BuildRootSignature()
 	// thought of as defining the function signature.  
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
+    const int rootParamsCnt = 7;
+	CD3DX12_ROOT_PARAMETER slotRootParameter[rootParamsCnt];
+
     slotRootParameter[0].InitAsConstantBufferView(0);
+    slotRootParameter[1].InitAsConstantBufferView(1);
 
     // 材质描述符表
     CD3DX12_DESCRIPTOR_RANGE texTable;
     texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);
-    slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-    // 常量描述符表
-    CD3DX12_DESCRIPTOR_RANGE uniformTable;
-    uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
-    slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
+    slotRootParameter[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    // // 常量描述符表
+    // CD3DX12_DESCRIPTOR_RANGE uniformTable;
+    // uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+    // slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
 
     CD3DX12_DESCRIPTOR_RANGE passTable;
     passTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);
@@ -351,10 +297,12 @@ void Graphics::BuildRootSignature()
     texTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
     slotRootParameter[5].InitAsDescriptorTable(1, &texTable2, D3D12_SHADER_VISIBILITY_PIXEL);
 
+    slotRootParameter[6].InitAsConstantBufferView(3);
+
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(rootParamsCnt, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -531,17 +479,6 @@ void Graphics::LoadAssets()
         CreateTextureFromImage(mesh.texns[aiTextureType_NORMALS], normalTex.Resource, normalTex.UploadHeap);
         textures.push_back(normalTex);
     }
-}
-
-void Graphics::LoadTexture()
-{
-	MyTex.Name = "woodCrateTex";
-	MyTex.Filename = L"..\\assets\\WoodCrate01.dds";
-	// ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-	// 	mCommandList.Get(), MyTex.Filename.c_str(),
-	// 	MyTex.Resource, MyTex.UploadHeap));
-    string fn = "../assets/fallout_car_2/textures/default_baseColor.png";
-	CreateTextureFromImage(fn, MyTex.Resource, MyTex.UploadHeap);
 }
 
 // TODO: improve load speed, too slow now 
@@ -768,10 +705,9 @@ void Graphics::DrawShadowMap()
 
     mCommandList->SetPipelineState(SMPSO.Get());
 
-    auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    unsigned int passID = 4 + CurrentFrame*PassCount;
-    passHandle.Offset(passID * mCbvSrvUavDescriptorSize);
-    mCommandList->SetGraphicsRootDescriptorTable(3, passHandle);
+    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress();
+
+    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
     DrawObjects();
 
@@ -791,12 +727,16 @@ void Graphics::DrawObjects()
     handle.Offset(handleID * mCbvSrvUavDescriptorSize);
 
     int meshPtr = 0;
-    mCommandList->SetGraphicsRootDescriptorTable(2, handle);
+    
+    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();
 
     while(meshPtr+3 < mMeshIndex.size())
     {
+        mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
         mCommandList->DrawIndexedInstanced(mMeshIndex[meshPtr], 1, mMeshIndex[meshPtr + 1], mMeshIndex[meshPtr + 2], 0);
+
         meshPtr += 3;
+        // objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
     }
 }
 
@@ -831,12 +771,56 @@ void Graphics::InitDescriptorHeaps()
 
 void Graphics::InitSRV()
 {
-    PreZMap = std::make_unique<Resource>(md3dDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, mClientWidth, mClientHeight); 
-    auto handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    // baseColor/normal/specular + pre-Z + cluster structure
 
+    PreZMap = std::make_unique<Resource>(md3dDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, mClientWidth, mClientHeight); 
+    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    CpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    GpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    // 临时 dsv handle 测试效果
+    auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+    DsvHandle.Offset(mDsvDescriptorSize);
+    PreZMap->BuildDescriptors(CpuHandle, GpuHandle, DsvHandle);
 }
 
-void Graphics::InitCBV()
+void Graphics::PreZPass()
 {
+    mCommandList->RSSetViewports(1, &PreZMap->Viewport());
+    mCommandList->RSSetScissorRects(1, &PreZMap->ScissorRect());
 
+    // Change to DEPTH_WRITE.
+    mCommandList->ResourceBarrier(1, 
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            PreZMap->GetResource(),
+            D3D12_RESOURCE_STATE_GENERIC_READ, 
+            D3D12_RESOURCE_STATE_DEPTH_WRITE
+        )
+    );
+
+    // Clear the back buffer and depth buffer.
+    mCommandList->ClearDepthStencilView(PreZMap->Dsv(), 
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // // Set null render target because we are only going to draw to
+    // // depth buffer.  Setting a null render target will disable color writes.
+    // // Note the active PSO also must specify a render target count of 0.
+    mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
+
+    // 临时, 使用 shadow pass 的 pipeline state object 来测试效果
+    mCommandList->SetPipelineState(SMPSO.Get()); 
+
+    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+
+    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
+
+    DrawObjects();
+
+    // Change back to GENERIC_READ so we can read the texture in a shader.
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+            PreZMap->GetResource(),
+            D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+            D3D12_RESOURCE_STATE_GENERIC_READ
+        )
+    );
 }

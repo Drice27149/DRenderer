@@ -3,23 +3,18 @@ Texture2D gNormalMap: register(t1);
 Texture2D gShadowMap: register(t2);
 SamplerState gsamLinear: register(s0);
 
-cbuffer cbPerObject : register(b0)
+cbuffer RealPass : register(b0)
 {
-	float4x4 viewProj; 
+	float4x4 _View;
+	float4x4 _Proj;
+	float4x4 _SMView;
+	float4x4 _SMProj;
 };
 
-cbuffer ObjectCB: register(b1)
+cbuffer RealObject: register(b1)
 {
-	float4x4 model;
-}
-
-cbuffer PassCB: register(b2)
-{
-	float4x4 View;
-	float4x4 Proj;
-	float4x4 SMView;
-	float4x4 SMProj;
-}
+	float4x4 _model;
+};
 
 struct VertexIn
 {
@@ -44,11 +39,11 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	float4x4 mvp = mul(mul(model, View), Proj);
+	float4x4 mvp = mul(mul(_model, _View), _Proj);
 
 	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
 
-	float4x4 shadowMvp = mul(mul(model, SMView), SMProj);
+	float4x4 shadowMvp = mul(mul(_model, _SMView), _SMProj);
 	vout.clipPos = mul(float4(vin.vertex, 1.0f), shadowMvp);
 	// uv
 	vout.uv = vin.texcoord;
