@@ -33,7 +33,7 @@ using std::cout;
 // gcolor: 5
 // ssao: 6
 
-const float PI = acos(-1.0);
+const float PI = (float) acos(-1.0);
 
 struct Vertex {
     vec3 vertex;     // 顶点坐标

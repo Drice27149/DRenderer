@@ -25,7 +25,7 @@ Object* AssimpLoader::LoadFile(string fn)
     }
 
     Assimp::Importer import;
-    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure);	
+    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure | aiProcess_GenSmoothNormals);
 	
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
     {

@@ -403,31 +403,31 @@ void BoxApp::BuildBoxGeometry()
 {
     vector<Vertex> vs;
     vector<unsigned int> ids;
-    for(Object* obj: DEngine::gobjs){
-        for(Mesh mesh: obj->meshes){
-            mMeshIndex.push_back(mesh.ids.size());
-            mMeshIndex.push_back(ids.size());
-            mMeshIndex.push_back(vs.size());
+    //for(Object* obj: DEngine::gobjs){
+    //    for(Mesh mesh: obj->meshes){
+    //        mMeshIndex.push_back(mesh.ids.size());
+    //        mMeshIndex.push_back(ids.size());
+    //        mMeshIndex.push_back(vs.size());
 
-            for(Vertex v: mesh.vs) vs.push_back(v);
-            for(unsigned int id: mesh.ids) ids.push_back(id);
-        }
-    }
+    //        for(Vertex v: mesh.vs) vs.push_back(v);
+    //        for(unsigned int id: mesh.ids) ids.push_back(id);
+    //    }
+    //}
 
-    Panel panel;
+    //Panel panel;
 
-    mMeshIndex.push_back(panel.ids.size());
-    mMeshIndex.push_back(ids.size());
-    mMeshIndex.push_back(vs.size());
+    //mMeshIndex.push_back(panel.ids.size());
+    //mMeshIndex.push_back(ids.size());
+    //mMeshIndex.push_back(vs.size());
 
-    for(Vertex v: panel.vs) vs.push_back(v);
-    for(unsigned int id: panel.ids) ids.push_back(id);
+    //for(Vertex v: panel.vs) vs.push_back(v);
+    //for(unsigned int id: panel.ids) ids.push_back(id);
 
     SkyBox skybox;
 
-    mMeshIndex.push_back(skybox.ids.size());
-    mMeshIndex.push_back(ids.size());
-    mMeshIndex.push_back(vs.size());
+    //mMeshIndex.push_back(skybox.ids.size());
+    //mMeshIndex.push_back(ids.size());
+    //mMeshIndex.push_back(vs.size());
 
     for(Vertex v: skybox.vs) vs.push_back(v);
     for(unsigned int id: skybox.ids) ids.push_back(id);
@@ -738,9 +738,9 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BoxApp::BuildFrameResources()
 {
-    for(int i = 0; i < FrameCount; i++){
-        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), PassCount, DEngine::gobjs.size()));
-    }
+    //for(int i = 0; i < FrameCount; i++){
+    //    mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), PassCount, DEngine::gobjs.size()));
+    //}
 }
 
 void BoxApp::BuildShaderResourceView()

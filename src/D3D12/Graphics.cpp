@@ -352,9 +352,9 @@ void Graphics::BuildBoxGeometry()
     vector<unsigned int> ids;
     for(Object* obj: DEngine::gobjs){
         for(Mesh mesh: obj->meshes){
-            mMeshIndex.push_back(mesh.ids.size());
-            mMeshIndex.push_back(ids.size());
-            mMeshIndex.push_back(vs.size());
+            mMeshIndex.push_back((unsigned int) mesh.ids.size());
+            mMeshIndex.push_back((unsigned int) ids.size());
+            mMeshIndex.push_back((unsigned int) vs.size());
 
             for(Vertex v: mesh.vs) vs.push_back(v);
             for(unsigned int id: mesh.ids) ids.push_back(id);
@@ -363,24 +363,24 @@ void Graphics::BuildBoxGeometry()
 
     Panel panel;
 
-    mMeshIndex.push_back(panel.ids.size());
-    mMeshIndex.push_back(ids.size());
-    mMeshIndex.push_back(vs.size());
+    mMeshIndex.push_back((unsigned int) panel.ids.size());
+    mMeshIndex.push_back((unsigned int) ids.size());
+    mMeshIndex.push_back((unsigned int) vs.size());
 
     for(Vertex v: panel.vs) vs.push_back(v);
     for(unsigned int id: panel.ids) ids.push_back(id);
 
     SkyBox skybox;
 
-    mMeshIndex.push_back(skybox.ids.size());
-    mMeshIndex.push_back(ids.size());
-    mMeshIndex.push_back(vs.size());
+    mMeshIndex.push_back((unsigned int) skybox.ids.size());
+    mMeshIndex.push_back((unsigned int) ids.size());
+    mMeshIndex.push_back((unsigned int) vs.size());
 
     for(Vertex v: skybox.vs) vs.push_back(v);
     for(unsigned int id: skybox.ids) ids.push_back(id);
 
-    int vsSize = sizeof(Vertex) * vs.size();
-    int idsSize = sizeof(unsigned int) * ids.size();
+    unsigned int vsSize = sizeof(Vertex) * vs.size();
+    unsigned int idsSize = sizeof(unsigned int) * ids.size();
 
     mMeshGeo = std::make_unique<MeshGeometry>();
     
@@ -640,7 +640,7 @@ void Graphics::OnRMouseUp(WPARAM btnState, int x, int y)
 void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 {
     if(DEngine::instance != nullptr)
-            DEngine::GetInputMgr().Tick(x, y);
+            DEngine::GetInputMgr().Tick((float)x, (float)y);
 
     if((btnState & MK_LBUTTON) != 0)
     {
@@ -675,7 +675,8 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 void Graphics::BuildFrameResources()
 {
     for(int i = 0; i < FrameCount; i++){
-        mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), PassCount, DEngine::gobjs.size()));
+        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)DEngine::gobjs.size());
+        mFrameResources.push_back(std::move(newFrameResource));
     }
 }
 
@@ -723,20 +724,20 @@ void Graphics::DrawObjects()
 
     auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     // 替纹理贴图 offset 的空间要加上
-    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 4 + FrameCount*PassCount;
+    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 4 + (unsigned int)FrameCount*PassCount;
     handle.Offset(handleID * mCbvSrvUavDescriptorSize);
 
     int meshPtr = 0;
     
     auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();
-
+    
     while(meshPtr+3 < mMeshIndex.size())
     {
         mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
         mCommandList->DrawIndexedInstanced(mMeshIndex[meshPtr], 1, mMeshIndex[meshPtr + 1], mMeshIndex[meshPtr + 2], 0);
 
         meshPtr += 3;
-        // objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+        if(meshPtr == 3) objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
     }
 }
 
@@ -752,7 +753,7 @@ void Graphics::DrawSkyBox()
     auto skyHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     skyHandle.Offset(mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootDescriptorTable(5, skyHandle);
-    int drawIndex = mMeshIndex.size() - 3;
+    unsigned int drawIndex = mMeshIndex.size() - 3;
     mCommandList->DrawIndexedInstanced(mMeshIndex[drawIndex], 1, mMeshIndex[drawIndex + 1], mMeshIndex[drawIndex + 2], 0);
 }
 

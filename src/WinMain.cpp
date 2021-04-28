@@ -23,18 +23,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         Graphics theApp(hInstance);
 
-        string fn = "../assets/corvette_stingray/scene.gltf";
-        AssimpLoader* ld = new AssimpLoader();
-        DEngine::gobj = ld->LoadFile(fn);
-
         DEngine::gobjs.clear();
 
+        vector<string> fns = { "../assets/LightShapes/cone.obj", "../assets/LightShapes/cube.obj", "../assets/LightShapes/sphere.obj" };
+
         for(int i = 0; i < 1; i++){
-            string fn = "../assets/corvette_stingray/scene.gltf";
+            // string fn = "../assets/corvette_stingray/scene.gltf";
+            string fn = fns[i];
             AssimpLoader* ld = new AssimpLoader();
             Object* nobj = ld->LoadFile(fn);
 
-            nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3((300.0)*i, 0.0, 0.0)));
+            nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.0, 0.0)));
 
             DEngine::gobjs.push_back(nobj);
         }
