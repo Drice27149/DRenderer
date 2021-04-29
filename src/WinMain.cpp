@@ -33,7 +33,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
             AssimpLoader* ld = new AssimpLoader();
             Object* nobj = ld->LoadFile(fn);
 
-            nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.0, 0.0)));
+            nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
 
             DEngine::gobjs.push_back(nobj);
         }

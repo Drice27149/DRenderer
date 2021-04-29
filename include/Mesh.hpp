@@ -30,3 +30,7 @@ class SkyBox: public Mesh {
 public:
     SkyBox(float up = 200, float down = -200, float left = -200, float right = 200, float front = 200, float back = -200);
 };
+
+class Frustum: public Mesh {
+    Frustum(float up, float down, float left, float right, float front, float back, int xCnt, int yCnt, int zCnt);
+};

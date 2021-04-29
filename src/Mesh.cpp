@@ -104,4 +104,10 @@ SkyBox::SkyBox(float up, float down, float left, float right, float front, float
     };
 }
 
+Frustum::Frustum(float up, float down, float left, float right, float front, float back, int xCnt, int yCnt, int zCnt)
+{
+
+
+}
+
 

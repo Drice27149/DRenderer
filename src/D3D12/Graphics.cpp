@@ -67,6 +67,9 @@ void Graphics::UpdateObjUniform()
         objCB->CopyData(index, temp);
         index++;
     }
+    ObjectUniform temp;
+    temp.model = glm::transpose(glm::mat4(1.0));
+    objCB->CopyData(index, temp);
 }
 
 void Graphics::UpdatePassUniform()
@@ -675,7 +678,7 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 void Graphics::BuildFrameResources()
 {
     for(int i = 0; i < FrameCount; i++){
-        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)DEngine::gobjs.size());
+        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)(DEngine::gobjs.size()+1));
         mFrameResources.push_back(std::move(newFrameResource));
     }
 }
