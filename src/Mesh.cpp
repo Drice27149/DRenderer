@@ -106,8 +106,7 @@ SkyBox::SkyBox(float up, float down, float left, float right, float front, float
 
 Frustum::Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, int zCnt)
 {
-
-
+    
 }
 
 
