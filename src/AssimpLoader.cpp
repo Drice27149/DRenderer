@@ -40,11 +40,11 @@ Object* AssimpLoader::LoadFile(string fn)
 
 void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene)
 {
-    for(int i = 0; i < node->mNumMeshes; i++){
+    for(unsigned int i = 0; i < node->mNumMeshes; i++){
         aiMesh* cm = scene->mMeshes[node->mMeshes[i]];
         ProcessMesh(cm, scene);
     }
-    for(int i = 0; i < node->mNumChildren; i++){
+    for(unsigned int i = 0; i < node->mNumChildren; i++){
         ProcessNode(node->mChildren[i], scene);
     }
 }
@@ -60,7 +60,7 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     texs.resize(aiTextureType_UNKNOWN + 1);
     mask = 0;
 
-    for(int i = 0; i < mesh->mNumVertices; i++){
+    for(unsigned int i = 0; i < mesh->mNumVertices; i++){
         Vertex v;
         v.vertex = vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         if(mesh->mNormals){ 
@@ -73,8 +73,8 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
         }
         vs.push_back(v);
     }
-    for(int i = 0; i < mesh->mNumFaces; i++){
-        for(int j = 0; j < mesh->mFaces[i].mNumIndices; j++){
+    for(unsigned int i = 0; i < mesh->mNumFaces; i++){
+        for(unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++){
             ids.push_back(mesh->mFaces[i].mIndices[j]);
         }
     }
