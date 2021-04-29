@@ -32,5 +32,6 @@ public:
 };
 
 class Frustum: public Mesh {
+public:
     Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, int zCnt);
 };

@@ -4,6 +4,7 @@
 #include "FrameResource.h"
 #include "ShadowMap.h"
 #include "Resource.hpp"
+#include "DMesh.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -50,12 +51,14 @@ private:
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
+    void BuildDebugCluster();
     void BuildPSO();
     void BuildFrameResources();
 
     void DrawSkyBox();
     void DrawShadowMap();
     void DrawObjects();
+    void DrawDebugCluster();
 
     void InitDescriptorHeaps();
     void InitSRV();
@@ -101,8 +104,6 @@ private:
     POINT mLastMousePos;
 
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
-    std::unique_ptr<MeshGeometry> mMeshGeo = nullptr;
-    std::vector<unsigned int> mMeshIndex;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE SMHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE GPUSMHandle;
@@ -118,9 +119,18 @@ private:
 
     ComPtr<ID3D12DescriptorHeap> SrvHeap;
 
+    // 用来存取 Pre-Z pass 的标识符
     CD3DX12_GPU_DESCRIPTOR_HANDLE CPUPreZ;
     CD3DX12_GPU_DESCRIPTOR_HANDLE GPUPreZ;
-
     std::unique_ptr<Resource> PreZMap;
+    // vertex buffer 和 index buffer
+    std::unique_ptr<DMesh> objMesh = nullptr;
+    std::unique_ptr<DMesh> panelMesh = nullptr;
+    std::unique_ptr<DMesh> skyMesh = nullptr;
+    std::unique_ptr<DMesh> lineMesh = nullptr;
+    std::unique_ptr<DMesh> debugMesh = nullptr;
+    std::unique_ptr<DMesh> debugClusterMesh = nullptr;
+    // 暂时, 获取一个单位阵
+    D3D12_GPU_VIRTUAL_ADDRESS identityAddr;
 };
 

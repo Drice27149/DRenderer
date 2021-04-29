@@ -41,6 +41,12 @@ struct Vertex {
     vec2 texCoord;    // 顶点纹理坐标
     vec3 tangent;    // tagent, 定点切线
     vec3 bitangent;    // bitTagent, 同上
+
+    Vertex(){}
+
+    Vertex(vec3 v){
+        vertex = v;
+    }
 };
 
 struct GraphicData {

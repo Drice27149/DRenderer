@@ -35,6 +35,7 @@ bool Graphics::Initialize()
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
+    BuildDebugCluster();
     BuildPSO();
 
     // Execute the initialization commands.
@@ -60,16 +61,23 @@ void Graphics::OnResize()
 void Graphics::UpdateObjUniform()
 {
     auto objCB = mFrameResources[CurrentFrame]->ObjectCB.get();
+    auto objAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();
+    unsigned int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+
     int index = 0;
     for(Object* obj: DEngine::gobjs){
         ObjectUniform temp;
         temp.model = glm::transpose(obj->model);
         objCB->CopyData(index, temp);
         index++;
+
+        objAddr += objByteSize;
     }
     ObjectUniform temp;
     temp.model = glm::transpose(glm::mat4(1.0));
     objCB->CopyData(index, temp);
+
+    identityAddr = objAddr;
 }
 
 void Graphics::UpdatePassUniform()
@@ -177,6 +185,8 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
     DrawObjects();
+
+    DrawDebugCluster();
 
     DrawSkyBox();
 
@@ -351,56 +361,27 @@ void Graphics::BuildShadersAndInputLayout()
 
 void Graphics::BuildBoxGeometry()
 {
+    // 合并所有 obj 物体到一个缓冲区
     vector<Vertex> vs;
     vector<unsigned int> ids;
     for(Object* obj: DEngine::gobjs){
         for(Mesh mesh: obj->meshes){
-            mMeshIndex.push_back((unsigned int) mesh.ids.size());
-            mMeshIndex.push_back((unsigned int) ids.size());
-            mMeshIndex.push_back((unsigned int) vs.size());
-
             for(Vertex v: mesh.vs) vs.push_back(v);
             for(unsigned int id: mesh.ids) ids.push_back(id);
         }
     }
 
+    objMesh = std::make_unique<DMesh>();
+    objMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), vs, ids);
+
     Panel panel;
-
-    mMeshIndex.push_back((unsigned int) panel.ids.size());
-    mMeshIndex.push_back((unsigned int) ids.size());
-    mMeshIndex.push_back((unsigned int) vs.size());
-
-    for(Vertex v: panel.vs) vs.push_back(v);
-    for(unsigned int id: panel.ids) ids.push_back(id);
+    panelMesh = std::make_unique<DMesh>();
+    panelMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), panel.vs, panel.ids);
 
     SkyBox skybox;
 
-    mMeshIndex.push_back((unsigned int) skybox.ids.size());
-    mMeshIndex.push_back((unsigned int) ids.size());
-    mMeshIndex.push_back((unsigned int) vs.size());
-
-    for(Vertex v: skybox.vs) vs.push_back(v);
-    for(unsigned int id: skybox.ids) ids.push_back(id);
-
-    unsigned int vsSize = sizeof(Vertex) * vs.size();
-    unsigned int idsSize = sizeof(unsigned int) * ids.size();
-
-    mMeshGeo = std::make_unique<MeshGeometry>();
-    
-    ThrowIfFailed(D3DCreateBlob(vsSize, &mMeshGeo->VertexBufferCPU));
-	CopyMemory(mMeshGeo->VertexBufferCPU->GetBufferPointer(), vs.data(), vsSize);
-
-	ThrowIfFailed(D3DCreateBlob(idsSize, &mMeshGeo->IndexBufferCPU));
-	CopyMemory(mMeshGeo->IndexBufferCPU->GetBufferPointer(), ids.data(), idsSize);
-
-	mMeshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), vs.data(), vsSize, mMeshGeo->VertexBufferUploader);
-
-	mMeshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), ids.data(), idsSize, mMeshGeo->IndexBufferUploader);
-
-	mMeshGeo->VertexByteStride = sizeof(Vertex);
-	mMeshGeo->VertexBufferByteSize = vsSize;
-	mMeshGeo->IndexFormat = DXGI_FORMAT_R32_UINT;
-	mMeshGeo->IndexBufferByteSize = idsSize;
+    skyMesh = std::make_unique<DMesh>();
+    skyMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), skybox.vs, skybox.ids);
 }
 
 void Graphics::BuildPSO()
@@ -721,27 +702,30 @@ void Graphics::DrawShadowMap()
 
 void Graphics::DrawObjects()
 {
-    mCommandList->IASetVertexBuffers(0, 1, &mMeshGeo->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&mMeshGeo->IndexBufferView());
+    mCommandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&objMesh->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    
+    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();    
+    int idOffset = 0, vsOffset = 0;
+    
+    for(Object* obj: DEngine::gobjs){
+        mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
+
+        for(Mesh mesh: obj->meshes){
+            int idSize = mesh.ids.size();
+            mCommandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+            idOffset += mesh.ids.size();
+            vsOffset += mesh.vs.size();
+        }
+    }
+
+    mCommandList->IASetVertexBuffers(0, 1, &panelMesh->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&panelMesh->IndexBufferView());
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // 替纹理贴图 offset 的空间要加上
-    unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 4 + (unsigned int)FrameCount*PassCount;
-    handle.Offset(handleID * mCbvSrvUavDescriptorSize);
-
-    int meshPtr = 0;
-    
-    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();
-    
-    while(meshPtr+3 < mMeshIndex.size())
-    {
-        mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
-        mCommandList->DrawIndexedInstanced(mMeshIndex[meshPtr], 1, mMeshIndex[meshPtr + 1], mMeshIndex[meshPtr + 2], 0);
-
-        meshPtr += 3;
-        if(meshPtr == 3) objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
-    }
+    mCommandList->SetGraphicsRootConstantBufferView(1, identityAddr);
+    mCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 void Graphics::LoadCubeMap()
@@ -753,11 +737,16 @@ void Graphics::LoadCubeMap()
 void Graphics::DrawSkyBox()
 {
     mCommandList->SetPipelineState(SkyPSO.Get());
+    
+    mCommandList->IASetVertexBuffers(0, 1, &skyMesh->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&skyMesh->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+ 
     auto skyHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     skyHandle.Offset(mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootDescriptorTable(5, skyHandle);
-    unsigned int drawIndex = mMeshIndex.size() - 3;
-    mCommandList->DrawIndexedInstanced(mMeshIndex[drawIndex], 1, mMeshIndex[drawIndex + 1], mMeshIndex[drawIndex + 2], 0);
+    // index count, instance count, index offset, vertex offset, 0
+    mCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 void Graphics::InitDescriptorHeaps()
@@ -827,4 +816,21 @@ void Graphics::PreZPass()
             D3D12_RESOURCE_STATE_GENERIC_READ
         )
     );
+}
+
+void Graphics::BuildDebugCluster()
+{
+    debugClusterMesh = std::make_unique<DMesh>();
+    Frustum frustum(45.0, 1.0, 1.0, 1000.0, -1, -1, -1);
+    debugClusterMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), frustum.vs, frustum.ids);
+}
+
+void Graphics::DrawDebugCluster()
+{
+    mCommandList->IASetVertexBuffers(0, 1, &debugClusterMesh->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&debugClusterMesh->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+ 
+    Frustum frustum(45.0, 1.0, 1.0, 1000.0, -1, -1, -1);
+    mCommandList->DrawIndexedInstanced(frustum.ids.size(), 1, 0, 0, 0);
 }
