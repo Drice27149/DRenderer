@@ -174,11 +174,11 @@ void Graphics::Draw(const GameTimer& gt)
 	
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-    // ÎÆÀíÌùÍ¼
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
     mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // ³£Á¿ÒÑ¾­Ã»ÓÃ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ã»ï¿½ï¿½
     // mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
-    // shadow map ÎÆÀí
+    // shadow map ï¿½ï¿½ï¿½ï¿½
     mCommandList->SetGraphicsRootDescriptorTable(4, GPUSMHandle);
 
     auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
@@ -287,11 +287,11 @@ void Graphics::BuildRootSignature()
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
 
-    // ²ÄÖÊÃèÊö·û±í
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     CD3DX12_DESCRIPTOR_RANGE texTable;
     texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);
     slotRootParameter[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-    // // ³£Á¿ÃèÊö·û±í
+    // // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     // CD3DX12_DESCRIPTOR_RANGE uniformTable;
     // uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
     // slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
@@ -361,7 +361,7 @@ void Graphics::BuildShadersAndInputLayout()
 
 void Graphics::BuildBoxGeometry()
 {
-    // ºÏ²¢ËùÓÐ obj ÎïÌåµ½Ò»¸ö»º³åÇø
+    // ï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½ obj ï¿½ï¿½ï¿½åµ½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     vector<Vertex> vs;
     vector<unsigned int> ids;
     for(Object* obj: DEngine::gobjs){
@@ -451,7 +451,7 @@ void Graphics::BuildPSO()
 void Graphics::LoadAssets()
 {
     if(DEngine::gobj == nullptr) return ;
-    // Ä¿Ç°, ¼ÙÉèÖ»ÓÐÒ»¸ö mesh
+    // Ä¿Ç°, ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½Ò»ï¿½ï¿½ mesh
     const Mesh& mesh = DEngine::gobj->meshes[0];
     if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
         TTexture baseColorTex;
@@ -751,7 +751,7 @@ void Graphics::DrawSkyBox()
 
 void Graphics::InitDescriptorHeaps()
 {
-    // ¿ÉÄÜÓÐºÜ¶à, ÔÝÊ±¿ª×Å 32 ¸öÃèÊö·û
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ÐºÜ¶ï¿½, ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ 32 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     // 1. Pre-Z
     D3D12_DESCRIPTOR_HEAP_DESC desc;
     desc.NumDescriptors = 32;
@@ -771,7 +771,7 @@ void Graphics::InitSRV()
     CpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
     auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
     GpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
-    // ÁÙÊ± dsv handle ²âÊÔÐ§¹û
+    // ï¿½ï¿½Ê± dsv handle ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
     auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
     DsvHandle.Offset(mDsvDescriptorSize);
     PreZMap->BuildDescriptors(CpuHandle, GpuHandle, DsvHandle);
@@ -800,7 +800,7 @@ void Graphics::PreZPass()
     // // Note the active PSO also must specify a render target count of 0.
     mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
 
-    // ÁÙÊ±, Ê¹ÓÃ shadow pass µÄ pipeline state object À´²âÊÔÐ§¹û
+    // ï¿½ï¿½Ê±, Ê¹ï¿½ï¿½ shadow pass ï¿½ï¿½ pipeline state object ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
     mCommandList->SetPipelineState(SMPSO.Get()); 
 
     auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
@@ -821,7 +821,7 @@ void Graphics::PreZPass()
 void Graphics::BuildDebugCluster()
 {
     debugClusterMesh = std::make_unique<DMesh>();
-    Frustum frustum(45.0, 1.0, 1.0, 1000.0, -1, -1, -1);
+    Frustum frustum(45.0, 1.0, 1.0, 10.0, -1, -1, -1);
     debugClusterMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), frustum.vs, frustum.ids);
 }
 
@@ -831,6 +831,6 @@ void Graphics::DrawDebugCluster()
     mCommandList->IASetIndexBuffer(&debugClusterMesh->IndexBufferView());
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
  
-    Frustum frustum(45.0, 1.0, 1.0, 1000.0, -1, -1, -1);
+    Frustum frustum(45.0, 1.0, 1.0, 1.0, -1, -1, -1);
     mCommandList->DrawIndexedInstanced(frustum.ids.size(), 1, 0, 0, 0);
 }

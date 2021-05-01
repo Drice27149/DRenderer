@@ -10,9 +10,9 @@ Mesh::Mesh()
 Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids, vector<string> texns, int mask):
 vs(vs), ids(ids), texns(texns), mask(mask)
 {
-    // // ╪сть╤╔╣Црт╪╟╤╔╣ЦйЩ╬щ
+    // // О©╫О©╫О©╫ь╤О©╫О©╫О©╫О©╫т╪О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
     // GraphicAPI::LoadMesh(*this);
-    // // ╪стьнфюМлЫм╪
+    // // О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫м╪
     // texs.resize(aiTextureType_UNKNOWN + 1);
     // for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
     //     if (mask & (1 << it)) {
@@ -28,7 +28,7 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     vec2 dx = nx * glm::length(b-a)/(float)(lines-1);
     vec2 dy = ny * glm::length(d-a)/(float)(lines-1);
     vs.resize(lines*4);
-    // пп
+    // О©╫О©╫
     vec2 up = a;
     vec2 down = d;
     for(int i = 0; i < lines; i++){
@@ -37,7 +37,7 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
         up += dx;
         down += dx;
     }
-    // ап
+    // О©╫О©╫
     vec2 left = a;
     vec2 right = b;
     for(int i = 0; i < lines; i++){
@@ -124,10 +124,10 @@ Frustum::Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, 
         Vertex(vec3(width, height, -n)),
         Vertex(vec3(width, -height, -n)),
         Vertex(vec3(-width, -height, -n)),
-        Vertex(vec3(-width, height, -f)),
-        Vertex(vec3(width, height, -f)),
-        Vertex(vec3(width, -height, -f)),
-        Vertex(vec3(-width, -height, -f))
+        Vertex(vec3(-far_width, far_height, -f)),
+        Vertex(vec3(far_width, far_height, -f)),
+        Vertex(vec3(far_width, -far_height, -f)),
+        Vertex(vec3(-far_width, -far_height, -f))
     };
 
     ids = {
