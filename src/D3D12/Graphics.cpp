@@ -72,11 +72,6 @@ void Graphics::UpdateObjUniform()
 
         objAddr += objByteSize;
     }
-    ObjectUniform temp;
-    temp.model = glm::transpose(glm::mat4(1.0));
-    objCB->CopyData(index, temp);
-
-    identityAddr = objAddr;
 }
 
 void Graphics::UpdatePassUniform()
@@ -201,16 +196,21 @@ void Graphics::BuildDescriptorHeaps()
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
         &dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+    rtvHeapDesc.NumDescriptors = 5;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    rtvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
+        &rtvHeapDesc, IID_PPV_ARGS(RTVHeap.GetAddressOf())));
 
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
     SMHandle = hDescriptor;
     GPUSMHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     // GPUSMHandle.Offset(2*mCbvSrvUavDescriptorSize);
-
     hDescriptor.Offset(mCbvSrvUavDescriptorSize);
 
     auto SkyTex = CubeTex.Resource;
-
     assert(SkyTex);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -625,7 +625,7 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 void Graphics::BuildFrameResources()
 {
     for(int i = 0; i < FrameCount; i++){
-        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)(DEngine::gobjs.size()+1));
+        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)(DEngine::gobjs.size()));
         mFrameResources.push_back(std::move(newFrameResource));
     }
 }
@@ -704,15 +704,26 @@ void Graphics::InitSRV()
 {
     // baseColor/normal/specular + pre-Z + cluster structure
 
-    PreZMap = std::make_unique<Resource>(md3dDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, mClientWidth, mClientHeight); 
     auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
     CpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
     auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
     GpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+
+    PreZMap = std::make_unique<Resource>(md3dDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, mClientWidth, mClientHeight); 
+   
     // ��ʱ dsv handle ����Ч��
     auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
     DsvHandle.Offset(mDsvDescriptorSize);
     PreZMap->BuildDescriptors(CpuHandle, GpuHandle, DsvHandle);
+
+    CpuHandle.Offset(mCbvSrvUavDescriptorSize);
+    GpuHandle.Offset(mCbvSrvUavDescriptorSize);
+
+    clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), 
+        16, 8, 
+        CpuHandle, GpuHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart())
+    );
+    clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
 }
 
 void Graphics::PreZPass()
@@ -787,4 +798,13 @@ void Graphics::DrawObjects(DrawType drawType)
 void Graphics::DrawLines()
 {
     DrawObjects(DrawType::WhiteLines);
+}
+
+void Graphics::PrepareCluster()
+{
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::LightSteelBlue, 0, nullptr);
+	mCommandList->OMSetRenderTargets(1, &clusterDepth->WriteHandle(), true, nullptr);
+
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 }

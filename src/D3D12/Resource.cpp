@@ -30,7 +30,7 @@ Resource::Resource(ID3D12Device* device, D3D12_RESOURCE_DESC desc)
 		&desc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&mShadowMap)));
+		IID_PPV_ARGS(&mResource)));
 }
 
 UINT Resource::Width()const
@@ -45,7 +45,7 @@ UINT Resource::Height()const
 
 ID3D12Resource*  Resource::GetResource()
 {
-	return mShadowMap.Get();
+	return mResource.Get();
 }
 
 CD3DX12_GPU_DESCRIPTOR_HANDLE Resource::Srv()const
@@ -72,9 +72,9 @@ void Resource::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	                             CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
 	                             CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
 {
-	// CpuSrv »á±»ÓÃÀ´´´½¨ shader resource view
-	// CpuXXv »áÓÃÀ´±»´´½¨¶ÔÓ¦µÄ view ÀàÐÍ, ÓÃÀ´Ð´
-	// GpuSrv »áÓÃÀ´ setGraphics(), ÓÃÀ´¶Á
+	// CpuSrv ï¿½á±»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ shader resource view
+	// CpuXXv ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ view ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½Ð´
+	// GpuSrv ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ setGraphics(), ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 	// Save references to the descriptors. 
 	mhCpuSrv = hCpuSrv;
@@ -110,7 +110,7 @@ void Resource::BuildDescriptors()
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     srvDesc.Texture2D.PlaneSlice = 0;
-    md3dDevice->CreateShaderResourceView(mShadowMap.Get(), &srvDesc, mhCpuSrv);
+    md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, mhCpuSrv);
 
 	// Create DSV to resource so we can render to the shadow map.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc; 
@@ -118,7 +118,7 @@ void Resource::BuildDescriptors()
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     dsvDesc.Texture2D.MipSlice = 0;
-	md3dDevice->CreateDepthStencilView(mShadowMap.Get(), &dsvDesc, mhCpuDsv);
+	md3dDevice->CreateDepthStencilView(mResource.Get(), &dsvDesc, mhCpuDsv);
 }
 
 void Resource::BuildResource()
@@ -148,6 +148,76 @@ void Resource::BuildResource()
 		&texDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
 		&optClear,
-		IID_PPV_ARGS(&mShadowMap)));
+		IID_PPV_ARGS(&mResource)));
 }
+
+Resource::Resource(
+	ID3D12Device* device, 
+	unsigned int width, 
+	unsigned int height, 
+	CD3DX12_CPU_DESCRIPTOR_HANDLE createHandle,
+	CD3DX12_GPU_DESCRIPTOR_HANDLE readHandle,
+	CD3DX12_CPU_DESCRIPTOR_HANDLE writeHandle
+)
+{
+	md3dDevice = device;
+	mWidth = width;
+	mHeight = height;
+	this->createHandle = createHandle;
+	this->readHandle = readHandle;
+	this->writeHandle = writeHandle; 
+}
+
+void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
+{
+	CD3DX12_RESOURCE_DESC texDesc(
+		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		0,		// alignment
+		mWidth, mHeight, number,
+		1,		// mip levels
+		format,
+		1, 0,	// sample count/quality
+		D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+	// Performance tip: Tell the runtime at resource creation the desired clear value. 
+	D3D12_CLEAR_VALUE clearValue;
+	clearValue.Format = format;
+	// if (clear_color == 0)
+	// {
+	// 	float clearColor[] = { 0, 0, 0, 1 };
+	// 	memcpy(&clearValue.Color[0], &clearColor[0], 4 * sizeof(float));
+	// }
+	// else
+	// 	memcpy(&clearValue.Color[0], &clear_color[0], 4 * sizeof(float));
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		&clearValue,
+		IID_PPV_ARGS(&mResource)
+	);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = format; 
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2DArray.ArraySize = number;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    srvDesc.Texture2D.PlaneSlice = 0;
+    md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, createHandle);
+
+	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+	ZeroMemory(&RTVDesc, sizeof(RTVDesc));
+	RTVDesc.Format = format;
+	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+	RTVDesc.Texture2DArray.ArraySize = number;
+
+	md3dDevice->CreateRenderTargetView(mResource.Get(), &RTVDesc, writeHandle);
+}
+
 

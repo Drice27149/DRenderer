@@ -7,6 +7,14 @@ class Resource
 public:
 	Resource(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height);
     Resource(ID3D12Device* device, D3D12_RESOURCE_DESC desc);
+	Resource(
+		ID3D12Device* device, 
+		unsigned int width, 
+		unsigned int height, 
+		CD3DX12_CPU_DESCRIPTOR_HANDLE createHandle,
+		CD3DX12_GPU_DESCRIPTOR_HANDLE readHandle,
+		CD3DX12_CPU_DESCRIPTOR_HANDLE writeHandle
+	);
 	Resource(const Resource& rhs)=delete;
 	Resource& operator=(const Resource& rhs)=delete;
 	~Resource()=default;
@@ -20,7 +28,7 @@ public:
 	D3D12_VIEWPORT Viewport()const;
 	D3D12_RECT ScissorRect()const;
 
-	void BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
+	void BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv, CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
 	void OnResize(UINT newWidth, UINT newHeight);
 
 private:
@@ -30,19 +38,28 @@ private:
 private:
 
 	ID3D12Device* md3dDevice = nullptr;
-
 	D3D12_VIEWPORT mViewport;
 	D3D12_RECT mScissorRect;
-
 	UINT mWidth = 0;
 	UINT mHeight = 0;
+
 	DXGI_FORMAT mFormat = DXGI_FORMAT_R24G8_TYPELESS;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhGpuSrv;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuDsv;
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> mShadowMap = nullptr;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE createHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE readHandle;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE writeHandle;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> mResource = nullptr;
+
+	// New
+public:
+	void BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE ReadHandle()const { return readHandle; }
+	CD3DX12_CPU_DESCRIPTOR_HANDLE WriteHandle()const { return writeHandle; }
 };
 
  

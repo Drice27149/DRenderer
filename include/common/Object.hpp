@@ -7,7 +7,8 @@ enum DrawType {
     Normal,
     WhiteLines,
     RedLines,
-	LightSource
+	SpotLgiht, 	// frustum
+	PointLight	// sphere
 };
 
 class Object{

@@ -59,6 +59,7 @@ private:
     void InitSRV();
 
     void PreZPass();
+    void PrepareCluster();
 
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
@@ -111,6 +112,7 @@ private:
 //  -- begin of the new journey
 
     ComPtr<ID3D12DescriptorHeap> SrvHeap;
+    ComPtr<ID3D12DescriptorHeap> RTVHeap;
 
     // ������ȡ Pre-Z pass �ı�ʶ��
     CD3DX12_GPU_DESCRIPTOR_HANDLE CPUPreZ;
@@ -122,7 +124,6 @@ private:
 
     std::vector<std::unique_ptr<DMesh>> lineMeshes;
 
-    // ��ʱ, ��ȡһ����λ��
-    D3D12_GPU_VIRTUAL_ADDRESS identityAddr;
+    std::unique_ptr<Resource> clusterDepth;
 };
 
