@@ -3,6 +3,13 @@
 #include "Global.hpp"
 #include "Mesh.hpp"
 
+enum DrawType {
+    Normal,
+    WhiteLines,
+    RedLines,
+	LightSource
+};
+
 class Object{
 public:
 	Object();
@@ -10,4 +17,5 @@ public:
 	void Transform(mat4 trans);
 public:
 	mat4 model;
+	DrawType drawType;
 };

@@ -25,7 +25,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         DEngine::gobjs.clear();
 
-        vector<string> fns = { "../assets/LightShapes/cone.obj", "../assets/LightShapes/cube.obj", "../assets/LightShapes/sphere.obj" };
+        vector<string> fns = { "../assets/LightShapes/sphere.obj", "../assets/LightShapes/cube.obj", "../assets/LightShapes/sphere.obj" };
 
         for(int i = 0; i < 1; i++){
             // string fn = "../assets/corvette_stingray/scene.gltf";
@@ -34,9 +34,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
             Object* nobj = ld->LoadFile(fn);
 
             nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
+            nobj->drawType = DrawType::Normal;
 
             DEngine::gobjs.push_back(nobj);
         }
+
+        // Object cluster;
+        // cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 10.0, -1,-1,-1));
+        // cluster.drawType = DrawType::WhiteLines;
+
+        // DEngine::gobjs.push_back(&cluster);
+
+        Object panel;
+        panel.meshes.push_back(Panel());
+        panel.drawType = DrawType::Normal;
+        DEngine::gobjs.push_back(&panel);
 
         if(!theApp.Initialize())
             return 0;

@@ -35,7 +35,6 @@ bool Graphics::Initialize()
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildBoxGeometry();
-    BuildDebugCluster();
     BuildPSO();
 
     // Execute the initialization commands.
@@ -93,36 +92,6 @@ void Graphics::UpdatePassUniform()
     temp.SMView = glm::transpose(tempLight);
     temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     passCB->CopyData(1, temp);
-}
-
-void Graphics::UpdateLegacy()
-{
-    // Convert Spherical to Cartesian coordinates.
-    float x = mRadius*sinf(mPhi)*cosf(mTheta);
-    float z = mRadius*sinf(mPhi)*sinf(mTheta);
-    float y = mRadius*cosf(mPhi);
-
-    // Build the view matrix.
-    XMVECTOR pos = XMVectorSet(x, y + 200, z - 500, 1.0f);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-    XMStoreFloat4x4(&mView, view);
-
-    XMMATRIX world = XMLoadFloat4x4(&mWorld);
-    XMMATRIX proj = XMLoadFloat4x4(&mProj);
-    XMMATRIX worldViewProj = world*view*proj;
-
-    mat4 viewTrans = DEngine::GetCamMgr().GetViewTransform();
-    mat4 projectionTrans = DEngine::GetCamMgr().GetProjectionTransform();
-    mat4 mvp = projectionTrans * viewTrans;
-
-	// Update the constant buffer with the latest worldViewProj matrix.
-	ObjectConstants objConstants;
-    XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-    // mObjectCB->CopyData(0, mvp);
-    mObjectCB->CopyData<mat4>(0, glm::transpose(mvp));
 }
 
 void Graphics::Update(const GameTimer& gt)
@@ -184,10 +153,11 @@ void Graphics::Draw(const GameTimer& gt)
     auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
-    DrawObjects();
+    DrawObjects(DrawType::Normal);
 
-    DrawDebugCluster();
+    DrawLines();
 
+    // place at last
     DrawSkyBox();
 
     // Indicate a state transition on the resource usage.
@@ -361,6 +331,11 @@ void Graphics::BuildShadersAndInputLayout()
 
 void Graphics::BuildBoxGeometry()
 {
+    SkyBox skybox;
+
+    skyMesh = std::make_unique<DMesh>();
+    skyMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), skybox.vs, skybox.ids);
+
     // �ϲ����� obj ���嵽һ��������
     vector<Vertex> vs;
     vector<unsigned int> ids;
@@ -373,15 +348,6 @@ void Graphics::BuildBoxGeometry()
 
     objMesh = std::make_unique<DMesh>();
     objMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), vs, ids);
-
-    Panel panel;
-    panelMesh = std::make_unique<DMesh>();
-    panelMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), panel.vs, panel.ids);
-
-    SkyBox skybox;
-
-    skyMesh = std::make_unique<DMesh>();
-    skyMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), skybox.vs, skybox.ids);
 }
 
 void Graphics::BuildPSO()
@@ -694,38 +660,10 @@ void Graphics::DrawShadowMap()
 
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
-    DrawObjects();
+    DrawObjects(DrawType::Normal);
 
     // Change back to GENERIC_READ so we can read the texture in a shader.
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
-}
-
-void Graphics::DrawObjects()
-{
-    mCommandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&objMesh->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    
-    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();    
-    int idOffset = 0, vsOffset = 0;
-    
-    for(Object* obj: DEngine::gobjs){
-        mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
-
-        for(Mesh mesh: obj->meshes){
-            int idSize = mesh.ids.size();
-            mCommandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
-            idOffset += mesh.ids.size();
-            vsOffset += mesh.vs.size();
-        }
-    }
-
-    mCommandList->IASetVertexBuffers(0, 1, &panelMesh->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&panelMesh->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    mCommandList->SetGraphicsRootConstantBufferView(1, identityAddr);
-    mCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 void Graphics::LoadCubeMap()
@@ -795,9 +733,9 @@ void Graphics::PreZPass()
     mCommandList->ClearDepthStencilView(PreZMap->Dsv(), 
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-    // // Set null render target because we are only going to draw to
-    // // depth buffer.  Setting a null render target will disable color writes.
-    // // Note the active PSO also must specify a render target count of 0.
+    // Set null render target because we are only going to draw to
+    // depth buffer.  Setting a null render target will disable color writes.
+    // Note the active PSO also must specify a render target count of 0.
     mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
 
     // ��ʱ, ʹ�� shadow pass �� pipeline state object ������Ч��
@@ -807,7 +745,7 @@ void Graphics::PreZPass()
 
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
-    DrawObjects();
+    DrawObjects(DrawType::Normal);
 
     // Change back to GENERIC_READ so we can read the texture in a shader.
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -818,19 +756,35 @@ void Graphics::PreZPass()
     );
 }
 
-void Graphics::BuildDebugCluster()
-{
-    debugClusterMesh = std::make_unique<DMesh>();
-    Frustum frustum(45.0, 1.0, 1.0, 10.0, -1, -1, -1);
-    debugClusterMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), frustum.vs, frustum.ids);
+void Graphics::DrawObjects(DrawType drawType)
+{   
+    mCommandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
+    mCommandList->IASetIndexBuffer(&objMesh->IndexBufferView());
+
+    if(drawType == DrawType::Normal)
+        mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    else if(drawType == DrawType::WhiteLines)
+        mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();    
+    int idOffset = 0, vsOffset = 0;
+    
+    for(Object* obj: DEngine::gobjs){
+        mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
+
+        for(Mesh mesh: obj->meshes){
+            int idSize = mesh.ids.size();
+            if(obj->drawType == drawType) 
+                mCommandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+            idOffset += mesh.ids.size();
+            vsOffset += mesh.vs.size();
+        }
+
+        objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+    }
 }
 
-void Graphics::DrawDebugCluster()
+void Graphics::DrawLines()
 {
-    mCommandList->IASetVertexBuffers(0, 1, &debugClusterMesh->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&debugClusterMesh->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
- 
-    Frustum frustum(45.0, 1.0, 1.0, 1.0, -1, -1, -1);
-    mCommandList->DrawIndexedInstanced(frustum.ids.size(), 1, 0, 0, 0);
+    DrawObjects(DrawType::WhiteLines);
 }

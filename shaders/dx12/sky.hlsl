@@ -32,7 +32,10 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	float4x4 mvp = mul(mul(model, View), Proj);
+	float4x4 rotation = View;
+	for(int i = 0; i < 3; i++) rotation[3][i] = 0.0;
+
+	float4x4 mvp = mul(mul(model, rotation), Proj);
 
 	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
     vout.uv = vin.vertex;

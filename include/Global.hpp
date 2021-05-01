@@ -24,15 +24,6 @@ using std::vector;
 using std::string;
 using std::cout;
 
-// TODO: 解耦纹理和 opengl texture 的绑定
-// diffuse: texture0
-// depthmap: texture1
-// nomalmap: texture2
-// gpostion: 3
-// gnormal: 4
-// gcolor: 5
-// ssao: 6
-
 const float PI = (float) acos(-1.0);
 
 struct Vertex {

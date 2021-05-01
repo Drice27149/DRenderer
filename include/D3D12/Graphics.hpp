@@ -5,16 +5,11 @@
 #include "ShadowMap.h"
 #include "Resource.hpp"
 #include "DMesh.hpp"
+#include "Object.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
-
-struct ObjectConstants
-{
-    XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
-};
-
 
 class Graphics : public D3DApp
 {
@@ -44,21 +39,21 @@ private:
 
     void UpdateObjUniform();
     void UpdatePassUniform();
-    void UpdateLegacy();
 
     void BuildDescriptorHeaps();
     void BuildShaderResourceView();
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
-    void BuildBoxGeometry();
+    void BuildBoxGeometry(); // TOOD: delete
     void BuildDebugCluster();
     void BuildPSO();
     void BuildFrameResources();
 
+    // New
     void DrawSkyBox();
     void DrawShadowMap();
-    void DrawObjects();
-    void DrawDebugCluster();
+    void DrawObjects(DrawType drawType);
+    void DrawLines();
 
     void InitDescriptorHeaps();
     void InitSRV();
@@ -72,8 +67,6 @@ private:
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
-
-    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
 
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
@@ -119,18 +112,17 @@ private:
 
     ComPtr<ID3D12DescriptorHeap> SrvHeap;
 
-    // ÓÃÀ´´æÈ¡ Pre-Z pass µÄ±êÊ¶·û
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ Pre-Z pass ï¿½Ä±ï¿½Ê¶ï¿½ï¿½
     CD3DX12_GPU_DESCRIPTOR_HANDLE CPUPreZ;
     CD3DX12_GPU_DESCRIPTOR_HANDLE GPUPreZ;
     std::unique_ptr<Resource> PreZMap;
-    // vertex buffer ºÍ index buffer
+    // vertex buffer ï¿½ï¿½ index buffer
     std::unique_ptr<DMesh> objMesh = nullptr;
-    std::unique_ptr<DMesh> panelMesh = nullptr;
     std::unique_ptr<DMesh> skyMesh = nullptr;
-    std::unique_ptr<DMesh> lineMesh = nullptr;
-    std::unique_ptr<DMesh> debugMesh = nullptr;
-    std::unique_ptr<DMesh> debugClusterMesh = nullptr;
-    // ÔÝÊ±, »ñÈ¡Ò»¸öµ¥Î»Õó
+
+    std::vector<std::unique_ptr<DMesh>> lineMeshes;
+
+    // ï¿½ï¿½Ê±, ï¿½ï¿½È¡Ò»ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
     D3D12_GPU_VIRTUAL_ADDRESS identityAddr;
 };
 
