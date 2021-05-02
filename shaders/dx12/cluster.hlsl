@@ -7,6 +7,7 @@ cbuffer PassUniform : register(b0)
 cbuffer ObjectUniform : register(b1)
 {
 	float4x4 _model;
+    uint _id;
 };
 
 struct VertexIn
@@ -16,7 +17,14 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 pos: SV_POSITION;
+	float4 pos: POSITION;
+};
+
+struct GeoOut 
+{
+    float4 pos: SV_POSITION;
+    float temp: TEXCOORD;
+    uint rtArrayIndex : SV_RenderTargetArrayIndex;
 };
 
 VertexOut VS(VertexIn vin)
@@ -30,6 +38,19 @@ VertexOut VS(VertexIn vin)
     return vout;
 }
 
-void PS(VertexOut pin)
+[maxvertexcount(3)]
+void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 {
+    GeoOut gout;
+    gout.rtArrayIndex = _id;
+    for(int i = 0; i < 3; i++){
+        gout.pos = gin[i].pos;
+        gout.temp = (gin[i].pos.z / gin[i].pos.w)*0.5 + 0.5;
+        stream.Append(gout);
+    }
+}
+
+float2 PS(GeoOut pin) : SV_TARGET
+{
+    return float2(1.0 - pin.temp, pin.temp);
 }

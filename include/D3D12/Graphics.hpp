@@ -77,6 +77,10 @@ private:
     ComPtr<ID3DBlob> shadowPS = nullptr;
     ComPtr<ID3DBlob> skyVS = nullptr;
     ComPtr<ID3DBlob> skyPS = nullptr;
+    
+    ComPtr<ID3DBlob> clusterVS = nullptr;
+    ComPtr<ID3DBlob> clusterGS = nullptr;
+    ComPtr<ID3DBlob> clusterPS = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
@@ -122,8 +126,8 @@ private:
     std::unique_ptr<DMesh> objMesh = nullptr;
     std::unique_ptr<DMesh> skyMesh = nullptr;
 
-    std::vector<std::unique_ptr<DMesh>> lineMeshes;
-
     std::unique_ptr<Resource> clusterDepth;
+
+    ComPtr<ID3D12PipelineState> clusterPSO = nullptr;
 };
 

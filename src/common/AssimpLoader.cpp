@@ -6,38 +6,6 @@ AssimpLoader::AssimpLoader()
     meshCnt = 0;
 }
 
-Object* AssimpLoader::LoadFile(string fn)
-{
-    // TODO: 内存管理
-    obj = new Object();
-
-    // 获得模型文件的文件夹路径
-    fpath = "";
-    int p = 0;
-    while (p < fn.size()) {
-        if (fn[p] != '/') fpath.push_back(fn[p++]);
-        else {
-            fpath.push_back(fn[p++]);
-            int np = p;
-            while (np < fn.size() && fn[np] != '/') np++;
-            if (np == fn.size()) break;
-        }
-    }
-
-    Assimp::Importer import;
-    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure | aiProcess_GenSmoothNormals);
-	
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
-    {
-        cout << "ERROR::ASSIMP::" << import.GetErrorString() << "\n";
-        return nullptr;
-    }
-
-    ProcessNode(scene->mRootNode, scene);
-
-    return obj;
-}
-
 void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene)
 {
     for(unsigned int i = 0; i < node->mNumMeshes; i++){
@@ -102,6 +70,37 @@ void AssimpLoader::ProcessMaterial(aiMaterial* mat)
             texs[it] = fulltexn;
         }
     }
+}
+
+void AssimpLoader::LoadFile(Object* obj, string fn)
+{
+    this->obj = obj;
+
+    meshCnt = 0;
+
+    // 获得模型文件的文件夹路径
+    fpath = "";
+    int p = 0;
+    while (p < fn.size()) {
+        if (fn[p] != '/') fpath.push_back(fn[p++]);
+        else {
+            fpath.push_back(fn[p++]);
+            int np = p;
+            while (np < fn.size() && fn[np] != '/') np++;
+            if (np == fn.size()) break;
+        }
+    }
+
+    Assimp::Importer import;
+    const aiScene *scene = import.ReadFile(fn, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_ValidateDataStructure | aiProcess_GenSmoothNormals);
+	
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
+    {
+        cout << "ERROR::ASSIMP::" << import.GetErrorString() << "\n";
+        return ;
+    }
+
+    ProcessNode(scene->mRootNode, scene);
 }
 
 

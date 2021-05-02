@@ -16,6 +16,7 @@ struct PassUniform
 struct ObjectUniform
 {
     glm::mat4 model;
+    unsigned int id;
 };
 
 struct FrameResource

@@ -11,7 +11,7 @@ enum DrawType {
 	PointLight	// sphere
 };
 
-class Object{
+class Object {
 public:
 	Object();
 	vector<Mesh> meshes;
@@ -19,4 +19,5 @@ public:
 public:
 	mat4 model;
 	DrawType drawType;
+	int id;
 };

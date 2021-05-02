@@ -7,7 +7,7 @@
 class AssimpLoader{
 public:
     AssimpLoader();
-    Object* LoadFile(string filename);
+    void LoadFile(Object* obj, string filename);
 private:
     void ProcessNode(aiNode *node, const aiScene *scene);
     void ProcessMesh(aiMesh *mesh, const aiScene *scene);

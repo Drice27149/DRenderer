@@ -4,6 +4,7 @@
 #include "AssimpLoader.hpp"
 #include "DEngine.hpp"
 #include "Graphics.hpp"
+#include "Light.hpp"
 
 Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
@@ -27,11 +28,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         vector<string> fns = { "../assets/LightShapes/sphere.obj", "../assets/LightShapes/cube.obj", "../assets/LightShapes/sphere.obj" };
 
+        AssimpLoader ld;
+
         for(int i = 0; i < 1; i++){
             // string fn = "../assets/corvette_stingray/scene.gltf";
             string fn = fns[i];
-            AssimpLoader* ld = new AssimpLoader();
-            Object* nobj = ld->LoadFile(fn);
+           
+            Object* nobj = new Object();
+            ld.LoadFile(nobj, fn);
 
             nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
             nobj->drawType = DrawType::Normal;
@@ -39,6 +43,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
             DEngine::gobjs.push_back(nobj);
         }
 
+        // debug cluster
         // Object cluster;
         // cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 10.0, -1,-1,-1));
         // cluster.drawType = DrawType::WhiteLines;
@@ -49,6 +54,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         panel.meshes.push_back(Panel());
         panel.drawType = DrawType::Normal;
         DEngine::gobjs.push_back(&panel);
+
+        Light pointLight(DrawType::PointLight);
+        pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.5, 0.0)));
+        pointLight.id = 0;
+        DEngine::gobjs.push_back(&pointLight);
+
+        Light pointLight0(DrawType::PointLight);
+        pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 5.0, 0.0)));
+        pointLight0.id = 1;
+        DEngine::gobjs.push_back(&pointLight0);
+
+        Light pointLight1(DrawType::PointLight);
+        pointLight1.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 7.5, 0.0)));
+        pointLight1.id = 2;
+        DEngine::gobjs.push_back(&pointLight1);
 
         if(!theApp.Initialize())
             return 0;

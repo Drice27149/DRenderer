@@ -67,6 +67,7 @@ void Graphics::UpdateObjUniform()
     for(Object* obj: DEngine::gobjs){
         ObjectUniform temp;
         temp.model = glm::transpose(obj->model);
+        temp.id = obj->id;
         objCB->CopyData(index, temp);
         index++;
 
@@ -120,24 +121,24 @@ void Graphics::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    PreZPass();
-
     DrawShadowMap();
 
-    mCommandList->SetPipelineState(mPSO.Get());
+    PreZPass();
 
-    mCommandList->RSSetViewports(1, &mScreenViewport);
-    mCommandList->RSSetScissorRects(1, &mScissorRect);
+    PrepareCluster();
+
+    mCommandList->SetPipelineState(mPSO.Get());
 
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+    // Specify the buffers we are going to render to.
+	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
     // Clear the back buffer and depth buffer.
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
     mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	
-    // Specify the buffers we are going to render to.
-	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
     // ������ͼ
     mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     // �����Ѿ�û��
@@ -147,6 +148,9 @@ void Graphics::Draw(const GameTimer& gt)
 
     auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
+
+    mCommandList->RSSetViewports(1, &mScreenViewport);
+    mCommandList->RSSetScissorRects(1, &mScissorRect);
 
     DrawObjects(DrawType::Normal);
 
@@ -319,6 +323,10 @@ void Graphics::BuildShadersAndInputLayout()
 	skyVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "VS", "vs_5_1");
 	skyPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "PS", "ps_5_1");
 
+    clusterVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "VS", "vs_5_1");
+    clusterGS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "GS", "gs_5_1");
+    clusterPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "PS", "ps_5_1");
+
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, vertex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -410,8 +418,52 @@ void Graphics::BuildPSO()
     psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = mBackBufferFormat;
-
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&SkyPSO)));
+
+    psoDesc.VS = {
+        reinterpret_cast<BYTE*>(clusterVS->GetBufferPointer()), 
+		clusterVS->GetBufferSize() 
+    };
+    psoDesc.GS = {
+        reinterpret_cast<BYTE*>(clusterGS->GetBufferPointer()), 
+		clusterGS->GetBufferSize() 
+    };
+    psoDesc.PS = {
+        reinterpret_cast<BYTE*>(clusterPS->GetBufferPointer()), 
+		clusterPS->GetBufferSize() 
+    };
+
+    // cluster depth...
+	D3D12_RASTERIZER_DESC rasterDescFront;
+	rasterDescFront.AntialiasedLineEnable = FALSE;
+	rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+	rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
+	rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+	rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+	rasterDescFront.DepthClipEnable = TRUE;
+	rasterDescFront.FillMode = D3D12_FILL_MODE_SOLID;
+	rasterDescFront.ForcedSampleCount = 0;
+	rasterDescFront.FrontCounterClockwise = FALSE;
+	rasterDescFront.MultisampleEnable = FALSE;
+	rasterDescFront.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+
+    psoDesc.RasterizerState = rasterDescFront;
+	
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
+	psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_MAX;
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState.DepthEnable = FALSE;
+	psoDesc.DepthStencilState.StencilEnable = FALSE;
+	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8_UNORM;
+	psoDesc.SampleDesc.Count = 1;
+
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterPSO)));
 }
 
 void Graphics::LoadAssets()
@@ -641,6 +693,11 @@ void Graphics::DrawShadowMap()
     mCommandList->RSSetViewports(1, &shadowMap->Viewport());
     mCommandList->RSSetScissorRects(1, &shadowMap->ScissorRect());
 
+    mCommandList->OMSetRenderTargets(0, nullptr, false, &shadowMap->Dsv());
+
+    mCommandList->RSSetViewports(1, &shadowMap->Viewport());
+    mCommandList->RSSetScissorRects(1, &shadowMap->ScissorRect());
+
     // Change to DEPTH_WRITE.
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),
         D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
@@ -652,7 +709,6 @@ void Graphics::DrawShadowMap()
     // // Set null render target because we are only going to draw to
     // // depth buffer.  Setting a null render target will disable color writes.
     // // Note the active PSO also must specify a render target count of 0.
-    mCommandList->OMSetRenderTargets(0, nullptr, false, &shadowMap->Dsv());
 
     mCommandList->SetPipelineState(SMPSO.Get());
 
@@ -728,6 +784,11 @@ void Graphics::InitSRV()
 
 void Graphics::PreZPass()
 {
+    // Set null render target because we are only going to draw to
+    // depth buffer.  Setting a null render target will disable color writes.
+    // Note the active PSO also must specify a render target count of 0.
+    mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
+
     mCommandList->RSSetViewports(1, &PreZMap->Viewport());
     mCommandList->RSSetScissorRects(1, &PreZMap->ScissorRect());
 
@@ -743,11 +804,6 @@ void Graphics::PreZPass()
     // Clear the back buffer and depth buffer.
     mCommandList->ClearDepthStencilView(PreZMap->Dsv(), 
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    // Set null render target because we are only going to draw to
-    // depth buffer.  Setting a null render target will disable color writes.
-    // Note the active PSO also must specify a render target count of 0.
-    mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
 
     // ��ʱ, ʹ�� shadow pass �� pipeline state object ������Ч��
     mCommandList->SetPipelineState(SMPSO.Get()); 
@@ -802,9 +858,17 @@ void Graphics::DrawLines()
 
 void Graphics::PrepareCluster()
 {
+    mCommandList->OMSetRenderTargets(1, &clusterDepth->WriteHandle(), true, nullptr);
+
+    mCommandList->RSSetViewports(1, &clusterDepth->Viewport());
+    mCommandList->RSSetScissorRects(1, &clusterDepth->ScissorRect());
+
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::LightSteelBlue, 0, nullptr);
-	mCommandList->OMSetRenderTargets(1, &clusterDepth->WriteHandle(), true, nullptr);
+	mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::Black, 0, nullptr);
+	
+    mCommandList->SetPipelineState(clusterPSO.Get());
+
+    DrawObjects(DrawType::PointLight);
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-}
+}   
