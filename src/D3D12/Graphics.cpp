@@ -776,7 +776,7 @@ void Graphics::InitSRV()
     GpuHandle.Offset(mCbvSrvUavDescriptorSize);
 
     clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), 
-        16, 8, 
+        160, 80, 
         CpuHandle, GpuHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart())
     );
     clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);

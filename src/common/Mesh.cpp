@@ -119,31 +119,64 @@ Frustum::Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, 
     float far_height = height * f / n;
     float far_width = far_height*aspect;
     // point at (0, 0, 0), look at -z
-    vs = {
-        Vertex(vec3(-width, height, -n)),
-        Vertex(vec3(width, height, -n)),
-        Vertex(vec3(width, -height, -n)),
-        Vertex(vec3(-width, -height, -n)),
-        Vertex(vec3(-far_width, far_height, -f)),
-        Vertex(vec3(far_width, far_height, -f)),
-        Vertex(vec3(far_width, -far_height, -f)),
-        Vertex(vec3(-far_width, -far_height, -f))
-    };
+    // vs = {
+    //     Vertex(vec3(-width, height, -n)),
+    //     Vertex(vec3(width, height, -n)),
+    //     Vertex(vec3(width, -height, -n)),
+    //     Vertex(vec3(-width, -height, -n)),
+    //     Vertex(vec3(-far_width, far_height, -f)),
+    //     Vertex(vec3(far_width, far_height, -f)),
+    //     Vertex(vec3(far_width, -far_height, -f)),
+    //     Vertex(vec3(-far_width, -far_height, -f))
+    // };
 
-    ids = {
-        0,1,
-        1,2,
-        2,3,
-        3,0,
-        4,5,
-        5,6,
-        6,7,
-        7,4,
-        0,4,
-        1,5,
-        2,6,
-        3,7,
-    };
+    // ids = {
+    //     0,1,
+    //     1,2,
+    //     2,3,
+    //     3,0,
+    //     4,5,
+    //     5,6,
+    //     6,7,
+    //     7,4,
+    //     0,4,
+    //     1,5,
+    //     2,6,
+    //     3,7,
+    // };
+    vs.clear();
+    ids.clear();
+    for(int i = 1; i <= zCnt+1; i++){
+        float curZ = (f-n)/(float)zCnt * (float)(i-1) + n;
+        float rate = curZ / n;
+        float curX = -rate*width/2.0;
+        float stepX = rate*width/(float)xCnt;
+        float stepY = rate*height/(float)yCnt;
+        for(int x = 1; x <= xCnt+1; x++){
+            float curY = -rate*height/2.0;
+            for(int y = 1; y <= yCnt+1; y++){
+                int id = vs.size();
+                vs.push_back(Vertex(vec3(curX, curY, -curZ)));
+                int leftId = id - 1;
+                int upId = id - yCnt - 1;
+                int preId = id - (xCnt+1)*(yCnt+1);
+                if(x!=1){
+                    ids.push_back(id);
+                    ids.push_back(upId);
+                }
+                if(y!=1){
+                    ids.push_back(id);
+                    ids.push_back(leftId);
+                }
+                if(i!=1){
+                    ids.push_back(id);
+                    ids.push_back(preId);
+                }
+                curY += stepY;
+            }
+            curX += stepX;
+        }
+    }
 }
 
 

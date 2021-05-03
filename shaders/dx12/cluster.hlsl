@@ -52,5 +52,6 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 
 float2 PS(GeoOut pin) : SV_TARGET
 {
+    // TODO: more exact max depth & min depth, for now I'm tired...
     return float2(1.0 - pin.temp, pin.temp);
 }

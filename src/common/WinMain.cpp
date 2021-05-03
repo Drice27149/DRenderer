@@ -44,16 +44,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         }
 
         // debug cluster
-        // Object cluster;
-        // cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 10.0, -1,-1,-1));
-        // cluster.drawType = DrawType::WhiteLines;
+        Object cluster;
+        cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 10.0, 16, 8, 24));
+        cluster.drawType = DrawType::WhiteLines;
+        cluster.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0,3.0,12.0)));
+        DEngine::gobjs.push_back(&cluster);
 
-        // DEngine::gobjs.push_back(&cluster);
-
-        Object panel;
-        panel.meshes.push_back(Panel());
-        panel.drawType = DrawType::Normal;
-        DEngine::gobjs.push_back(&panel);
+        // Object panel;
+        // panel.meshes.push_back(Panel());
+        // panel.drawType = DrawType::Normal;
+        // DEngine::gobjs.push_back(&panel);
 
         Light pointLight(DrawType::PointLight);
         pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.5, 0.0)));
