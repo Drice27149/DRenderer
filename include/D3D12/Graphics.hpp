@@ -11,6 +11,19 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+struct TempOffset {
+    unsigned int offset;
+};
+
+struct TempNode {
+    unsigned int id;
+    unsigned int next;
+};
+
+struct TempLight {
+    glm::vec3 dir;
+};
+
 class Graphics : public D3DApp
 {
 public:
@@ -60,6 +73,10 @@ private:
 
     void PreZPass();
     void PrepareCluster();
+    void InitUAV();
+    void PrepareComputeShader();
+
+    void ExecuteComputeShader();
 
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
@@ -77,6 +94,7 @@ private:
     ComPtr<ID3DBlob> shadowPS = nullptr;
     ComPtr<ID3DBlob> skyVS = nullptr;
     ComPtr<ID3DBlob> skyPS = nullptr;
+    ComPtr<ID3DBlob> clusterCS = nullptr;
     
     ComPtr<ID3DBlob> clusterVS = nullptr;
     ComPtr<ID3DBlob> clusterGS = nullptr;
@@ -112,11 +130,16 @@ private:
     int CurrentFrame = 0;
     int PassCount = 2;
     int TextureCount = 8;
+    int ClusterX = 2;
+    int ClusterY = 2;
+    int ClusterZ = 2;
 
 //  -- begin of the new journey
 
     ComPtr<ID3D12DescriptorHeap> SrvHeap;
+    int SrvCounter;
     ComPtr<ID3D12DescriptorHeap> RTVHeap;
+    int RtvCounter;
 
     // ������ȡ Pre-Z pass �ı�ʶ��
     CD3DX12_GPU_DESCRIPTOR_HANDLE CPUPreZ;
@@ -129,5 +152,12 @@ private:
     std::unique_ptr<Resource> clusterDepth;
 
     ComPtr<ID3D12PipelineState> clusterPSO = nullptr;
+    ComPtr<ID3D12Resource> HeadTable, HeadTableCounter;
+    ComPtr<ID3D12Resource> NodeTable, NodeTableCounter;
+
+    ComPtr<ID3D12RootSignature> CSRootSignature;
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE HeadTableHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE NodeTableHandle;
 };
 

@@ -28,12 +28,17 @@ bool Graphics::Initialize()
 
     BuildDescriptorHeaps();
 
+    BuildShadersAndInputLayout();
+
     InitSRV();
+    // order can't be exchanged
+    InitUAV();
+    PrepareComputeShader();
 
     BuildFrameResources();
     BuildShaderResourceView();
     BuildRootSignature();
-    BuildShadersAndInputLayout();
+    
     BuildBoxGeometry();
     BuildPSO();
 
@@ -126,6 +131,8 @@ void Graphics::Draw(const GameTimer& gt)
     PreZPass();
 
     PrepareCluster();
+
+    ExecuteComputeShader();
 
     mCommandList->SetPipelineState(mPSO.Get());
 
@@ -326,6 +333,8 @@ void Graphics::BuildShadersAndInputLayout()
     clusterVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "VS", "vs_5_1");
     clusterGS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "GS", "gs_5_1");
     clusterPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "PS", "ps_5_1");
+
+    clusterCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster\\lightlist.hlsl", nullptr, "CS", "cs_5_1");
 
     mInputLayout =
     {
@@ -754,6 +763,7 @@ void Graphics::InitDescriptorHeaps()
 	desc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&desc,
         IID_PPV_ARGS(&SrvHeap)));
+    SrvCounter = 0;
 }
 
 void Graphics::InitSRV()
@@ -776,10 +786,12 @@ void Graphics::InitSRV()
     GpuHandle.Offset(mCbvSrvUavDescriptorSize);
 
     clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), 
-        160, 80, 
+        ClusterX, ClusterY, 
         CpuHandle, GpuHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart())
     );
     clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
+
+    SrvCounter = TextureCount + 1;
 }
 
 void Graphics::PreZPass()
@@ -872,3 +884,157 @@ void Graphics::PrepareCluster()
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 }   
+
+void Graphics::InitUAV()
+{
+	CD3DX12_RESOURCE_DESC uav_counter_resource_desc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, sizeof(unsigned int), 1, 1, 1,
+		DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	CD3DX12_RESOURCE_DESC uav_counter_uav_resource_desc = uav_counter_resource_desc;
+	uav_counter_uav_resource_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&uav_counter_uav_resource_desc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&HeadTableCounter)
+    );
+
+    // head table
+    // fixed size (clusterX * clusterY), no need for counter
+    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
+    GpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
+    SrvCounter++;
+
+    HeadTableHandle = GpuHandle;
+
+    CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	HeadDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&HeadDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&HeadTable));
+
+	//Structured buffer uav
+	D3D12_UNORDERED_ACCESS_VIEW_DESC lll_uav_view_desc;
+	ZeroMemory(&lll_uav_view_desc, sizeof(lll_uav_view_desc));
+	lll_uav_view_desc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
+	lll_uav_view_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	lll_uav_view_desc.Buffer.FirstElement = 0;
+	lll_uav_view_desc.Buffer.NumElements = ClusterX*ClusterY;
+	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempOffset); //2 uint32s in struct
+	lll_uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
+	lll_uav_view_desc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
+
+	md3dDevice->CreateUnorderedAccessView(HeadTable.Get(), HeadTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
+
+    // node table, contain lightID & next pointer
+    // this table need a counter
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&uav_counter_uav_resource_desc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&NodeTableCounter)
+    );
+
+    // Node table
+    // ...
+    CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
+    GpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
+    SrvCounter++;
+
+    NodeTableHandle = GpuHandle;
+
+    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	NodeDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&NodeDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&NodeTable));
+
+	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
+
+	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
+
+    // light data look up table
+    // this table is pure cpu data, won't change in runtime
+}
+
+void Graphics::PrepareComputeShader()
+{
+    // compute shader root signature
+	CD3DX12_DESCRIPTOR_RANGE uavTable0;
+	uavTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+
+	CD3DX12_DESCRIPTOR_RANGE uavTable1;
+	uavTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);
+
+	CD3DX12_DESCRIPTOR_RANGE uavTable2;
+	uavTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2);
+
+	// Root parameter can be a table, root descriptor or root constants.
+	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
+
+	// Perfomance TIP: Order from most frequent to least frequent.
+	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
+	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable1);
+	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
+
+	// A root signature is an array of root parameters.
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter,
+		0, nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_NONE);
+
+	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if(errorBlob != nullptr)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+	ThrowIfFailed(hr);
+
+	ThrowIfFailed(md3dDevice->CreateRootSignature(
+		0,
+		serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(),
+		IID_PPV_ARGS(CSRootSignature.GetAddressOf())));
+
+    // compute shader pipeline state
+    D3D12_COMPUTE_PIPELINE_STATE_DESC wavesUpdatePSO = {};
+	wavesUpdatePSO.pRootSignature = CSRootSignature.Get();
+	wavesUpdatePSO.CS =
+	{
+		reinterpret_cast<BYTE*>(clusterCS->GetBufferPointer()),
+		clusterCS->GetBufferSize()
+	};
+	wavesUpdatePSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&wavesUpdatePSO, IID_PPV_ARGS(&clusterPSO)));
+}
+
+void Graphics::ExecuteComputeShader()
+{
+    mCommandList->SetPipelineState(clusterPSO.Get());
+    mCommandList->SetComputeRootSignature(CSRootSignature.Get());
+    mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
+    mCommandList->Dispatch(1,1,1);
+}
