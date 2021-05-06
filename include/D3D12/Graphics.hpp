@@ -131,8 +131,8 @@ private:
     int CurrentFrame = 0;
     int PassCount = 2;
     int TextureCount = 8;
-    int ClusterX = 2;
-    int ClusterY = 2;
+    int ClusterX = 16;
+    int ClusterY = 8;
     int ClusterZ = 2;
 
 //  -- begin of the new journey

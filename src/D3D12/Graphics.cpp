@@ -941,6 +941,7 @@ void Graphics::InitUAV()
         nullptr,
         IID_PPV_ARGS(&debugTexture))
     );
+    debugTexture->SetName(L"debugTexture");
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
 
@@ -987,6 +988,7 @@ void Graphics::InitUAV()
 		nullptr,
 		IID_PPV_ARGS(&HeadTable)
     );
+    HeadTable->SetName(L"HeadTable");
 
 	// still head table, uav desc set up
 	D3D12_UNORDERED_ACCESS_VIEW_DESC lll_uav_view_desc;
@@ -1034,8 +1036,8 @@ void Graphics::InitUAV()
 		IID_PPV_ARGS(&NodeTable));
 
 	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
-
 	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
+    NodeTable->SetName(L"NodeTable");
 
     // light data look up table
     // this table is pure cpu data, won't change in runtime
