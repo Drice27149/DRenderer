@@ -161,11 +161,11 @@ void BoxApp::Draw(const GameTimer& gt)
 	
     // Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-    // ÎÆÀíÌùÍ¼
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
     mCommandList->SetGraphicsRootDescriptorTable(1, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // ³£Á¿ÒÑ¾­Ã»ÓÃ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ã»ï¿½ï¿½
     mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
-    // shadow map ÎÆÀí
+    // shadow map ï¿½ï¿½ï¿½ï¿½
     mCommandList->SetGraphicsRootDescriptorTable(4, GPUSMHandle);
 
     auto passHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -288,7 +288,7 @@ void BoxApp::BuildConstantBufferView()
         auto passCB = mFrameResources[i]->PassCB->Resource();
         D3D12_GPU_VIRTUAL_ADDRESS passAddress = passCB->GetGPUVirtualAddress();
         for(int j = 0; j < PassCount; j++){
-            // Ã¿¸öÖ¡µÄÃ¿¸öpass³£Á¿, °ó¶¨Ò»¸öÃèÊö·û
+            // Ã¿ï¿½ï¿½Ö¡ï¿½ï¿½Ã¿ï¿½ï¿½passï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
             cbvDesc.BufferLocation = passAddress;
             cbvDesc.SizeInBytes = passByteSize;
@@ -303,7 +303,7 @@ void BoxApp::BuildConstantBufferView()
         auto objectCB = mFrameResources[i]->ObjectCB->Resource();
         D3D12_GPU_VIRTUAL_ADDRESS objectAddress = objectCB->GetGPUVirtualAddress();
         for(int j = 0; j < DEngine::gobjs.size(); j++){
-            // Ã¿¸öÖ¡µÄÃ¿¸öÎïÌå³£Á¿, °ó¶¨Ò»¸öÃèÊö·û
+            // Ã¿ï¿½ï¿½Ö¡ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½å³£ï¿½ï¿½, ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
             cbvDesc.BufferLocation = objectAddress;
             cbvDesc.SizeInBytes = objByteSize;
@@ -328,11 +328,11 @@ void BoxApp::BuildRootSignature()
 	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
     slotRootParameter[0].InitAsConstantBufferView(0);
 
-    // ²ÄÖÊÃèÊö·û±í
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     CD3DX12_DESCRIPTOR_RANGE texTable;
     texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);
     slotRootParameter[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-    // ³£Á¿ÃèÊö·û±í
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     CD3DX12_DESCRIPTOR_RANGE uniformTable;
     uniformTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
     slotRootParameter[2].InitAsDescriptorTable(1, &uniformTable);
@@ -520,7 +520,7 @@ void BoxApp::BuildPSO()
 void BoxApp::LoadAssets()
 {
     if(DEngine::gobj == nullptr) return ;
-    // Ä¿Ç°, ¼ÙÉèÖ»ÓÐÒ»¸ö mesh
+    // Ä¿Ç°, ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½Ò»ï¿½ï¿½ mesh
     const Mesh& mesh = DEngine::gobj->meshes[0];
     if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
         TTexture baseColorTex;
@@ -738,9 +738,9 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BoxApp::BuildFrameResources()
 {
-    //for(int i = 0; i < FrameCount; i++){
-    //    mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), PassCount, DEngine::gobjs.size()));
-    //}
+    for(int i = 0; i < FrameCount; i++){
+       mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)DEngine::gobjs.size()));
+    }
 }
 
 void BoxApp::BuildShaderResourceView()
@@ -787,7 +787,7 @@ void BoxApp::DrawObjects()
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     auto handle =  CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // ÌæÎÆÀíÌùÍ¼ offset µÄ¿Õ¼äÒª¼ÓÉÏ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ offset ï¿½Ä¿Õ¼ï¿½Òªï¿½ï¿½ï¿½ï¿½
     unsigned int handleID = CurrentFrame*(DEngine::gobjs.size()) + 4 + FrameCount*PassCount;
     handle.Offset(handleID * mCbvSrvUavDescriptorSize);
 

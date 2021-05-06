@@ -136,6 +136,8 @@ void Graphics::Draw(const GameTimer& gt)
 
     mCommandList->SetPipelineState(mPSO.Get());
 
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
@@ -336,6 +338,8 @@ void Graphics::BuildShadersAndInputLayout()
 
     clusterCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster\\lightlist.hlsl", nullptr, "CS", "cs_5_1");
 
+    debugCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\debug.hlsl", nullptr, "CS", "cs_5_1");
+
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, vertex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -473,6 +477,27 @@ void Graphics::BuildPSO()
 	psoDesc.SampleDesc.Count = 1;
 
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterPSO)));
+
+    // compute shader, cluster depth pipeline state
+    D3D12_COMPUTE_PIPELINE_STATE_DESC computeDesc = {};
+	computeDesc.pRootSignature = CSRootSignature.Get();
+	computeDesc.CS =
+	{
+		reinterpret_cast<BYTE*>(clusterCS->GetBufferPointer()),
+		clusterCS->GetBufferSize()
+	};
+	computeDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&computePSO)));
+
+    D3D12_COMPUTE_PIPELINE_STATE_DESC debugDesc = {};
+    debugDesc.pRootSignature = CSRootSignature.Get();
+	debugDesc.CS =
+	{
+		reinterpret_cast<BYTE*>(debugCS->GetBufferPointer()),
+		debugCS->GetBufferSize()
+	};
+    debugDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&debugDesc, IID_PPV_ARGS(&debugPSO)));
 }
 
 void Graphics::LoadAssets()
@@ -887,6 +912,46 @@ void Graphics::PrepareCluster()
 
 void Graphics::InitUAV()
 {
+    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    CpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
+    GpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
+    SrvCounter++;
+
+    // debug compute shader texture
+    D3D12_RESOURCE_DESC texDesc;
+    ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+    texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    texDesc.Alignment = 0;
+    texDesc.Width = 16;
+    texDesc.Height = 8;
+    texDesc.DepthOrArraySize = 1;
+    texDesc.MipLevels = 1;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.SampleDesc.Quality = 0;
+    texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &texDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        nullptr,
+        IID_PPV_ARGS(&debugTexture))
+    );
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+
+    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+
+    md3dDevice->CreateUnorderedAccessView(debugTexture.Get(), nullptr, &uavDesc, CpuHandle);
+
+    DebugTableHandle = GpuHandle;
+
 	CD3DX12_RESOURCE_DESC uav_counter_resource_desc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, sizeof(unsigned int), 1, 1, 1,
 		DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 	CD3DX12_RESOURCE_DESC uav_counter_uav_resource_desc = uav_counter_resource_desc;
@@ -903,8 +968,8 @@ void Graphics::InitUAV()
 
     // head table
     // fixed size (clusterX * clusterY), no need for counter
-    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
     CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
     GpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
     SrvCounter++;
@@ -920,9 +985,10 @@ void Graphics::InitUAV()
 		&HeadDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 		nullptr,
-		IID_PPV_ARGS(&HeadTable));
+		IID_PPV_ARGS(&HeadTable)
+    );
 
-	//Structured buffer uav
+	// still head table, uav desc set up
 	D3D12_UNORDERED_ACCESS_VIEW_DESC lll_uav_view_desc;
 	ZeroMemory(&lll_uav_view_desc, sizeof(lll_uav_view_desc));
 	lll_uav_view_desc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
@@ -956,7 +1022,7 @@ void Graphics::InitUAV()
 
     NodeTableHandle = GpuHandle;
 
-    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (1024) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 	NodeDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	md3dDevice->CreateCommittedResource(
@@ -987,16 +1053,20 @@ void Graphics::PrepareComputeShader()
 	CD3DX12_DESCRIPTOR_RANGE uavTable2;
 	uavTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2);
 
+    CD3DX12_DESCRIPTOR_RANGE uavTable3;
+	uavTable3.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3);
+
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
 	// Perfomance TIP: Order from most frequent to least frequent.
 	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable1);
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
+    slotRootParameter[3].InitAsDescriptorTable(1, &uavTable3);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
@@ -1012,29 +1082,25 @@ void Graphics::PrepareComputeShader()
 	}
 	ThrowIfFailed(hr);
 
-	ThrowIfFailed(md3dDevice->CreateRootSignature(
-		0,
-		serializedRootSig->GetBufferPointer(),
-		serializedRootSig->GetBufferSize(),
-		IID_PPV_ARGS(CSRootSignature.GetAddressOf())));
-
-    // compute shader pipeline state
-    D3D12_COMPUTE_PIPELINE_STATE_DESC wavesUpdatePSO = {};
-	wavesUpdatePSO.pRootSignature = CSRootSignature.Get();
-	wavesUpdatePSO.CS =
-	{
-		reinterpret_cast<BYTE*>(clusterCS->GetBufferPointer()),
-		clusterCS->GetBufferSize()
-	};
-	wavesUpdatePSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&wavesUpdatePSO, IID_PPV_ARGS(&clusterPSO)));
+	ThrowIfFailed(md3dDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(CSRootSignature.GetAddressOf())));
 }
 
 void Graphics::ExecuteComputeShader()
 {
-    mCommandList->SetPipelineState(clusterPSO.Get());
+    mCommandList->SetPipelineState(computePSO.Get());
+    ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     mCommandList->SetComputeRootSignature(CSRootSignature.Get());
     mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
     mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
     mCommandList->Dispatch(1,1,1);
+
+    mCommandList->SetPipelineState(debugPSO.Get());
+    // ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+    mCommandList->SetComputeRootSignature(CSRootSignature.Get());
+    mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(3, DebugTableHandle);
+    mCommandList->Dispatch(1, 1, 1);
 }

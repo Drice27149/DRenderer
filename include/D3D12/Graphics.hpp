@@ -95,6 +95,7 @@ private:
     ComPtr<ID3DBlob> skyVS = nullptr;
     ComPtr<ID3DBlob> skyPS = nullptr;
     ComPtr<ID3DBlob> clusterCS = nullptr;
+    ComPtr<ID3DBlob> debugCS = nullptr;
     
     ComPtr<ID3DBlob> clusterVS = nullptr;
     ComPtr<ID3DBlob> clusterGS = nullptr;
@@ -152,6 +153,8 @@ private:
     std::unique_ptr<Resource> clusterDepth;
 
     ComPtr<ID3D12PipelineState> clusterPSO = nullptr;
+    ComPtr<ID3D12PipelineState> computePSO = nullptr;
+    ComPtr<ID3D12PipelineState> debugPSO = nullptr;
     ComPtr<ID3D12Resource> HeadTable, HeadTableCounter;
     ComPtr<ID3D12Resource> NodeTable, NodeTableCounter;
 
@@ -159,5 +162,8 @@ private:
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE HeadTableHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE NodeTableHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE DebugTableHandle;
+
+    ComPtr<ID3D12Resource> debugTexture;
 };
 
