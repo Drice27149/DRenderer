@@ -1015,7 +1015,6 @@ void Graphics::InitUAV()
     );
 
     // Node table
-    // ...
     CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
     GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
     CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
@@ -1033,14 +1032,24 @@ void Graphics::InitUAV()
 		&NodeDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 		nullptr,
-		IID_PPV_ARGS(&NodeTable));
+		IID_PPV_ARGS(&NodeTable)
+    );
 
 	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
 	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
     NodeTable->SetName(L"NodeTable");
 
     // light data look up table
-    // this table is pure cpu data, won't change in runtime
+    vector<TempLight> lights;
+    TempLight l0;
+    l0.id = 1;
+    l0.pos = glm::vec3(1999, 12, 22);
+    l0.radiance = 10.0;
+    lights.push_back(l0);
+    unsigned int byteSize = sizeof(TempLight) * lights.size();
+
+    LightTable = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), lights.data(), byteSize, LightUploadBuffer);
+    LightTable->SetName(L"LightTable");
 }
 
 void Graphics::PrepareComputeShader()
@@ -1055,20 +1064,21 @@ void Graphics::PrepareComputeShader()
 	CD3DX12_DESCRIPTOR_RANGE uavTable2;
 	uavTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2);
 
-    CD3DX12_DESCRIPTOR_RANGE uavTable3;
-	uavTable3.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3);
+    CD3DX12_DESCRIPTOR_RANGE depthTable;
+    depthTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 
 	// Perfomance TIP: Order from most frequent to least frequent.
 	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable1);
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
-    slotRootParameter[3].InitAsDescriptorTable(1, &uavTable3);
+    slotRootParameter[3].InitAsDescriptorTable(1, &depthTable);
+    slotRootParameter[4].InitAsShaderResourceView(1);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter,
 		0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
@@ -1089,6 +1099,12 @@ void Graphics::PrepareComputeShader()
 
 void Graphics::ExecuteComputeShader()
 {
+    // clear first, then compute
+    // head, node counter
+    unsigned int clearValue[4] = {0, 0, 0, 0};
+    mCommandList->ClearUnorderedAccessViewUint(nullptr, nullptr, HeadTable.Get(), clearValue, 0, nullptr);
+
+    // compute
     mCommandList->SetPipelineState(computePSO.Get());
     ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -1103,6 +1119,8 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootSignature(CSRootSignature.Get());
     mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
     mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(3, DebugTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
+    mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
     mCommandList->Dispatch(1, 1, 1);
 }

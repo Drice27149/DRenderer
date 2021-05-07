@@ -21,7 +21,9 @@ struct TempNode {
 };
 
 struct TempLight {
-    glm::vec3 dir;
+    unsigned int id;
+    glm::vec3 pos;
+    float radiance;
 };
 
 class Graphics : public D3DApp
@@ -157,11 +159,14 @@ private:
     ComPtr<ID3D12PipelineState> debugPSO = nullptr;
     ComPtr<ID3D12Resource> HeadTable, HeadTableCounter;
     ComPtr<ID3D12Resource> NodeTable, NodeTableCounter;
+    ComPtr<ID3D12Resource> LightTable;
+    Microsoft::WRL::ComPtr<ID3D12Resource> LightUploadBuffer;
 
     ComPtr<ID3D12RootSignature> CSRootSignature;
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE HeadTableHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE NodeTableHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE LightTableHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE DebugTableHandle;
 
     ComPtr<ID3D12Resource> debugTexture;

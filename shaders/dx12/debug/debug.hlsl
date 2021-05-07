@@ -15,10 +15,12 @@ struct Light {
 
 RWStructuredBuffer<Offset> headTable: register(u0);
 RWStructuredBuffer<Node> nodeTable: register(u1);
-RWStructuredBuffer<Light> lightTable: register(u2);
-RWTexture2D<float4> outTable: register(u3);
+RWTexture2D<float4> outTable: register(u2);
+// RWStructuredBuffer<Light> lightTable: register(u2);
+Texture2DArray<float2> depthTable: register(t0);
+StructuredBuffer<Light> lightTable: register(t1);
 
-[numthreads(8, 1, 1)]
+[numthreads(16, 8, 1)]
 void CS(int3 id : SV_DispatchThreadID)
 {
     int2 pos = int2(id.x, 0);
