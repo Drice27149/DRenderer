@@ -33,7 +33,10 @@ bool Graphics::Initialize()
     InitSRV();
     // order can't be exchanged
     InitUAV();
+
     PrepareComputeShader();
+
+    PrepareClusterVis();
 
     BuildFrameResources();
     BuildShaderResourceView();
@@ -41,6 +44,7 @@ bool Graphics::Initialize()
     
     BuildBoxGeometry();
     BuildPSO();
+    BuildClusterVisPSO();
 
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
@@ -164,10 +168,10 @@ void Graphics::Draw(const GameTimer& gt)
 
     DrawObjects(DrawType::Normal);
 
-    DrawLines();
-
     // place at last
     DrawSkyBox();
+
+    DrawLines();
 
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -341,6 +345,10 @@ void Graphics::BuildShadersAndInputLayout()
 
     debugCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\debug.hlsl", nullptr, "CS", "cs_5_1");
 
+    clusterVisVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "VS", "vs_5_1");
+    clusterVisGS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "GS", "gs_5_1");
+    clusterVisPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "PS", "ps_5_1");
+
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, vertex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -348,6 +356,8 @@ void Graphics::BuildShadersAndInputLayout()
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texCoord), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, tangent), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, bitangent), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TEXCOORD", 1, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, row), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TEXCOORD", 2, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, col), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     };
 }
 
@@ -891,6 +901,16 @@ void Graphics::DrawObjects(DrawType drawType)
 
 void Graphics::DrawLines()
 {
+    mCommandList->SetPipelineState(clusterVisPSO.Get());
+    mCommandList->SetGraphicsRootSignature(clusterVisSignature.Get());
+
+    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
+    // mCommandList->SetGraphicsRootConstantBufferView(3, );
+    mCommandList->SetGraphicsRootConstantBufferView(2, clusterUniform->Resource()->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootDescriptorTable(3, HeadTableHandle);
+    mCommandList->SetGraphicsRootDescriptorTable(4, NodeTableHandle);
+
     DrawObjects(DrawType::WhiteLines);
 }
 
@@ -1150,6 +1170,8 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
     mCommandList->SetComputeRootConstantBufferView(5, clusterUniform->Resource()->GetGPUVirtualAddress());
     mCommandList->Dispatch(1, 1, 1);
+
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
 }
 
 void Graphics::ClearUAVs()
@@ -1178,4 +1200,77 @@ void Graphics::UpdateStaticUniform()
     temp.cFar = 20.0;
 
     clusterUniform->CopyData(0, temp);
+}
+
+void Graphics::PrepareClusterVis()
+{
+    CD3DX12_ROOT_PARAMETER slotRootParameter[5];
+    // 根签名
+	CD3DX12_DESCRIPTOR_RANGE uavTable0;
+	uavTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+
+	CD3DX12_DESCRIPTOR_RANGE uavTable1;
+	uavTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);
+
+	// Perfomance TIP: Order from most frequent to least frequent.
+    slotRootParameter[0].InitAsConstantBufferView(0);
+    slotRootParameter[1].InitAsConstantBufferView(1);
+    slotRootParameter[2].InitAsConstantBufferView(2);
+	slotRootParameter[3].InitAsDescriptorTable(1, &uavTable0);
+	slotRootParameter[4].InitAsDescriptorTable(1, &uavTable1);
+
+	// A root signature is an array of root parameters.
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if(errorBlob != nullptr)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+	ThrowIfFailed(hr);
+
+	ThrowIfFailed(md3dDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(clusterVisSignature.GetAddressOf())));
+}
+
+void Graphics::BuildClusterVisPSO()
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+    psoDesc.pRootSignature = clusterVisSignature.Get();
+
+    psoDesc.VS = 
+	{ 
+		reinterpret_cast<BYTE*>(clusterVisVS->GetBufferPointer()), 
+		clusterVisVS->GetBufferSize() 
+	};
+    psoDesc.GS = 
+    {
+        reinterpret_cast<BYTE*>(clusterVisGS->GetBufferPointer()), 
+		clusterVisGS->GetBufferSize() 
+    };
+    psoDesc.PS = 
+	{ 
+		reinterpret_cast<BYTE*>(clusterVisPS->GetBufferPointer()), 
+		clusterVisPS->GetBufferSize() 
+	};
+
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.RasterizerState.FrontCounterClockwise = true;
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = mBackBufferFormat;
+    psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+    psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+    psoDesc.DSVFormat = mDepthStencilFormat;
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterVisPSO)));
 }

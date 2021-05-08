@@ -91,6 +91,9 @@ private:
     void ClearUAVs();
     void UpdateStaticUniform();
 
+    void PrepareClusterVis();
+    void BuildClusterVisPSO();
+
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
 private:
@@ -113,6 +116,13 @@ private:
     ComPtr<ID3DBlob> clusterVS = nullptr;
     ComPtr<ID3DBlob> clusterGS = nullptr;
     ComPtr<ID3DBlob> clusterPS = nullptr;
+
+    ComPtr<ID3DBlob> clusterVisVS = nullptr;
+    ComPtr<ID3DBlob> clusterVisGS = nullptr;
+    ComPtr<ID3DBlob> clusterVisPS = nullptr;
+
+    ComPtr<ID3D12PipelineState> clusterVisPSO = nullptr;
+    ComPtr<ID3D12RootSignature> clusterVisSignature = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
