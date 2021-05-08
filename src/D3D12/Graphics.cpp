@@ -21,7 +21,7 @@ bool Graphics::Initialize()
 		
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
- 
+
     LoadAssets();
 
     LoadCubeMap();
@@ -109,6 +109,7 @@ void Graphics::Update(const GameTimer& gt)
 
     UpdatePassUniform();
     UpdateObjUniform();
+    UpdateStaticUniform();
 }
 
 void Graphics::Draw(const GameTimer& gt)
@@ -977,7 +978,7 @@ void Graphics::InitUAV()
 
     HeadTableHandle = GpuHandle;
 
-    CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+    CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY*ClusterZ) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 	HeadDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	md3dDevice->CreateCommittedResource(
@@ -996,7 +997,7 @@ void Graphics::InitUAV()
 	lll_uav_view_desc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
 	lll_uav_view_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 	lll_uav_view_desc.Buffer.FirstElement = 0;
-	lll_uav_view_desc.Buffer.NumElements = ClusterX*ClusterY;
+	lll_uav_view_desc.Buffer.NumElements = ClusterX*ClusterY*ClusterZ;
 	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempOffset); //2 uint32s in struct
 	lll_uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
 	lll_uav_view_desc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
@@ -1023,7 +1024,8 @@ void Graphics::InitUAV()
 
     NodeTableHandle = GpuHandle;
 
-    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (1024) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+    // TODO: 扩大 nodetable 容量为 16*8*24*MaxLight
+    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (2048) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 	NodeDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	md3dDevice->CreateCommittedResource(
@@ -1035,6 +1037,7 @@ void Graphics::InitUAV()
 		IID_PPV_ARGS(&NodeTable)
     );
 
+    lll_uav_view_desc.Buffer.NumElements = 2048; // MaxLightCount * clusterX * clusterY * clusterZ
 	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
 	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
     NodeTable->SetName(L"NodeTable");
@@ -1042,14 +1045,28 @@ void Graphics::InitUAV()
     // light data look up table
     vector<TempLight> lights;
     TempLight l0;
-    l0.id = 1;
+    
     l0.pos = glm::vec3(1999, 12, 22);
     l0.radiance = 10.0;
-    lights.push_back(l0);
+    for(int i = 0; i < 3; i++){
+        l0.id = i;
+        lights.push_back(l0);
+    }
     unsigned int byteSize = sizeof(TempLight) * lights.size();
 
     LightTable = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), lights.data(), byteSize, LightUploadBuffer);
     LightTable->SetName(L"LightTable");
+
+    // head table clear buffer
+    vector<TempOffset> cleardata;
+    cleardata.resize(ClusterX*ClusterY*ClusterZ);
+    for(TempOffset& u: cleardata) u.offset = 0;
+    byteSize = sizeof(TempOffset) * cleardata.size();
+    headClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), cleardata.data(), byteSize, headUploadBuffer);
+
+    // node table counter clear buffer
+    unsigned int counter = 1;
+    nodeCounterClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), &counter, sizeof(unsigned int), nodeUploadBuffer);
 }
 
 void Graphics::PrepareComputeShader()
@@ -1068,7 +1085,7 @@ void Graphics::PrepareComputeShader()
     depthTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
 
 	// Perfomance TIP: Order from most frequent to least frequent.
 	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
@@ -1076,9 +1093,10 @@ void Graphics::PrepareComputeShader()
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
     slotRootParameter[3].InitAsDescriptorTable(1, &depthTable);
     slotRootParameter[4].InitAsShaderResourceView(1);
+    slotRootParameter[5].InitAsConstantBufferView(0);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter,
 		0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
@@ -1099,10 +1117,12 @@ void Graphics::PrepareComputeShader()
 
 void Graphics::ExecuteComputeShader()
 {
-    // clear first, then compute
-    // head, node counter
-    unsigned int clearValue[4] = {0, 0, 0, 0};
-    mCommandList->ClearUnorderedAccessViewUint(nullptr, nullptr, HeadTable.Get(), clearValue, 0, nullptr);
+    // TODO: clear first
+    // ??? clear uav will bug
+    // ??? no clear will auto clear
+    ClearUAVs();
+
+    int lightCount = 3;
 
     // compute
     mCommandList->SetPipelineState(computePSO.Get());
@@ -1111,7 +1131,13 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootSignature(CSRootSignature.Get());
     mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
     mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
-    mCommandList->Dispatch(1,1,1);
+    mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
+    mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
+    mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
+    mCommandList->SetComputeRootConstantBufferView(5, clusterUniform->Resource()->GetGPUVirtualAddress());
+    mCommandList->Dispatch(lightCount, 1, 1);
+
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
 
     mCommandList->SetPipelineState(debugPSO.Get());
     // ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
@@ -1122,5 +1148,34 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
     mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
     mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
+    mCommandList->SetComputeRootConstantBufferView(5, clusterUniform->Resource()->GetGPUVirtualAddress());
     mCommandList->Dispatch(1, 1, 1);
+}
+
+void Graphics::ClearUAVs()
+{
+    // md3dDevice->TransitionResources(2, mCommandList, resources, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(HeadTable.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(NodeTableCounter.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
+	
+    mCommandList->CopyResource(HeadTable.Get(), headClearBuffer.Get());
+    mCommandList->CopyResource(NodeTableCounter.Get(), nodeCounterClearBuffer.Get());
+	
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(HeadTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(NodeTableCounter.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+}
+
+void Graphics::UpdateStaticUniform()
+{
+    if(clusterUniform == nullptr)
+        clusterUniform = std::make_unique<UploadBuffer<TempCluster>>(md3dDevice.Get(), 1, true);
+
+    TempCluster temp;
+    temp.clusterX = 16;
+    temp.clusterY = 8;
+    temp.clusterZ = 4;
+    temp.cNear = 1.0;
+    temp.cFar = 20.0;
+
+    clusterUniform->CopyData(0, temp);
 }

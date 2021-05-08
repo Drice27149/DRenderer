@@ -26,6 +26,14 @@ struct TempLight {
     float radiance;
 };
 
+struct TempCluster {
+    unsigned int clusterX;
+    unsigned int clusterY;
+    unsigned int clusterZ;
+    float cNear;
+    float cFar;
+};
+
 class Graphics : public D3DApp
 {
 public:
@@ -79,6 +87,9 @@ private:
     void PrepareComputeShader();
 
     void ExecuteComputeShader();
+
+    void ClearUAVs();
+    void UpdateStaticUniform();
 
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
@@ -135,7 +146,7 @@ private:
     int TextureCount = 8;
     int ClusterX = 16;
     int ClusterY = 8;
-    int ClusterZ = 2;
+    int ClusterZ = 4;
 
 //  -- begin of the new journey
 
@@ -160,7 +171,7 @@ private:
     ComPtr<ID3D12Resource> HeadTable, HeadTableCounter;
     ComPtr<ID3D12Resource> NodeTable, NodeTableCounter;
     ComPtr<ID3D12Resource> LightTable;
-    Microsoft::WRL::ComPtr<ID3D12Resource> LightUploadBuffer;
+    ComPtr<ID3D12Resource> LightUploadBuffer;
 
     ComPtr<ID3D12RootSignature> CSRootSignature;
 
@@ -170,5 +181,11 @@ private:
     CD3DX12_GPU_DESCRIPTOR_HANDLE DebugTableHandle;
 
     ComPtr<ID3D12Resource> debugTexture;
+    ComPtr<ID3D12Resource> headClearBuffer;
+    ComPtr<ID3D12Resource> nodeCounterClearBuffer;
+    ComPtr<ID3D12Resource> headUploadBuffer;
+    ComPtr<ID3D12Resource> nodeUploadBuffer;
+
+    std::unique_ptr<UploadBuffer<TempCluster>> clusterUniform = nullptr;
 };
 
