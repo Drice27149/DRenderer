@@ -56,7 +56,7 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
     float2 result = depthTable.Load(int4(x, y, lightID, 0));
     float minDepth = 1.0 - result.x;
     float maxDepth = result.y;
-    // if(result.x == 0.0f && result.y == 0.0f) return ;
+    if(result.x == 0.0f && result.y == 0.0f) return ;
     minDepth = GetlinerDepth(minDepth, near, far);
     maxDepth = GetlinerDepth(maxDepth, near, far);
     float stepLen = (far - near) / (float)(clusterZ);
@@ -65,7 +65,7 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
         // 当前 cluster 的 id
         float cMinD = near + (float)z * stepLen;
         float cMaxD = cMinD + stepLen;
-        if(false/*minDepth > cMaxD || maxDepth < cMinD*/){}
+        if(minDepth > cMaxD || maxDepth < cMinD){}
         else{
             uint cID = index * clusterZ + z;
             // 新增 node 的 id

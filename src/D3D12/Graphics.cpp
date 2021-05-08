@@ -191,7 +191,7 @@ void Graphics::Draw(const GameTimer& gt)
 void Graphics::BuildDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 20;
+    cbvHeapDesc.NumDescriptors = 50;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
@@ -817,7 +817,7 @@ void Graphics::InitSRV()
     );
     clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
 
-    SrvCounter = TextureCount + 1;
+    SrvCounter = TextureCount + 2;
 }
 
 void Graphics::PreZPass()

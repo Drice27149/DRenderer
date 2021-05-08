@@ -44,14 +44,12 @@ uint GetLightCount(uint cID)
 [numthreads(16, 8, 1)]
 void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
 {
-    // uint index = threadID.y * clusterX + threadID.x;
-    // uint count = 0;
-    // for(int z = 0; z < clusterZ; z++){
-    //     uint cID = index * clusterZ + z;
-    //     count = count + GetLightCount(cID);
-    // }
-    // float value = (float)count / (float)10.0;
-    // outTable[int2(threadID.x, threadID.y)] = float4(value, 0.0, 0.0, 0.0);
-    float2 temp = depthTable[int3(threadID.x, threadID.y, 0)];
-    outTable[int2(threadID.x, threadID.y)] = float4(temp, 0.0, 1.0);
+    uint index = threadID.y * clusterX + threadID.x;
+    uint count = 0;
+    for(int z = 0; z < clusterZ; z++){
+        uint cID = index * clusterZ + z;
+        count = count + GetLightCount(cID);
+    }
+    float value = (float)count / (float)10.0;
+    outTable[int2(threadID.x, threadID.y)] = float4(value, 0.0, 0.0, 0.0);
 }
