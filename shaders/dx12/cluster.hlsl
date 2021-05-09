@@ -1,6 +1,6 @@
 cbuffer PassUniform : register(b0)
 {
-	float4x4 _View;
+	float4x4 _View; // debug 时候这个不能变
 	float4x4 _Proj;
 };
 

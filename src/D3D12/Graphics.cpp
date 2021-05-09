@@ -166,10 +166,10 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-    DrawObjects(DrawType::Normal);
+    DrawObjects(DrawType::PointLight);
 
     // place at last
-    DrawSkyBox();
+    // DrawSkyBox();
 
     DrawLines();
 
@@ -356,8 +356,9 @@ void Graphics::BuildShadersAndInputLayout()
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texCoord), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, tangent), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, bitangent), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "TEXCOORD", 1, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, row), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "TEXCOORD", 2, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, col), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TEXCOORD", 1, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, x), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TEXCOORD", 2, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, y), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "TEXCOORD", 3, DXGI_FORMAT_R32_UINT, 0, offsetof(Vertex, z), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     };
 }
 
@@ -904,6 +905,9 @@ void Graphics::DrawLines()
     mCommandList->SetPipelineState(clusterVisPSO.Get());
     mCommandList->SetGraphicsRootSignature(clusterVisSignature.Get());
 
+    ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
     auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
     // mCommandList->SetGraphicsRootConstantBufferView(3, );
@@ -916,6 +920,14 @@ void Graphics::DrawLines()
 
 void Graphics::PrepareCluster()
 {
+    if (fixCamCB == nullptr){
+        PassUniform temp;
+        temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
+        temp.proj = glm::transpose(glm::perspective(45.0, 1.0, 1.0, 20.0));
+        fixCamCB = std::make_unique<UploadBuffer<PassUniform>>(md3dDevice.Get(), 1, true);
+        fixCamCB->CopyData(0, temp);
+    }
+
     mCommandList->OMSetRenderTargets(1, &clusterDepth->WriteHandle(), true, nullptr);
 
     mCommandList->RSSetViewports(1, &clusterDepth->Viewport());
@@ -925,6 +937,9 @@ void Graphics::PrepareCluster()
 	mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::Black, 0, nullptr);
 	
     mCommandList->SetPipelineState(clusterPSO.Get());
+
+    auto passAddr = fixCamCB->Resource()->GetGPUVirtualAddress();
+    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
     DrawObjects(DrawType::PointLight);
 

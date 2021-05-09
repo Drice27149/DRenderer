@@ -196,6 +196,8 @@ private:
     ComPtr<ID3D12Resource> headUploadBuffer;
     ComPtr<ID3D12Resource> nodeUploadBuffer;
 
+    std::unique_ptr<UploadBuffer<PassUniform>> fixCamCB = nullptr;
+
     std::unique_ptr<UploadBuffer<TempCluster>> clusterUniform = nullptr;
 };
 

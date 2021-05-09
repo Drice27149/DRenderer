@@ -109,5 +109,8 @@ float4 PS(VertexOut pin) : SV_Target
 	float shadowBlur = GetShadowBlur(pin.clipPos);
 	lightRate = lightRate * (1.0 - shadowBlur);
 
+	// temp
+	return float4(1.0, 1.0, 1.0, 1.0);
+
 	return float4(lightRate, lightRate, lightRate, 1.0);
 }

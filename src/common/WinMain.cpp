@@ -56,12 +56,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // DEngine::gobjs.push_back(&panel);
 
         Light pointLight(DrawType::PointLight);
-        pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.5, 0.0)));
+        pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));
         pointLight.id = 0;
         DEngine::gobjs.push_back(&pointLight);
 
         Light pointLight0(DrawType::PointLight);
-        pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 5.0, 0.0)));
+        pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(5.0, 5.0, 0.0)));
         pointLight0.id = 1;
         DEngine::gobjs.push_back(&pointLight0);
 
