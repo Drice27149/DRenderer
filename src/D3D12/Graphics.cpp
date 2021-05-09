@@ -461,7 +461,7 @@ void Graphics::BuildPSO()
     // cluster depth...
 	D3D12_RASTERIZER_DESC rasterDescFront;
 	rasterDescFront.AntialiasedLineEnable = FALSE;
-	rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+	rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
 	rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -1275,11 +1275,14 @@ void Graphics::BuildClusterVisPSO()
 		clusterVisPS->GetBufferSize() 
 	};
 
+    D3D12_DEPTH_STENCIL_DESC depthDesc = {};
+    depthDesc.DepthEnable = false;
+
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = true;
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = depthDesc;// CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
     psoDesc.NumRenderTargets = 1;

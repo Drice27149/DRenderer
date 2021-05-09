@@ -30,8 +30,9 @@ StructuredBuffer<Light> lightTable: register(t1);
 
 float GetlinerDepth(float z, float n, float f)
 {
-    z = 2.0 * z - 1.0;
-    float depth = 2.0 * n * f / (f + n - z * (f - n));
+    // z = 2.0 * z - 1.0;
+    // float depth = 2.0 * n * f / (f + n - z * (f - n));
+    float depth = z * (f-n);
     return depth;
 }
 

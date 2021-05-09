@@ -131,7 +131,7 @@ Frustum::Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, 
             for(int y = 1; y <= yCnt+1; y++){
                 int id = vs.size();
                 Vertex ver = Vertex(vec3(curX, curY, -curZ));
-                ver.x = xCnt+1 - x;
+                ver.x = x-1;
                 ver.y = yCnt+1 - y;
                 ver.z = i - 1;
                 vs.push_back(ver);

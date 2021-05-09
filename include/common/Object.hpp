@@ -16,6 +16,7 @@ public:
 	Object();
 	vector<Mesh> meshes;
 	void Transform(mat4 trans);
+	void Scale(float rate);
 public:
 	mat4 model;
 	DrawType drawType;

@@ -57,17 +57,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         Light pointLight(DrawType::PointLight);
         pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));
+        pointLight.Scale(3.0);
         pointLight.id = 0;
         DEngine::gobjs.push_back(&pointLight);
 
         Light pointLight0(DrawType::PointLight);
         pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(5.0, 5.0, 0.0)));
         pointLight0.id = 1;
+        pointLight0.Scale(2.0);
         DEngine::gobjs.push_back(&pointLight0);
 
         Light pointLight1(DrawType::PointLight);
         pointLight1.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 7.5, 0.0)));
         pointLight1.id = 2;
+        pointLight1.Scale(1.0);
         DEngine::gobjs.push_back(&pointLight1);
 
         if(!theApp.Initialize())
