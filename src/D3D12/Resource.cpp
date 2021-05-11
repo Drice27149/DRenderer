@@ -183,8 +183,8 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
 	// Performance tip: Tell the runtime at resource creation the desired clear value. 
-	D3D12_CLEAR_VALUE clearValue;
-	clearValue.Format = format;
+	// D3D12_CLEAR_VALUE clearValue;
+	// clearValue.Format = format;
 	// if (clear_color == 0)
 	// {
 	// 	float clearColor[] = { 0, 0, 0, 1 };
@@ -198,7 +198,7 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		&clearValue,
+		nullptr, // &clearValue,
 		IID_PPV_ARGS(&mResource)
 	);
 
@@ -220,6 +220,68 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 
     md3dDevice->CreateShaderResourceView(mResource.Get(), &SRVDesc, createHandle);
 	mResource->SetName(L"renderTargetArray");
+}
+
+Resource::Resource(ID3D12Device* device, unsigned int width, unsigned int height)
+{
+	md3dDevice = device;
+	mWidth = width;
+	mHeight = height;
+	mViewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
+	mScissorRect = { 0, 0, (int)width, (int)height };
+}
+
+void Resource::BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_FORMAT xxxFormat)
+{
+	// 0. commit resource
+	// 1. build shader resource view
+	// 2. build xxx view
+	// note: create the resource with typeless components, and specialize the resource in a view
+	// i.e: resource format = xxx_typeless, view format = xxx_uint 
+
+	// commit resource
+	D3D12_RESOURCE_DESC texDesc;
+	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	texDesc.Alignment = 0;
+	texDesc.Width = mWidth;
+	texDesc.Height = mHeight;
+	texDesc.DepthOrArraySize = 1;
+	texDesc.MipLevels = 1;
+	texDesc.Format = resFormat;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	ThrowIfFailed(md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&mResource)
+		)
+	);
+
+	// build shader resource view
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = srvFormat;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    srvDesc.Texture2D.PlaneSlice = 0;
+    md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, srvCpu);
+
+	// build xxx view
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc; 
+    dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+    dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsvDesc.Format = xxxFormat;
+    dsvDesc.Texture2D.MipSlice = 0;
+	md3dDevice->CreateDepthStencilView(mResource.Get(), &dsvDesc, xxxCpu);
 }
 
 

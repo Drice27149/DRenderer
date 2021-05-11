@@ -46,6 +46,8 @@ bool Graphics::Initialize()
     BuildPSO();
     BuildClusterVisPSO();
 
+    InitPassMgrs();
+
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
@@ -166,10 +168,10 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-    DrawObjects(DrawType::PointLight);
+    DrawObjects(DrawType::Normal);
 
     // place at last
-    // DrawSkyBox();
+    DrawSkyBox();
 
     DrawLines();
 
@@ -207,20 +209,22 @@ void Graphics::BuildDescriptorHeaps()
 
     // for shadow map
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-    dsvHeapDesc.NumDescriptors = 5;
+    dsvHeapDesc.NumDescriptors = 50;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     dsvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
         &dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
+    DsvCounter = 0;
 
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-    rtvHeapDesc.NumDescriptors = 5;
+    rtvHeapDesc.NumDescriptors = 50;
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     rtvHeapDesc.NodeMask = 0;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
         &rtvHeapDesc, IID_PPV_ARGS(RTVHeap.GetAddressOf())));
+    RtvCounter = 0;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
     SMHandle = hDescriptor;
@@ -731,7 +735,11 @@ void Graphics::BuildFrameResources()
 void Graphics::BuildShaderResourceView()
 {   
     shadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
-    shadowMap->BuildDescriptors(SMHandle, GPUSMHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart()));
+    auto dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
+    DsvCounter++;
+
+    shadowMap->BuildDescriptors(SMHandle, GPUSMHandle, dsvCpu);
 }
 
 void Graphics::DrawShadowMap()
@@ -816,7 +824,9 @@ void Graphics::InitSRV()
    
     // ��ʱ dsv handle ����Ч��
     auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-    DsvHandle.Offset(mDsvDescriptorSize);
+    DsvHandle.Offset(DsvCounter * mDsvDescriptorSize);
+    DsvCounter++;
+
     PreZMap->BuildDescriptors(CpuHandle, GpuHandle, DsvHandle);
 
     CpuHandle.Offset(mCbvSrvUavDescriptorSize);
@@ -1291,4 +1301,21 @@ void Graphics::BuildClusterVisPSO()
     psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
     psoDesc.DSVFormat = mDepthStencilFormat;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterVisPSO)));
+}
+
+void Graphics::InitPassMgrs()
+{
+    // 只能放在最后, 目前和 baseColor/normal/matellic 的 srvcounter 有冲突的地方
+    preZMgr = std::make_unique<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
+    auto srvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    srvCpu.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    auto srvGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    srvCpu.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    SrvCounter++;
+    auto dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+    DsvCounter++;
+    preZMgr->srvCpu = srvCpu;
+    preZMgr->srvGpu = srvGpu;
+    preZMgr->dsvCpu = dsvCpu;
+    preZMgr->Init();
 }

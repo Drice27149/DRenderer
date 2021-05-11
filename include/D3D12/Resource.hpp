@@ -43,7 +43,7 @@ private:
 	UINT mWidth = 0;
 	UINT mHeight = 0;
 
-	DXGI_FORMAT mFormat = DXGI_FORMAT_R24G8_TYPELESS;
+	DXGI_FORMAT mFormat = DXGI_FORMAT_R24G8_TYPELESS; // DXGI_FORMAT_R24G8_TYPELESS;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhGpuSrv;
@@ -60,6 +60,14 @@ public:
 	void BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format);
 	CD3DX12_GPU_DESCRIPTOR_HANDLE ReadHandle()const { return readHandle; }
 	CD3DX12_CPU_DESCRIPTOR_HANDLE WriteHandle()const { return writeHandle; }
+	// New and decouple
+public:
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE xxxCpu;
+
+	Resource(ID3D12Device* device, unsigned int width, unsigned int height);
+	void BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_FORMAT xxxFormat);
 };
 
  

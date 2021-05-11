@@ -6,6 +6,7 @@
 #include "Resource.hpp"
 #include "DMesh.hpp"
 #include "Object.hpp"
+#include "PreZMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -101,6 +102,8 @@ private:
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
+    unsigned int DsvCounter;
+
 
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
@@ -199,5 +202,13 @@ private:
     std::unique_ptr<UploadBuffer<PassUniform>> fixCamCB = nullptr;
 
     std::unique_ptr<UploadBuffer<TempCluster>> clusterUniform = nullptr;
+
+public:
+    // pass manager
+    std::unique_ptr<PreZMgr> preZMgr;
+
+public:
+    // new, for decouple
+    void InitPassMgrs();
 };
 

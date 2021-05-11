@@ -50,10 +50,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         cluster.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0,3.0,12.0)));
         DEngine::gobjs.push_back(&cluster);
 
-        // Object panel;
-        // panel.meshes.push_back(Panel());
-        // panel.drawType = DrawType::Normal;
-        // DEngine::gobjs.push_back(&panel);
+        Object panel;
+        panel.meshes.push_back(Panel());
+        panel.drawType = DrawType::Normal;
+        DEngine::gobjs.push_back(&panel);
 
         Light pointLight(DrawType::PointLight);
         pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));

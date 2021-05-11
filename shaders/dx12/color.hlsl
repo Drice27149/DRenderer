@@ -110,7 +110,7 @@ float4 PS(VertexOut pin) : SV_Target
 	lightRate = lightRate * (1.0 - shadowBlur);
 
 	// temp
-	return float4(0.5, 0.5, 0.0, 1.0);
+	// return float4(0.5, 0.5, 0.0, 1.0);
 
 	return float4(lightRate, lightRate, lightRate, 1.0);
 }
