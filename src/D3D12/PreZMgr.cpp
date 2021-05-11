@@ -15,7 +15,7 @@ void PreZMgr::BuildRootSig()
     params[0].InitAsConstantBufferView(0);
     params[1].InitAsConstantBufferView(1);
 
-    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, params, 0 , nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT/*D3D12_ROOT_SIGNATURE_FLAG_NONE*/);
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, params, 0 , nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT/*D3D12_ROOT_SIGNATURE_FLAG_NONE*/);
 	// CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, params, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
@@ -75,28 +75,90 @@ void PreZMgr::BuildPSO()
 void PreZMgr::CreateResources()
 {
     depthMap = std::make_shared<Resource>(device, width, height);
+
     depthMap->srvCpu = srvCpu;
     depthMap->srvGpu = srvGpu;
     depthMap->xxxCpu = dsvCpu;
+
+    depthMap->BuildDepthMap(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT);
 }
 
 void PreZMgr::CompileShaders()
 {
-	vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\common\\depth.hlsl", nullptr, "VS", "vs_6_1");
-	gs = d3dUtil::CompileShader(L"..\\assets\\shaders\\common\\depth.hlsl", nullptr, "PS", "ps_6_1");
+	vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\common\\depth.hlsl", nullptr, "VS", "vs_5_1");
+	ps = d3dUtil::CompileShader(L"..\\assets\\shaders\\common\\depth.hlsl", nullptr, "PS", "ps_5_1");
 }
 
 void PreZMgr::Init()
 {
     // TODO: Async
-    // CompileShaders();
-    // CreateResources();
+    CompileShaders();
+    CreateResources();
 
-    // BuildRootSig();
-    // BuildPSO();
+    BuildRootSig();
+    BuildPSO();
 }
 
 void PreZMgr::Pass()
 {
+    commandList->OMSetRenderTargets(0, nullptr, false, &depthMap->xxxCpu);
+    commandList->RSSetViewports(1, &depthMap->Viewport());
+    commandList->RSSetScissorRects(1, &depthMap->ScissorRect());
 
+    commandList->ResourceBarrier(1, 
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            depthMap->GetResource(),
+            D3D12_RESOURCE_STATE_GENERIC_READ, 
+            D3D12_RESOURCE_STATE_DEPTH_WRITE
+        )
+    );
+
+    commandList->ClearDepthStencilView(depthMap->xxxCpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    commandList->SetPipelineState(pso.Get()); 
+
+    auto passAddr = constantMgr->GetCameraPassConstant();
+    commandList->SetGraphicsRootConstantBufferView(0, passAddr);
+
+    // DrawObjects(DrawType::Normal);
+
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+            depthMap->GetResource(),
+            D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+            D3D12_RESOURCE_STATE_GENERIC_READ
+        )
+    );
+}
+
+void PreZMgr::PrePass()
+{
+    commandList->OMSetRenderTargets(0, nullptr, false, &depthMap->xxxCpu);
+    commandList->RSSetViewports(1, &depthMap->Viewport());
+    commandList->RSSetScissorRects(1, &depthMap->ScissorRect());
+
+    commandList->ResourceBarrier(1, 
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            depthMap->GetResource(),
+            D3D12_RESOURCE_STATE_GENERIC_READ, 
+            D3D12_RESOURCE_STATE_DEPTH_WRITE
+        )
+    );
+
+    commandList->ClearDepthStencilView(depthMap->xxxCpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    commandList->SetPipelineState(pso.Get()); 
+    commandList->SetGraphicsRootSignature(rootSig.Get());
+
+    auto passAddr = constantMgr->GetCameraPassConstant();
+    commandList->SetGraphicsRootConstantBufferView(0, passAddr);
+}
+
+void PreZMgr::PostPass()
+{
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+            depthMap->GetResource(),
+            D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+            D3D12_RESOURCE_STATE_GENERIC_READ
+        )
+    );
 }

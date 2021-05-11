@@ -68,68 +68,25 @@ void Graphics::OnResize()
     XMStoreFloat4x4(&mProj, P);
 }
 
-void Graphics::UpdateObjUniform()
-{
-    auto objCB = mFrameResources[CurrentFrame]->ObjectCB.get();
-    auto objAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();
-    unsigned int objByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
-
-    int index = 0;
-    for(Object* obj: DEngine::gobjs){
-        ObjectUniform temp;
-        temp.model = glm::transpose(obj->model);
-        temp.id = obj->id;
-        objCB->CopyData(index, temp);
-        index++;
-
-        objAddr += objByteSize;
-    }
-}
-
-void Graphics::UpdatePassUniform()
-{
-    glm::mat4 tempLight = glm::lookAt(vec3(-8.0, 8.0, 0.0), vec3(0.0,0.0,0.0), vec3(0.0,1.0,0.0));
-    auto passCB = mFrameResources[CurrentFrame]->PassCB.get();
-    PassUniform temp;
-    temp.view = glm::transpose(tempLight); // glm::transpose(DEngine::GetCamMgr().GetViewTransform());
-    temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
-    passCB->CopyData(0, temp);
-    temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
-    temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
-    temp.SMView = glm::transpose(tempLight);
-    temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
-    passCB->CopyData(1, temp);
-}
-
 void Graphics::Update(const GameTimer& gt)
 {
-    CurrentFrame = (CurrentFrame + 1)%FrameCount;
-    auto mCurFrameResource = mFrameResources[CurrentFrame].get();
-
-    if(mCurFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurFrameResource->Fence){
-        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
-        ThrowIfFailed(mFence->SetEventOnCompletion(mCurFrameResource->Fence, eventHandle));
-        WaitForSingleObject(eventHandle, INFINITE);
-        CloseHandle(eventHandle);
-    }
-
-    UpdatePassUniform();
-    UpdateObjUniform();
-    UpdateStaticUniform();
+    constantMgr->Update();
 }
 
 void Graphics::Draw(const GameTimer& gt)
 {
     // Reuse the memory associated with command recording.
     // We can only reset when the associated command lists have finished execution on the GPU.
-	ThrowIfFailed(mFrameResources[CurrentFrame]->CmdListAlloc->Reset());
+	ThrowIfFailed(constantMgr->frameResources[constantMgr->curFrame]->CmdListAlloc->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
     // Reusing the command list reuses memory.
-    ThrowIfFailed(mCommandList->Reset(mFrameResources[CurrentFrame]->CmdListAlloc.Get(), mPSO.Get()));
+    ThrowIfFailed(mCommandList->Reset(constantMgr->frameResources[constantMgr->curFrame]->CmdListAlloc.Get(), mPSO.Get()));
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+    ID3D12DescriptorHeap* SdescriptorHeaps[] = { SrvHeap.Get() };
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
@@ -142,6 +99,7 @@ void Graphics::Draw(const GameTimer& gt)
     ExecuteComputeShader();
 
     mCommandList->SetPipelineState(mPSO.Get());
+    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
@@ -155,14 +113,15 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
     mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
+    mCommandList->SetDescriptorHeaps(_countof(SdescriptorHeaps), SdescriptorHeaps);
     // ������ͼ
-    mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    // mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     // �����Ѿ�û��
     // mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
     // shadow map ����
-    mCommandList->SetGraphicsRootDescriptorTable(4, GPUSMHandle);
+    mCommandList->SetGraphicsRootDescriptorTable(4, shadowMgr->srvGpu);
 
-    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+    auto passAddr = constantMgr->GetCameraPassConstant();
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -170,6 +129,7 @@ void Graphics::Draw(const GameTimer& gt)
 
     DrawObjects(DrawType::Normal);
 
+    mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     // place at last
     DrawSkyBox();
 
@@ -189,7 +149,7 @@ void Graphics::Draw(const GameTimer& gt)
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-    mFrameResources[CurrentFrame]->Fence = ++mCurrentFence;
+    constantMgr->frameResources[constantMgr->curFrame]->Fence = ++mCurrentFence;
 
     mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
@@ -726,54 +686,19 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 
 void Graphics::BuildFrameResources()
 {
-    for(int i = 0; i < FrameCount; i++){
-        auto newFrameResource = std::make_unique<FrameResource>(md3dDevice.Get(), (unsigned int)PassCount, (unsigned int)(DEngine::gobjs.size()));
-        mFrameResources.push_back(std::move(newFrameResource));
-    }
 }
 
 void Graphics::BuildShaderResourceView()
 {   
-    shadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
-    auto dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
-    DsvCounter++;
-
-    shadowMap->BuildDescriptors(SMHandle, GPUSMHandle, dsvCpu);
 }
 
 void Graphics::DrawShadowMap()
 {
-    mCommandList->RSSetViewports(1, &shadowMap->Viewport());
-    mCommandList->RSSetScissorRects(1, &shadowMap->ScissorRect());
-
-    mCommandList->OMSetRenderTargets(0, nullptr, false, &shadowMap->Dsv());
-
-    mCommandList->RSSetViewports(1, &shadowMap->Viewport());
-    mCommandList->RSSetScissorRects(1, &shadowMap->ScissorRect());
-
-    // Change to DEPTH_WRITE.
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),
-        D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
-
-    // Clear the back buffer and depth buffer.
-    mCommandList->ClearDepthStencilView(shadowMap->Dsv(), 
-        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    // // Set null render target because we are only going to draw to
-    // // depth buffer.  Setting a null render target will disable color writes.
-    // // Note the active PSO also must specify a render target count of 0.
-
-    mCommandList->SetPipelineState(SMPSO.Get());
-
-    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress();
-
-    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
+    shadowMgr->PrePass();
 
     DrawObjects(DrawType::Normal);
 
-    // Change back to GENERIC_READ so we can read the texture in a shader.
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMap->Resource(),D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+    shadowMgr->PostPass();
 }
 
 void Graphics::LoadCubeMap()
@@ -814,72 +739,32 @@ void Graphics::InitDescriptorHeaps()
 void Graphics::InitSRV()
 {
     // baseColor/normal/specular + pre-Z + cluster structure
+    SrvCounter = TextureCount;
 
     auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    CpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    CpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
     auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    GpuHandle.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    GpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
+    SrvCounter++;
 
-    PreZMap = std::make_unique<Resource>(md3dDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, mClientWidth, mClientHeight); 
-   
-    // ��ʱ dsv handle ����Ч��
     auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
     DsvHandle.Offset(DsvCounter * mDsvDescriptorSize);
     DsvCounter++;
-
-    PreZMap->BuildDescriptors(CpuHandle, GpuHandle, DsvHandle);
-
-    CpuHandle.Offset(mCbvSrvUavDescriptorSize);
-    GpuHandle.Offset(mCbvSrvUavDescriptorSize);
 
     clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), 
         ClusterX, ClusterY, 
         CpuHandle, GpuHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart())
     );
     clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
-
-    SrvCounter = TextureCount + 2;
 }
 
 void Graphics::PreZPass()
 {
-    // Set null render target because we are only going to draw to
-    // depth buffer.  Setting a null render target will disable color writes.
-    // Note the active PSO also must specify a render target count of 0.
-    mCommandList->OMSetRenderTargets(0, nullptr, false, &PreZMap->Dsv());
-
-    mCommandList->RSSetViewports(1, &PreZMap->Viewport());
-    mCommandList->RSSetScissorRects(1, &PreZMap->ScissorRect());
-
-    // Change to DEPTH_WRITE.
-    mCommandList->ResourceBarrier(1, 
-        &CD3DX12_RESOURCE_BARRIER::Transition(
-            PreZMap->GetResource(),
-            D3D12_RESOURCE_STATE_GENERIC_READ, 
-            D3D12_RESOURCE_STATE_DEPTH_WRITE
-        )
-    );
-
-    // Clear the back buffer and depth buffer.
-    mCommandList->ClearDepthStencilView(PreZMap->Dsv(), 
-        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    // ��ʱ, ʹ�� shadow pass �� pipeline state object ������Ч��
-    mCommandList->SetPipelineState(SMPSO.Get()); 
-
-    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
-
-    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
+    preZMgr->PrePass();
 
     DrawObjects(DrawType::Normal);
 
-    // Change back to GENERIC_READ so we can read the texture in a shader.
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-            PreZMap->GetResource(),
-            D3D12_RESOURCE_STATE_DEPTH_WRITE, 
-            D3D12_RESOURCE_STATE_GENERIC_READ
-        )
-    );
+    preZMgr->PostPass();
 }
 
 void Graphics::DrawObjects(DrawType drawType)
@@ -892,7 +777,7 @@ void Graphics::DrawObjects(DrawType drawType)
     else if(drawType == DrawType::WhiteLines)
         mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-    auto objectAddr = mFrameResources[CurrentFrame]->ObjectCB->Resource()->GetGPUVirtualAddress();    
+    auto objectAddr = constantMgr->GetObjectConstant((unsigned long long)0);
     int idOffset = 0, vsOffset = 0;
     
     for(Object* obj: DEngine::gobjs){
@@ -918,10 +803,10 @@ void Graphics::DrawLines()
     ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    auto passAddr = mFrameResources[CurrentFrame]->PassCB->Resource()->GetGPUVirtualAddress() + d3dUtil::CalcConstantBufferByteSize(sizeof(PassUniform));
+    auto passAddr = constantMgr->GetCameraPassConstant();
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
     // mCommandList->SetGraphicsRootConstantBufferView(3, );
-    mCommandList->SetGraphicsRootConstantBufferView(2, clusterUniform->Resource()->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootConstantBufferView(2, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
     mCommandList->SetGraphicsRootDescriptorTable(3, HeadTableHandle);
     mCommandList->SetGraphicsRootDescriptorTable(4, NodeTableHandle);
 
@@ -944,9 +829,10 @@ void Graphics::PrepareCluster()
     mCommandList->RSSetScissorRects(1, &clusterDepth->ScissorRect());
 
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::Black, 0, nullptr);
+	// mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::Black, 0, nullptr);
 	
     mCommandList->SetPipelineState(clusterPSO.Get());
+    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     auto passAddr = fixCamCB->Resource()->GetGPUVirtualAddress();
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
@@ -1179,7 +1065,7 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
     mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
     mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
-    mCommandList->SetComputeRootConstantBufferView(5, clusterUniform->Resource()->GetGPUVirtualAddress());
+    mCommandList->SetComputeRootConstantBufferView(5, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
     mCommandList->Dispatch(lightCount, 1, 1);
 
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
@@ -1193,7 +1079,7 @@ void Graphics::ExecuteComputeShader()
     mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
     mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
     mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
-    mCommandList->SetComputeRootConstantBufferView(5, clusterUniform->Resource()->GetGPUVirtualAddress());
+    mCommandList->SetComputeRootConstantBufferView(5, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
     mCommandList->Dispatch(1, 1, 1);
 
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
@@ -1210,21 +1096,6 @@ void Graphics::ClearUAVs()
 	
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(HeadTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(NodeTableCounter.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-}
-
-void Graphics::UpdateStaticUniform()
-{
-    if(clusterUniform == nullptr)
-        clusterUniform = std::make_unique<UploadBuffer<TempCluster>>(md3dDevice.Get(), 1, true);
-
-    TempCluster temp;
-    temp.clusterX = 16;
-    temp.clusterY = 8;
-    temp.clusterZ = 4;
-    temp.cNear = 1.0;
-    temp.cFar = 20.0;
-
-    clusterUniform->CopyData(0, temp);
 }
 
 void Graphics::PrepareClusterVis()
@@ -1303,19 +1174,47 @@ void Graphics::BuildClusterVisPSO()
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterVisPSO)));
 }
 
+// 目前只能放在最后, 目前和 baseColor/normal/matellic 的 srvcounter 有冲突的地方
+// 重构之后会放到比较前面的位置
 void Graphics::InitPassMgrs()
 {
-    // 只能放在最后, 目前和 baseColor/normal/matellic 的 srvcounter 有冲突的地方
+    // 常量 (uniform) 管理类
+    // @TODO: pass count 准确化
+    ID3D12Device* device = md3dDevice.Get();
+    ID3D12Fence* fence = mFence.Get();
+    constantMgr = std::make_shared<ConstantMgr>(device, fence, (unsigned int)FrameCount, (unsigned int)5, (unsigned int)DEngine::gobjs.size());
+    
+    // Pre-Z 管理类
     preZMgr = std::make_unique<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
     auto srvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    srvCpu.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    srvCpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
     auto srvGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    srvCpu.Offset(TextureCount * mCbvSrvUavDescriptorSize);
+    srvGpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
     SrvCounter++;
     auto dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
     DsvCounter++;
     preZMgr->srvCpu = srvCpu;
     preZMgr->srvGpu = srvGpu;
     preZMgr->dsvCpu = dsvCpu;
+    // 临时
+    preZMgr->constantMgr = constantMgr;
     preZMgr->Init();
+
+    // 阴影管理类
+    shadowMgr = std::make_unique<ShadowMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
+    srvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
+    srvCpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
+    srvGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
+    srvGpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
+    SrvCounter++;
+    dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
+    DsvCounter++;
+    shadowMgr->srvCpu = srvCpu;
+    shadowMgr->srvGpu = srvGpu;
+    shadowMgr->dsvCpu = dsvCpu;
+    // 临时
+    shadowMgr->constantMgr = constantMgr;
+    shadowMgr->Init();
 }

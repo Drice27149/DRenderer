@@ -2,11 +2,12 @@
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 #include "FrameResource.h"
-#include "ShadowMap.h"
 #include "Resource.hpp"
 #include "DMesh.hpp"
 #include "Object.hpp"
+#include "ConstantMgr.hpp"
 #include "PreZMgr.hpp"
+#include "ShadowMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -61,9 +62,6 @@ private:
     void LoadCubeMap();
     void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
 
-    void UpdateObjUniform();
-    void UpdatePassUniform();
-
     void BuildDescriptorHeaps();
     void BuildShaderResourceView();
     void BuildRootSignature();
@@ -90,7 +88,6 @@ private:
     void ExecuteComputeShader();
 
     void ClearUAVs();
-    void UpdateStaticUniform();
 
     void PrepareClusterVis();
     void BuildClusterVisPSO();
@@ -103,7 +100,6 @@ private:
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
     unsigned int DsvCounter;
-
 
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
@@ -146,12 +142,9 @@ private:
     TTexture MyTex;
     POINT mLastMousePos;
 
-    std::vector<std::unique_ptr<FrameResource>> mFrameResources;
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE SMHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE GPUSMHandle;
 
-    std::unique_ptr<ShadowMap> shadowMap;
     TTexture CubeTex;
 
     int CurrentFrame = 0;
@@ -168,11 +161,6 @@ private:
     ComPtr<ID3D12DescriptorHeap> RTVHeap;
     int RtvCounter;
 
-    // ������ȡ Pre-Z pass �ı�ʶ��
-    CD3DX12_GPU_DESCRIPTOR_HANDLE CPUPreZ;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE GPUPreZ;
-    std::unique_ptr<Resource> PreZMap;
-    // vertex buffer �� index buffer
     std::unique_ptr<DMesh> objMesh = nullptr;
     std::unique_ptr<DMesh> skyMesh = nullptr;
 
@@ -201,12 +189,11 @@ private:
 
     std::unique_ptr<UploadBuffer<PassUniform>> fixCamCB = nullptr;
 
-    std::unique_ptr<UploadBuffer<TempCluster>> clusterUniform = nullptr;
-
 public:
-    // pass manager
-    std::unique_ptr<PreZMgr> preZMgr;
-
+    // pass mgr, 各种 pass 管理类
+    std::shared_ptr<ConstantMgr> constantMgr = nullptr;
+    std::unique_ptr<PreZMgr> preZMgr = nullptr;
+    std::unique_ptr<ShadowMgr> shadowMgr = nullptr;
 public:
     // new, for decouple
     void InitPassMgrs();

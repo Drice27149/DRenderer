@@ -263,6 +263,7 @@ void Resource::BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_
 		IID_PPV_ARGS(&mResource)
 		)
 	);
+	mResource->SetName(L"PreZ depthMap");
 
 	// build shader resource view
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};

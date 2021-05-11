@@ -15,6 +15,9 @@ public:
     virtual void CompileShaders() = 0;
 
     virtual void Pass() = 0;
+    // @TODO: do it better
+    virtual void PrePass() = 0;
+    virtual void PostPass() = 0;
 public:
     // 创建资源和命令提交
     ID3D12Device* device;
