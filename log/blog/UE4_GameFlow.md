@@ -131,14 +131,14 @@
             * 创建游戏实例 ```NewObject``` 方法
             * ```instance->initializestandalone()``` 
             * 创建 ```viewportClient```
+            * 创建 ```GameViewport```
 
         * ```GEngine->Start()```
 
           * 啥都没有 ???
           * ```UGameEngine::Start()``` 
             * ```GameInstance->StartGameInstance()``` 启动游戏实例
-            * UEngine 和 UGameEngine 是什么关系
-            * Init 和 start 方法都是虚的, 所以可能都是用的 UGameEngine 的实现 
+            * ```GameInstance->OnStart()``` 接下来就是 gameplay 相关了, 暂时跳过
 
         * ```c++
           FModuleManager::Get().LoadModule("...") // 加载一些模块
