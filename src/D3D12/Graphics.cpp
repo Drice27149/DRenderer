@@ -83,12 +83,12 @@ void Graphics::Draw(const GameTimer& gt)
     // Reusing the command list reuses memory.
     ThrowIfFailed(mCommandList->Reset(constantMgr->frameResources[constantMgr->curFrame]->CmdListAlloc.Get(), mPSO.Get()));
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	// ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+	// mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    ID3D12DescriptorHeap* SdescriptorHeaps[] = { SrvHeap.Get() };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { heapMgr->GetSRVHeap() };
 
-	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+    mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
     DrawShadowMap();
 
@@ -101,8 +101,6 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->SetPipelineState(mPSO.Get());
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
@@ -113,12 +111,7 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
     mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-    mCommandList->SetDescriptorHeaps(_countof(SdescriptorHeaps), SdescriptorHeaps);
-    // ������ͼ
-    // mCommandList->SetGraphicsRootDescriptorTable(2, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // �����Ѿ�û��
-    // mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
-    // shadow map ����
+    // shadow map
     mCommandList->SetGraphicsRootDescriptorTable(4, shadowMgr->srvGpu);
 
     auto passAddr = constantMgr->GetCameraPassConstant();
@@ -127,12 +120,13 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
+    // real render
     DrawObjects(DrawType::Normal);
-
-    mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+    
     // place at last
     DrawSkyBox();
 
+    // debugvis
     DrawLines();
 
     // Indicate a state transition on the resource usage.
@@ -156,41 +150,12 @@ void Graphics::Draw(const GameTimer& gt)
 
 void Graphics::BuildDescriptorHeaps()
 {
-    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 50;
-    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
-        IID_PPV_ARGS(&mCbvHeap)));
+    heapMgr = std::make_unique<HeapMgr>(md3dDevice.Get(), mCommandList.Get(), 50, 50, 50);
 
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
-        IID_PPV_ARGS(&SrvHeap)));
-
-    // for shadow map
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-    dsvHeapDesc.NumDescriptors = 50;
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    dsvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-        &dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
-    DsvCounter = 0;
-
-    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-    rtvHeapDesc.NumDescriptors = 50;
-    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    rtvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
-        &rtvHeapDesc, IID_PPV_ARGS(RTVHeap.GetAddressOf())));
-    RtvCounter = 0;
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-    SMHandle = hDescriptor;
-    GPUSMHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    // GPUSMHandle.Offset(2*mCbvSrvUavDescriptorSize);
-    hDescriptor.Offset(mCbvSrvUavDescriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+    heapMgr->GetNewSRV(cpuHandle, gpuHandle);
+    SkyTexHandle = gpuHandle;
 
     auto SkyTex = CubeTex.Resource;
     assert(SkyTex);
@@ -203,25 +168,23 @@ void Graphics::BuildDescriptorHeaps()
 	srvDesc.TextureCube.MipLevels = SkyTex->GetDesc().MipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = SkyTex->GetDesc().Format;
-	md3dDevice->CreateShaderResourceView(SkyTex.Get(), &srvDesc, hDescriptor);
+	md3dDevice->CreateShaderResourceView(SkyTex.Get(), &srvDesc, cpuHandle);
 
-    hDescriptor.Offset(mCbvSrvUavDescriptorSize);
+    // for(TTexture& texture: textures){
+    //     auto tex = texture.Resource;
 
-    for(TTexture& texture: textures){
-        auto tex = texture.Resource;
+    //     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    //     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    //     srvDesc.Format = tex->GetDesc().Format;
+    //     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    //     srvDesc.Texture2D.MostDetailedMip = 0;
+    //     srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
+    //     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.Format = tex->GetDesc().Format;
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-        srvDesc.Texture2D.MipLevels = tex->GetDesc().MipLevels;
-        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    //     md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc,hDescriptor);
 
-        md3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc,hDescriptor);
-
-        hDescriptor.Offset(mCbvSrvUavDescriptorSize);
-    }
+    //     hDescriptor.Offset(mCbvSrvUavDescriptorSize);
+    // }
 }
 
 void Graphics::BuildRootSignature()
@@ -715,46 +678,27 @@ void Graphics::DrawSkyBox()
     mCommandList->IASetIndexBuffer(&skyMesh->IndexBufferView());
     mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
  
-    auto skyHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    skyHandle.Offset(mCbvSrvUavDescriptorSize);
-    mCommandList->SetGraphicsRootDescriptorTable(5, skyHandle);
+    mCommandList->SetGraphicsRootDescriptorTable(5, SkyTexHandle);
     // index count, instance count, index offset, vertex offset, 0
     mCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 void Graphics::InitDescriptorHeaps()
 {
-    // �����кܶ�, ��ʱ���� 32 ��������
-    // 1. Pre-Z
-    D3D12_DESCRIPTOR_HEAP_DESC desc;
-    desc.NumDescriptors = 32;
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	desc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&desc,
-        IID_PPV_ARGS(&SrvHeap)));
-    SrvCounter = 0;
 }
 
 void Graphics::InitSRV()
 {
     // baseColor/normal/specular + pre-Z + cluster structure
-    SrvCounter = TextureCount;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
 
-    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    CpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    GpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    SrvCounter++;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
+    heapMgr->GetNewRTV(rtvCpu, rtvGpu);
 
-    auto DsvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-    DsvHandle.Offset(DsvCounter * mDsvDescriptorSize);
-    DsvCounter++;
-
-    clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), 
-        ClusterX, ClusterY, 
-        CpuHandle, GpuHandle, CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart())
-    );
+    clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), ClusterX, ClusterY, srvCpu, srvGpu, rtvCpu);
     clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
 }
 
@@ -800,9 +744,6 @@ void Graphics::DrawLines()
     mCommandList->SetPipelineState(clusterVisPSO.Get());
     mCommandList->SetGraphicsRootSignature(clusterVisSignature.Get());
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
     auto passAddr = constantMgr->GetCameraPassConstant();
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
     // mCommandList->SetGraphicsRootConstantBufferView(3, );
@@ -844,11 +785,9 @@ void Graphics::PrepareCluster()
 
 void Graphics::InitUAV()
 {
-    auto CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    auto GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    CpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    GpuHandle.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    SrvCounter++;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
 
     // debug compute shader texture
     D3D12_RESOURCE_DESC texDesc;
@@ -881,9 +820,9 @@ void Graphics::InitUAV()
     uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
     uavDesc.Texture2D.MipSlice = 0;
 
-    md3dDevice->CreateUnorderedAccessView(debugTexture.Get(), nullptr, &uavDesc, CpuHandle);
+    md3dDevice->CreateUnorderedAccessView(debugTexture.Get(), nullptr, &uavDesc, srvCpu);
 
-    DebugTableHandle = GpuHandle;
+    DebugTableHandle = srvGpu;
 
 	CD3DX12_RESOURCE_DESC uav_counter_resource_desc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, sizeof(unsigned int), 1, 1, 1,
 		DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
@@ -899,15 +838,9 @@ void Graphics::InitUAV()
 		IID_PPV_ARGS(&HeadTableCounter)
     );
 
-    // head table
-    // fixed size (clusterX * clusterY), no need for counter
-    CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
-    GpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
-    SrvCounter++;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
 
-    HeadTableHandle = GpuHandle;
+    HeadTableHandle = srvGpu;
 
     CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY*ClusterZ) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 	HeadDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -933,7 +866,7 @@ void Graphics::InitUAV()
 	lll_uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
 	lll_uav_view_desc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
 
-	md3dDevice->CreateUnorderedAccessView(HeadTable.Get(), HeadTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
+	md3dDevice->CreateUnorderedAccessView(HeadTable.Get(), HeadTableCounter.Get(), &lll_uav_view_desc, srvCpu);
 
     // node table, contain lightID & next pointer
     // this table need a counter
@@ -946,14 +879,9 @@ void Graphics::InitUAV()
 		IID_PPV_ARGS(&NodeTableCounter)
     );
 
-    // Node table
-    CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    CpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
-    GpuHandle.Offset(SrvCounter*mCbvSrvUavDescriptorSize);
-    SrvCounter++;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
 
-    NodeTableHandle = GpuHandle;
+    NodeTableHandle = srvGpu;
 
     // TODO: 扩大 nodetable 容量为 16*8*24*MaxLight
     CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (2048) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
@@ -970,7 +898,7 @@ void Graphics::InitUAV()
 
     lll_uav_view_desc.Buffer.NumElements = 2048; // MaxLightCount * clusterX * clusterY * clusterZ
 	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
-	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, CpuHandle);
+	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, srvCpu);
     NodeTable->SetName(L"NodeTable");
 
     // light data look up table
@@ -1057,8 +985,6 @@ void Graphics::ExecuteComputeShader()
 
     // compute
     mCommandList->SetPipelineState(computePSO.Get());
-    ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     mCommandList->SetComputeRootSignature(CSRootSignature.Get());
     mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
     mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
@@ -1071,8 +997,6 @@ void Graphics::ExecuteComputeShader()
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
 
     mCommandList->SetPipelineState(debugPSO.Get());
-    // ID3D12DescriptorHeap* descriptorHeaps[] = { SrvHeap.Get() };
-	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     mCommandList->SetComputeRootSignature(CSRootSignature.Get());
     mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
     mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
@@ -1186,14 +1110,13 @@ void Graphics::InitPassMgrs()
     
     // Pre-Z 管理类
     preZMgr = std::make_unique<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
-    auto srvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    srvCpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    auto srvGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    srvGpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    SrvCounter++;
-    auto dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
-    DsvCounter++;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE dsvGpu;
+    heapMgr->GetNewDSV(dsvCpu, dsvGpu);
+
     preZMgr->srvCpu = srvCpu;
     preZMgr->srvGpu = srvGpu;
     preZMgr->dsvCpu = dsvCpu;
@@ -1203,14 +1126,9 @@ void Graphics::InitPassMgrs()
 
     // 阴影管理类
     shadowMgr = std::make_unique<ShadowMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
-    srvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(SrvHeap->GetCPUDescriptorHandleForHeapStart());
-    srvCpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    srvGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(SrvHeap->GetGPUDescriptorHandleForHeapStart());
-    srvGpu.Offset(SrvCounter * mCbvSrvUavDescriptorSize);
-    SrvCounter++;
-    dsvCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-    dsvCpu.Offset(DsvCounter * mDsvDescriptorSize);
-    DsvCounter++;
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
+    heapMgr->GetNewDSV(dsvCpu, dsvGpu);
+
     shadowMgr->srvCpu = srvCpu;
     shadowMgr->srvGpu = srvGpu;
     shadowMgr->dsvCpu = dsvCpu;

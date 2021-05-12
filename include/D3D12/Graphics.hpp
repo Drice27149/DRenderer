@@ -8,6 +8,7 @@
 #include "ConstantMgr.hpp"
 #include "PreZMgr.hpp"
 #include "ShadowMgr.hpp"
+#include "HeapMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -97,9 +98,6 @@ private:
 private:
     
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
-    unsigned int DsvCounter;
 
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
@@ -142,9 +140,6 @@ private:
     TTexture MyTex;
     POINT mLastMousePos;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE SMHandle;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE GPUSMHandle;
-
     TTexture CubeTex;
 
     int CurrentFrame = 0;
@@ -155,12 +150,6 @@ private:
     int ClusterZ = 4;
 
 //  -- begin of the new journey
-
-    ComPtr<ID3D12DescriptorHeap> SrvHeap;
-    int SrvCounter;
-    ComPtr<ID3D12DescriptorHeap> RTVHeap;
-    int RtvCounter;
-
     std::unique_ptr<DMesh> objMesh = nullptr;
     std::unique_ptr<DMesh> skyMesh = nullptr;
 
@@ -180,6 +169,7 @@ private:
     CD3DX12_GPU_DESCRIPTOR_HANDLE NodeTableHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE LightTableHandle;
     CD3DX12_GPU_DESCRIPTOR_HANDLE DebugTableHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE SkyTexHandle;
 
     ComPtr<ID3D12Resource> debugTexture;
     ComPtr<ID3D12Resource> headClearBuffer;
@@ -194,6 +184,7 @@ public:
     std::shared_ptr<ConstantMgr> constantMgr = nullptr;
     std::unique_ptr<PreZMgr> preZMgr = nullptr;
     std::unique_ptr<ShadowMgr> shadowMgr = nullptr;
+    std::unique_ptr<HeapMgr> heapMgr = nullptr;
 public:
     // new, for decouple
     void InitPassMgrs();
