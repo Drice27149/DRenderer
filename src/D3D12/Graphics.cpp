@@ -24,8 +24,6 @@ bool Graphics::Initialize()
 
     LoadAssets();
 
-    LoadCubeMap();
-
     BuildDescriptorHeaps();
 
     BuildShadersAndInputLayout();
@@ -152,24 +150,6 @@ void Graphics::BuildDescriptorHeaps()
 {
     heapMgr = std::make_unique<HeapMgr>(md3dDevice.Get(), mCommandList.Get(), 50, 50, 50);
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-    heapMgr->GetNewSRV(cpuHandle, gpuHandle);
-    SkyTexHandle = gpuHandle;
-
-    auto SkyTex = CubeTex.Resource;
-    assert(SkyTex);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	srvDesc.TextureCube.MostDetailedMip = 0;
-	srvDesc.TextureCube.MipLevels = SkyTex->GetDesc().MipLevels;
-	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-	srvDesc.Format = SkyTex->GetDesc().Format;
-	md3dDevice->CreateShaderResourceView(SkyTex.Get(), &srvDesc, cpuHandle);
-
     // for(TTexture& texture: textures){
     //     auto tex = texture.Resource;
 
@@ -291,11 +271,6 @@ void Graphics::BuildShadersAndInputLayout()
 
 void Graphics::BuildBoxGeometry()
 {
-    SkyBox skybox;
-
-    skyMesh = std::make_unique<DMesh>();
-    skyMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), skybox.vs, skybox.ids);
-
     // �ϲ����� obj ���嵽һ��������
     vector<Vertex> vs;
     vector<unsigned int> ids;
@@ -340,37 +315,6 @@ void Graphics::BuildPSO()
     psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
     psoDesc.DSVFormat = mDepthStencilFormat;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
-
-    // shadow map's pipeline state
-    psoDesc.VS = 
-    {
-		reinterpret_cast<BYTE*>(shadowVS->GetBufferPointer()), 
-		shadowVS->GetBufferSize() 
-    };
-    psoDesc.PS = 
-    {
-		reinterpret_cast<BYTE*>(shadowPS->GetBufferPointer()), 
-		shadowPS->GetBufferSize() 
-    };
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-    psoDesc.NumRenderTargets = 0;
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&SMPSO)));
-
-    // skybox texture
-    psoDesc.VS = 
-    {
-		reinterpret_cast<BYTE*>(skyVS->GetBufferPointer()), 
-		skyVS->GetBufferSize() 
-    };
-    psoDesc.PS = 
-    {
-		reinterpret_cast<BYTE*>(skyPS->GetBufferPointer()), 
-		skyPS->GetBufferSize() 
-    };
-    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = mBackBufferFormat;
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&SkyPSO)));
 
     psoDesc.VS = {
         reinterpret_cast<BYTE*>(clusterVS->GetBufferPointer()), 
@@ -664,23 +608,11 @@ void Graphics::DrawShadowMap()
     shadowMgr->PostPass();
 }
 
-void Graphics::LoadCubeMap()
-{
-    auto fn = L"..\\assets\\cubeMap\\grasscube1024.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(), mCommandList.Get(), L"..\\assets\\cubeMap\\grasscube1024.dds", CubeTex.Resource, CubeTex.UploadHeap));
-}
-
 void Graphics::DrawSkyBox()
 {
-    mCommandList->SetPipelineState(SkyPSO.Get());
-    
-    mCommandList->IASetVertexBuffers(0, 1, &skyMesh->VertexBufferView());
-    mCommandList->IASetIndexBuffer(&skyMesh->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
- 
-    mCommandList->SetGraphicsRootDescriptorTable(5, SkyTexHandle);
-    // index count, instance count, index offset, vertex offset, 0
-    mCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+    skyBoxMgr->PrePass();
+    skyBoxMgr->Pass();
+    skyBoxMgr->PostPass();
 }
 
 void Graphics::InitDescriptorHeaps()
@@ -1135,4 +1067,10 @@ void Graphics::InitPassMgrs()
     // 临时
     shadowMgr->constantMgr = constantMgr;
     shadowMgr->Init();
+
+    // 天空盒管理类
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
+    skyBoxMgr = std::make_unique<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get(), srvCpu, srvGpu);
+    skyBoxMgr->constantMgr = constantMgr;
+    skyBoxMgr->Init();
 }

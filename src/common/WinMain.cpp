@@ -26,7 +26,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         DEngine::gobjs.clear();
 
-        vector<string> fns = { "../assets/LightShapes/sphere.obj", "../assets/LightShapes/cube.obj", "../assets/LightShapes/sphere.obj" };
+        vector<string> fns = { "../assets/models/LightShapes/sphere.obj", "../assets/models/LightShapes/cube.obj", "../assets/models/LightShapes/sphere.obj" };
 
         AssimpLoader ld;
 

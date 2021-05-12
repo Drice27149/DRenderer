@@ -9,6 +9,7 @@
 #include "PreZMgr.hpp"
 #include "ShadowMgr.hpp"
 #include "HeapMgr.hpp"
+#include "SkyBoxMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -60,7 +61,6 @@ private:
     virtual void OnMouseZoom(WPARAM state)override;
 
     void LoadAssets();
-    void LoadCubeMap();
     void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
 
     void BuildDescriptorHeaps();
@@ -124,8 +124,6 @@ private:
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
-    ComPtr<ID3D12PipelineState> SMPSO = nullptr;
-    ComPtr<ID3D12PipelineState> SkyPSO = nullptr;
 
     XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
     XMFLOAT4X4 mView = MathHelper::Identity4x4();
@@ -185,6 +183,7 @@ public:
     std::unique_ptr<PreZMgr> preZMgr = nullptr;
     std::unique_ptr<ShadowMgr> shadowMgr = nullptr;
     std::unique_ptr<HeapMgr> heapMgr = nullptr;
+    std::unique_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
 public:
     // new, for decouple
     void InitPassMgrs();

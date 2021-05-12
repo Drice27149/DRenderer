@@ -30,8 +30,6 @@ public:
     ComPtr<ID3D12PipelineState> pso;
     // 根签名
     ComPtr<ID3D12RootSignature> rootSig;
-    // 在 pass uniform 里面的偏移
-    unsigned long long passOffset;
     // 顶点格式
     const std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = 
     {

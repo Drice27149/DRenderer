@@ -10,10 +10,10 @@ public:
 
         AssimpLoader ld;
         if(drawType == DrawType::SpotLgiht){
-            ld.LoadFile(this, "../assets/LightShapes/cube.obj");
+            ld.LoadFile(this, "../assets/models/LightShapes/cube.obj");
         }
         else if(drawType == DrawType::PointLight){
-            ld.LoadFile(this, "../assets/LightShapes/sphere.obj");
+            ld.LoadFile(this, "../assets/models/LightShapes/sphere.obj");
         }
         else {
             // TODO: throw error, draw type not found
