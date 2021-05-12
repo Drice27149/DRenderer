@@ -101,43 +101,57 @@
         * 
     
   * ```LaunchWindows.cpp: GuardedMain``` 
-  
+
     * ```EditorInit(GEngineLoop)``` 编辑器初始化, 暂时不看
-  
+
     * ```EngineInit() ``` 
-  
+
       * ```GEngineLoop.Init()``` -> ```LaunchEngineLoop.cpp FEngineLoop::Init()```
-  
+
         * ```c++
           		FString UnrealEdEngineClassName;
-          		GConfig->GetString(TEXT("/Script/Engine.Engine"), TEXT("UnrealEdEngine"), UnrealEdEngineClassName, GEngineIni);
-          		EngineClass = StaticLoadClass(UUnrealEdEngine::StaticClass(), nullptr, *UnrealEdEngineClassName);
-          		if (EngineClass == nullptr)
-          		{
-          			UE_LOG(LogInit, Fatal, TEXT("Failed to load UnrealEd Engine class '%s'."), *UnrealEdEngineClassName);
-          		}
-          		GEngine = GEditor = GUnrealEd = NewObject<UUnrealEdEngine>(GetTransientPackage(), EngineClass); // 此处为编辑器模式, 非编辑器模式下只有 GEngine 会被初始化
+            		GConfig->GetString(TEXT("/Script/Engine.Engine"), TEXT("UnrealEdEngine"), UnrealEdEngineClassName, GEngineIni);
+            		EngineClass = StaticLoadClass(UUnrealEdEngine::StaticClass(), nullptr, *UnrealEdEngineClassName);
+            		if (EngineClass == nullptr)
+            		{
+            			UE_LOG(LogInit, Fatal, TEXT("Failed to load UnrealEd Engine class '%s'."), *UnrealEdEngineClassName);
+            		}
+            		GEngine = GEditor = GUnrealEd = NewObject<UUnrealEdEngine>(GetTransientPackage(), EngineClass); // 此处为编辑器模式, 非编辑器模式下只有 GEngine 会被初始化
           ```
-  
-        * ```c++
-          GEngine->Init(this)
-          GEngine->Start()
-          ```
-  
+
+          	创建引擎类
+          	
+        * ```GEngine->Init(this)``` 调用引擎类的初始化函数
+
+          * 加载插件
+          * ```AddToRoot``` 避免 GC, 因为 UEngine 也继承了 UObject, 但同时又继承了 FExec, 这是因为 FExec 不继承自 UObject 吗
+          * ```FCoreUObjectDelegates::GetPreGarbageCollectDelegate().AddStatic(UEngine::PreGarbageCollect);``` 这是啥东东
+
+          * ```UGameEngine::Init```
+            * 创建游戏实例 ```NewObject``` 方法
+            * ```instance->initializestandalone()``` 
+            * 创建 ```viewportClient```
+
+        * ```GEngine->Start()```
+
+          * 啥都没有 ???
+          * ```UGameEngine::Start()``` 
+            * ```GameInstance->StartGameInstance()``` 启动游戏实例
+            * UEngine 和 UGameEngine 是什么关系
+            * Init 和 start 方法都是虚的, 所以可能都是用的 UGameEngine 的实现 
+
         * ```c++
           FModuleManager::Get().LoadModule("...") // 加载一些模块
           ```
-  
+
         * ```c++
           FViewport::SetGameRenderingEnabled(true, 3)
           ```
-  
+
         * ```c++
           FThreadHeartBeat::Get().Start()
           ```
-  
-        * 足足 800 行, 人晕了
-  
+
     * ```DumpBootTiming()```
 
 ### 循环更新流程
