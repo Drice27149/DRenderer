@@ -713,6 +713,10 @@ void Graphics::PrepareCluster()
     DrawObjects(DrawType::PointLight);
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+    clusterMgr->PrePass();
+    DrawObjects(DrawType::PointLight);
+    clusterMgr->PostPass();
 }   
 
 void Graphics::InitUAV()
@@ -771,7 +775,6 @@ void Graphics::InitUAV()
     );
 
     heapMgr->GetNewSRV(srvCpu, srvGpu);
-
     HeadTableHandle = srvGpu;
 
     CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY*ClusterZ) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
@@ -812,7 +815,6 @@ void Graphics::InitUAV()
     );
 
     heapMgr->GetNewSRV(srvCpu, srvGpu);
-
     NodeTableHandle = srvGpu;
 
     // TODO: 扩大 nodetable 容量为 16*8*24*MaxLight
@@ -1073,4 +1075,18 @@ void Graphics::InitPassMgrs()
     skyBoxMgr = std::make_unique<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get(), srvCpu, srvGpu);
     skyBoxMgr->constantMgr = constantMgr;
     skyBoxMgr->Init();
+
+    // light culling step 0: generate depth
+    heapMgr->GetNewSRV(srvCpu, srvGpu);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
+    heapMgr->GetNewRTV(rtvCpu, rtvGpu);
+    clusterMgr = std::make_unique<ClusterMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
+    clusterMgr->srvCpu = srvCpu;
+    clusterMgr->srvGpu = srvGpu;
+    clusterMgr->rtvCpu = rtvCpu;
+    clusterMgr->rtvGpu = rtvGpu;
+    clusterMgr->constantMgr = constantMgr;
+    clusterMgr->Init();
+    // light culling step 1: cull the light
 }
