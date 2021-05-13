@@ -15,6 +15,8 @@ public:
 		CD3DX12_GPU_DESCRIPTOR_HANDLE readHandle,
 		CD3DX12_CPU_DESCRIPTOR_HANDLE writeHandle
 	);
+	Resource(ID3D12Device* device, ID3D12GraphicsCommandList*  commandList):md3dDevice(device), commandList(commandList){}
+
 	Resource(const Resource& rhs)=delete;
 	Resource& operator=(const Resource& rhs)=delete;
 	~Resource()=default;
@@ -38,6 +40,7 @@ private:
 private:
 
 	ID3D12Device* md3dDevice = nullptr;
+	ID3D12GraphicsCommandList* commandList = nullptr;
 	D3D12_VIEWPORT mViewport;
 	D3D12_RECT mScissorRect;
 	UINT mWidth = 0;
@@ -54,7 +57,8 @@ public:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE writeHandle;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mResource = nullptr;
-
+	Microsoft::WRL::ComPtr<ID3D12Resource> CntResource = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> uploadBuffer = nullptr;
 	// New
 public:
 	void BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format);
@@ -68,6 +72,8 @@ public:
 
 	Resource(ID3D12Device* device, unsigned int width, unsigned int height);
 	void BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_FORMAT xxxFormat);
+	void BuildUAV(unsigned int elements, unsigned int size, bool haveCounter);
+	template<typename T> void BuildStructureBuffer(unsigned int elements, unsigned int size, T* data);
 };
 
  

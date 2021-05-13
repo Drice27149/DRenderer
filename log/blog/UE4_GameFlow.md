@@ -120,7 +120,7 @@
           ```
 
           	创建引擎类
-          	
+          
         * ```GEngine->Init(this)``` 调用引擎类的初始化函数
 
           * 加载插件
@@ -157,7 +157,47 @@
 ### 循环更新流程
 
 * ```LaunchWindows.cpp: GuardedMain``` 
+  
   * ```EngineTick()```
+  
+  * ```Scene->UpdateAllPrimitiveSceneInfos(RHICmdList)```
+  
+  * ```BeginFrameRenderThread(RHICmdList, CurrentFrameCounter)```
+  
+  * ```Scene->StartFrame();```
+  
+  * ```// process accumulated Slate input```
+  
+  * ```GEngine->Tick(FApp::GetDeltaTime(), bIdleMode);``` 这个时候才更新渲染线程里面的逻辑数据
+  
+    * 细说
+    * ```World->Tick()```
+      * 细说, Tick 逻辑上的一堆东西
+    * ```RedrowViewports -> GameViewport->Viewport->Draw(bShouldPresent);``` draw everything, 逻辑线程渲染提交
+      * ```EnqueueBeginRenderFrame(bShouldPresent);``` 开始
+      * ```ViewportClient->Draw(this, &Canvas)```
+        * 细说
+        * ```GetRendererModule().BeginRenderingViewFamily(SceneCanvas,&ViewFamily);``` draw the player views, 绘制游戏画面
+          * 细说
+          * 
+        * ```// Render the UI```
+        * ```SceneCanvas->Flush_GameThread();``` 只是个啥
+      * ```EnqueueEndRenderFrame(bLockToVsync, bShouldPresent);``` 结束, 可能用于区分一帧内的渲染提交, 也是 yy  的
+  
+  * ```// tick Slate application```
+  
+  * ```RHITick( FApp::GetDeltaTime() ); // Update RHI.```
+  
+  * ```c++
+    // Increment global frame counter. Once for each engine tick.
+    GFrameCounter++;
+    ```
+  
+  * ```FThreadManager::Get().Tick();``` 这个是在 tick 什么东西
+  
+  * ```c++
+    EndFrameRenderThread(RHICmdList); // 结束一个渲染帧
+    ```
 
 ### 退出流程
 
@@ -165,12 +205,3 @@
   * ```EditorExit()```
 * ```LaunchWindows.cpp WinMain```
   * ```FEngineLoop::AppExit()```
-
-
-
-
-
-
-
-
-

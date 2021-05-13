@@ -285,4 +285,63 @@ void Resource::BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_
 	md3dDevice->CreateDepthStencilView(mResource.Get(), &dsvDesc, xxxCpu);
 }
 
+void Resource::BuildUAV(unsigned int elements, unsigned int size, bool haveCounter)
+{
+	// uav counter first
+	if(haveCounter){
+		CD3DX12_RESOURCE_DESC uavCntDesc(
+			D3D12_RESOURCE_DIMENSION_BUFFER, 
+			0, 
+			sizeof(unsigned int), 
+			1, 1, 1, 
+			DXGI_FORMAT_UNKNOWN, 
+			1, 
+			0, 
+			D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE
+		);
+		uavCntDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+		md3dDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+			D3D12_HEAP_FLAG_NONE,
+			&uavCntDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nullptr,
+			IID_PPV_ARGS(&CntResource)
+		);
+	}
+	// unorder access view second
+    CD3DX12_RESOURCE_DESC ResourceDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, elements * size, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&ResourceDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&mResource)
+    );
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(uavDesc));
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	uavDesc.Buffer.FirstElement = 0;
+	uavDesc.Buffer.NumElements = elements;
+	uavDesc.Buffer.StructureByteStride = size; //2 uint32s in struct
+	uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
+	uavDesc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
+
+	md3dDevice->CreateUnorderedAccessView(mResource.Get(), CntResource?CntResource.Get():nullptr, &uavDesc, srvCpu);
+}
+
+template<typename T> void Resource::BuildStructureBuffer(unsigned int elements, unsigned int size, T* data)
+{
+    auto byteSize = elements * size;
+    headClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice, commandList, data, byteSize, uploadBuffer);
+}
+
+
+
 
