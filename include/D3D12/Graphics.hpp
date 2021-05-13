@@ -11,6 +11,7 @@
 #include "HeapMgr.hpp"
 #include "SkyBoxMgr.hpp"
 #include "ClusterMgr.hpp"
+#include "LightCullMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -186,6 +187,7 @@ public:
     std::unique_ptr<HeapMgr> heapMgr = nullptr;
     std::unique_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
     std::unique_ptr<ClusterMgr> clusterMgr = nullptr;
+    std::unique_ptr<LightCullMgr> lightCullMgr = nullptr;
 public:
     // new, for decouple
     void InitPassMgrs();

@@ -32,7 +32,7 @@ public:
     unsigned int clusterY;
     unsigned int clusterZ;
 public:
-    // 临时
+    // 临时, 之后会有共享上下文
     std::shared_ptr<ConstantMgr> constantMgr;
     // 临时 debug 用, 之后始终使用正常相机
     std::unique_ptr<UploadBuffer<PassUniform>> fixCam = nullptr;

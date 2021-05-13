@@ -73,7 +73,14 @@ public:
 	Resource(ID3D12Device* device, unsigned int width, unsigned int height);
 	void BuildDepthMap(DXGI_FORMAT resFormat, DXGI_FORMAT srvFormat, DXGI_FORMAT xxxFormat);
 	void BuildUAV(unsigned int elements, unsigned int size, bool haveCounter);
-	template<typename T> void BuildStructureBuffer(unsigned int elements, unsigned int size, T* data);
+	// hack: put implementation in header files to avoid link error
+	template<typename T> void BuildStructureBuffer(unsigned int elements, unsigned int size, T* data)
+	{
+		auto byteSize = elements * size;
+		mResource = d3dUtil::CreateDefaultBuffer(md3dDevice, commandList, data, byteSize, uploadBuffer);
+	}
+
+	ID3D12Resource* GetCounterResource() { return CntResource.Get(); }
 };
 
  

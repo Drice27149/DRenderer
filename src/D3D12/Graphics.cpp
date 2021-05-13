@@ -680,8 +680,10 @@ void Graphics::DrawLines()
     mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
     // mCommandList->SetGraphicsRootConstantBufferView(3, );
     mCommandList->SetGraphicsRootConstantBufferView(2, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
-    mCommandList->SetGraphicsRootDescriptorTable(3, HeadTableHandle);
-    mCommandList->SetGraphicsRootDescriptorTable(4, NodeTableHandle);
+    // mCommandList->SetGraphicsRootDescriptorTable(3, HeadTableHandle);
+    // mCommandList->SetGraphicsRootDescriptorTable(4, NodeTableHandle);
+    mCommandList->SetGraphicsRootDescriptorTable(3, lightCullMgr->srvGpu[0]);
+    mCommandList->SetGraphicsRootDescriptorTable(4, lightCullMgr->srvGpu[1]);
 
     DrawObjects(DrawType::WhiteLines);
 }
@@ -910,6 +912,10 @@ void Graphics::PrepareComputeShader()
 
 void Graphics::ExecuteComputeShader()
 {
+    lightCullMgr->PrePass();
+    lightCullMgr->Pass();
+    lightCullMgr->PostPass();
+
     // TODO: clear first
     // ??? clear uav will bug
     // ??? no clear will auto clear
@@ -1089,4 +1095,13 @@ void Graphics::InitPassMgrs()
     clusterMgr->constantMgr = constantMgr;
     clusterMgr->Init();
     // light culling step 1: cull the light
+
+    lightCullMgr = std::make_unique<LightCullMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
+    for(int i = 0; i < 2; i++){
+        heapMgr->GetNewSRV(srvCpu, srvGpu);
+        lightCullMgr->srvCpu[i] = srvCpu;
+        lightCullMgr->srvGpu[i] = srvGpu;
+    }
+    lightCullMgr->clusterDepth = clusterMgr->srvGpu;
+    lightCullMgr->Init();
 }

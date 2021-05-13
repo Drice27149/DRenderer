@@ -81,165 +81,91 @@ void LightCullMgr::BuildRootSig()
 
 void LightCullMgr::CompileShaders()
 {
-    // nullptr 的地方可以放宏
-    cs = d3dUtil::CompileShader(L"..\\assets\\shaders\\cluster\\lightCull.hlsl", nullptr, "CS", "vs_5_1");
+    cs = d3dUtil::CompileShader(L"..\\assets\\shaders\\cluster\\lightCull.hlsl", nullptr, "CS", "cs_5_1");
 }
 
 void LightCullMgr::CreateResources()
 {
-    // CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
-    // CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-    // heapMgr->GetNewSRV(srvCpu, srvGpu);
+    offsetTable = std::make_shared<Resource>(device, commandList);
+    offsetTable->srvCpu = srvCpu[0];
+    offsetTable->srvGpu = srvGpu[0];
+    offsetTable->BuildUAV(clusterX*clusterY*clusterZ, sizeof(LightOffset), false);
 
-    // // debug compute shader texture
-    // D3D12_RESOURCE_DESC texDesc;
-    // ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
-    // texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    // texDesc.Alignment = 0;
-    // texDesc.Width = 16;
-    // texDesc.Height = 8;
-    // texDesc.DepthOrArraySize = 1;
-    // texDesc.MipLevels = 1;
-    // texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    // texDesc.SampleDesc.Count = 1;
-    // texDesc.SampleDesc.Quality = 0;
-    // texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    // texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    // tempory max light count
+    unsigned int MAXLIGHTS = 32;
+    entryTable = std::make_shared<Resource>(device, commandList);
+    entryTable->srvCpu = srvCpu[1];
+    entryTable->srvGpu = srvGpu[1];
+    entryTable->BuildUAV(clusterX*clusterY*clusterZ*MAXLIGHTS, sizeof(LightEntry), true);
 
-    // ThrowIfFailed(md3dDevice->CreateCommittedResource(
-    //     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-    //     D3D12_HEAP_FLAG_NONE,
-    //     &texDesc,
-    //     D3D12_RESOURCE_STATE_COMMON,
-    //     nullptr,
-    //     IID_PPV_ARGS(&debugTexture))
-    // );
-    // debugTexture->SetName(L"debugTexture");
+    // tempory light data hack, will be added in shared context
+    // because light depth is correct, so the result will be correct
+    std::vector<LightInfo> infos;
+    for(int i = 0; i < 3; i++){
+        LightInfo info;
+        info.id = i;
+        infos.push_back(info);
+    }
+    lightTable = std::make_shared<Resource>(device, commandList);
+    lightTable->BuildStructureBuffer<LightInfo>(infos.size(), sizeof(LightInfo), infos.data());
 
-    // D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    // build helper buffer to clear uavs
+    std::vector<LightOffset> cleardata;
+    cleardata.resize(clusterX*clusterY*clusterZ);
+    for(LightOffset& u: cleardata) u.offset = 0;
+    unsigned int byteSize = sizeof(LightOffset) * cleardata.size();
+    offsetClearBuffer = d3dUtil::CreateDefaultBuffer(device, commandList, cleardata.data(), byteSize, uploadBuffer);
 
-    // uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-    // uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    // uavDesc.Texture2D.MipSlice = 0;
+    // node table counter clear buffer
+    unsigned int counter = 1;
+    entryClearBuffer = d3dUtil::CreateDefaultBuffer(device, commandList, &counter, sizeof(unsigned int), uploadBuffer);
 
-    // md3dDevice->CreateUnorderedAccessView(debugTexture.Get(), nullptr, &uavDesc, srvCpu);
-
-    // DebugTableHandle = srvGpu;
-
-	// CD3DX12_RESOURCE_DESC uav_counter_resource_desc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, sizeof(unsigned int), 1, 1, 1,
-	// 	DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	// CD3DX12_RESOURCE_DESC uav_counter_uav_resource_desc = uav_counter_resource_desc;
-	// uav_counter_uav_resource_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	// md3dDevice->CreateCommittedResource(
-	// 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-	// 	D3D12_HEAP_FLAG_NONE,
-	// 	&uav_counter_uav_resource_desc,
-	// 	D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-	// 	nullptr,
-	// 	IID_PPV_ARGS(&HeadTableCounter)
-    // );
-
-    // heapMgr->GetNewSRV(srvCpu, srvGpu);
-    // HeadTableHandle = srvGpu;
-
-    // CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY*ClusterZ) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	// HeadDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	// md3dDevice->CreateCommittedResource(
-	// 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-	// 	D3D12_HEAP_FLAG_NONE,
-	// 	&HeadDesc,
-	// 	D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-	// 	nullptr,
-	// 	IID_PPV_ARGS(&HeadTable)
-    // );
-    // HeadTable->SetName(L"HeadTable");
-
-	// // still head table, uav desc set up
-	// D3D12_UNORDERED_ACCESS_VIEW_DESC lll_uav_view_desc;
-	// ZeroMemory(&lll_uav_view_desc, sizeof(lll_uav_view_desc));
-	// lll_uav_view_desc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
-	// lll_uav_view_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-	// lll_uav_view_desc.Buffer.FirstElement = 0;
-	// lll_uav_view_desc.Buffer.NumElements = ClusterX*ClusterY*ClusterZ;
-	// lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempOffset); //2 uint32s in struct
-	// lll_uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
-	// lll_uav_view_desc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
-
-	// md3dDevice->CreateUnorderedAccessView(HeadTable.Get(), HeadTableCounter.Get(), &lll_uav_view_desc, srvCpu);
-
-    // // node table, contain lightID & next pointer
-    // // this table need a counter
-	// md3dDevice->CreateCommittedResource(
-	// 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-	// 	D3D12_HEAP_FLAG_NONE,
-	// 	&uav_counter_uav_resource_desc,
-	// 	D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-	// 	nullptr,
-	// 	IID_PPV_ARGS(&NodeTableCounter)
-    // );
-
-    // heapMgr->GetNewSRV(srvCpu, srvGpu);
-    // NodeTableHandle = srvGpu;
-
-    // // TODO: 扩大 nodetable 容量为 16*8*24*MaxLight
-    // CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (2048) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	// NodeDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	// md3dDevice->CreateCommittedResource(
-	// 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-	// 	D3D12_HEAP_FLAG_NONE,
-	// 	&NodeDesc,
-	// 	D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-	// 	nullptr,
-	// 	IID_PPV_ARGS(&NodeTable)
-    // );
-
-    // lll_uav_view_desc.Buffer.NumElements = 2048; // MaxLightCount * clusterX * clusterY * clusterZ
-	// lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
-	// md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, srvCpu);
-    // NodeTable->SetName(L"NodeTable");
-
-    // // light data look up table
-    // vector<TempLight> lights;
-    // TempLight l0;
     
-    // l0.pos = glm::vec3(1999, 12, 22);
-    // l0.radiance = 10.0;
-    // for(int i = 0; i < 3; i++){
-    //     l0.id = i;
-    //     lights.push_back(l0);
-    // }
-    // unsigned int byteSize = sizeof(TempLight) * lights.size();
-
-    // LightTable = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), lights.data(), byteSize, LightUploadBuffer);
-    // LightTable->SetName(L"LightTable");
-
-    // // head table clear buffer
-    // vector<TempOffset> cleardata;
-    // cleardata.resize(ClusterX*ClusterY*ClusterZ);
-    // for(TempOffset& u: cleardata) u.offset = 0;
-    // byteSize = sizeof(TempOffset) * cleardata.size();
-    // headClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), cleardata.data(), byteSize, headUploadBuffer);
-
-    // // node table counter clear buffer
-    // unsigned int counter = 1;
-    // nodeCounterClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), &counter, sizeof(unsigned int), nodeUploadBuffer);
+    clusterInfo = std::make_unique<UploadBuffer<ClusterInfo>>(device, 1, true);
+    ClusterInfo temp;
+    temp.clusterX = clusterX;
+    temp.clusterY = clusterY;
+    temp.clusterZ = clusterZ;
+    temp.cNear = 1.0;
+    temp.cFar = 20.0;
+    clusterInfo->CopyData(0, temp);
 }
 
 
 void LightCullMgr::Pass()
 {
-
+    commandList->Dispatch(3, 1, 1);
 }
 
 void LightCullMgr::PrePass()
 {
+    // clear first
+    ClearUAVS();
 
+    commandList->SetPipelineState(pso.Get());
+    commandList->SetComputeRootSignature(rootSig.Get());
+
+    commandList->SetComputeRootDescriptorTable(0, srvGpu[0]); // offsetTable
+    commandList->SetComputeRootDescriptorTable(1, srvGpu[1]); // entryTable
+    // commandList->SetComputeRootUnorderedAccessView(0, );   // debug, not used now
+    commandList->SetComputeRootDescriptorTable(3, clusterDepth); // cluster depth
+    commandList->SetComputeRootShaderResourceView(4, lightTable->GetResource()->GetGPUVirtualAddress()); // light table buffer
+    commandList->SetComputeRootConstantBufferView(5, clusterInfo->Resource()->GetGPUVirtualAddress());
 }
 
 void LightCullMgr::PostPass()
 {
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
+}
 
+void LightCullMgr::ClearUAVS()
+{
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(offsetTable->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(entryTable->GetCounterResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
+	
+    commandList->CopyResource(offsetTable->GetResource(), offsetClearBuffer.Get());
+    commandList->CopyResource(entryTable->GetCounterResource(), entryClearBuffer.Get());
+	
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(offsetTable->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(entryTable->GetCounterResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 }

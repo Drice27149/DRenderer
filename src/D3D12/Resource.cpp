@@ -336,12 +336,6 @@ void Resource::BuildUAV(unsigned int elements, unsigned int size, bool haveCount
 	md3dDevice->CreateUnorderedAccessView(mResource.Get(), CntResource?CntResource.Get():nullptr, &uavDesc, srvCpu);
 }
 
-template<typename T> void Resource::BuildStructureBuffer(unsigned int elements, unsigned int size, T* data)
-{
-    auto byteSize = elements * size;
-    headClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice, commandList, data, byteSize, uploadBuffer);
-}
-
 
 
 

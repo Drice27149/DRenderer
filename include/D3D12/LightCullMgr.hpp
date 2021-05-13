@@ -1,5 +1,7 @@
 #include "PassMgr.hpp"
 #include "Resource.hpp"
+#include "Struct.hpp"
+#include "UploadBuffer.h"
 
 class LightCullMgr: public PassMgr {
 public:
@@ -18,28 +20,30 @@ public:
     void Pass() override;
     void PrePass() override;
     void PostPass() override;
+
+    void ClearUAVS();
 public:
     // compute shader
     ComPtr<ID3DBlob> cs = nullptr;
-    // ืสิด
-    ComPtr<ID3D12Resource> HeadTable;
-    ComPtr<ID3D12Resource> NodeTable, NodeTableCounter;
-    ComPtr<ID3D12Resource> LightTable;
-    ComPtr<ID3D12Resource> LightUploadBuffer;
 
-    CD3DX12_GPU_DESCRIPTOR_HANDLE HeadTableHandle;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE NodeTableHandle;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE LightTableHandle;
+    std::shared_ptr<Resource> offsetTable;
+    std::shared_ptr<Resource> entryTable;
+    std::shared_ptr<Resource> lightTable;
 
-    // head: clear table, node: clear counter
-    ComPtr<ID3D12Resource> headClearBuffer;
-    ComPtr<ID3D12Resource> nodeClearBuffer;
-    ComPtr<ID3D12Resource> headUploadBuffer;
-    ComPtr<ID3D12Resource> nodeUploadBuffer;
+    // helper buffers to clear uavs
+    ComPtr<ID3D12Resource> offsetClearBuffer; // clear head table
+    ComPtr<ID3D12Resource> entryClearBuffer; // clear node count
+    ComPtr<ID3D12Resource> uploadBuffer;
 
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu[3];
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu[3];
+    CD3DX12_CPU_DESCRIPTOR_HANDLE xxxCpu[3];
     
+    CD3DX12_GPU_DESCRIPTOR_HANDLE clusterDepth;
 public:
     unsigned int clusterX;
     unsigned int clusterY;
     unsigned int clusterZ;
+    // tempory hack
+    std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
 };
