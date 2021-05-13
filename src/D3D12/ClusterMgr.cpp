@@ -127,6 +127,15 @@ void ClusterMgr::CreateResources()
     temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
     temp.proj = glm::transpose(glm::perspective(45.0, 1.0, 1.0, 20.0));
     fixCam->CopyData(0, temp);
+
+    clusterInfo = std::make_unique<UploadBuffer<ClusterInfo>>(device, 1, true);
+    ClusterInfo tempInfo;
+    tempInfo.clusterX = clusterX;
+    tempInfo.clusterY = clusterY;
+    tempInfo.clusterZ = clusterZ;
+    tempInfo.cNear = 1.0;
+    tempInfo.cFar = 20.0;
+    clusterInfo->CopyData(0, tempInfo);
 }
 
 void ClusterMgr::Pass()

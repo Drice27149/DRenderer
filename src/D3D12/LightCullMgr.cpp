@@ -51,10 +51,7 @@ void LightCullMgr::BuildRootSig()
     CD3DX12_DESCRIPTOR_RANGE depthTable;
     depthTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
-	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
-
-	// Perfomance TIP: Order from most frequent to least frequent.
 	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable1);
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
@@ -62,10 +59,8 @@ void LightCullMgr::BuildRootSig()
     slotRootParameter[4].InitAsShaderResourceView(1);
     slotRootParameter[5].InitAsConstantBufferView(0);
 
-	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
@@ -119,16 +114,6 @@ void LightCullMgr::CreateResources()
     // node table counter clear buffer
     unsigned int counter = 1;
     entryClearBuffer = d3dUtil::CreateDefaultBuffer(device, commandList, &counter, sizeof(unsigned int), uploadBuffer);
-
-    
-    clusterInfo = std::make_unique<UploadBuffer<ClusterInfo>>(device, 1, true);
-    ClusterInfo temp;
-    temp.clusterX = clusterX;
-    temp.clusterY = clusterY;
-    temp.clusterZ = clusterZ;
-    temp.cNear = 1.0;
-    temp.cFar = 20.0;
-    clusterInfo->CopyData(0, temp);
 }
 
 
@@ -150,7 +135,7 @@ void LightCullMgr::PrePass()
     // commandList->SetComputeRootUnorderedAccessView(0, );   // debug, not used now
     commandList->SetComputeRootDescriptorTable(3, clusterDepth); // cluster depth
     commandList->SetComputeRootShaderResourceView(4, lightTable->GetResource()->GetGPUVirtualAddress()); // light table buffer
-    commandList->SetComputeRootConstantBufferView(5, clusterInfo->Resource()->GetGPUVirtualAddress());
+    commandList->SetComputeRootConstantBufferView(5, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
 }
 
 void LightCullMgr::PostPass()

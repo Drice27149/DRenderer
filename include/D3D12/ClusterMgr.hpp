@@ -36,4 +36,5 @@ public:
     std::shared_ptr<ConstantMgr> constantMgr;
     // 临时 debug 用, 之后始终使用正常相机
     std::unique_ptr<UploadBuffer<PassUniform>> fixCam = nullptr;
+    std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
 };

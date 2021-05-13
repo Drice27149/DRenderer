@@ -26,25 +26,15 @@ bool Graphics::Initialize()
 
     BuildDescriptorHeaps();
 
+    InitPassMgrs();
+
     BuildShadersAndInputLayout();
 
-    InitSRV();
-    // order can't be exchanged
-    InitUAV();
-
-    PrepareComputeShader();
-
-    PrepareClusterVis();
-
-    BuildFrameResources();
-    BuildShaderResourceView();
     BuildRootSignature();
     
     BuildBoxGeometry();
-    BuildPSO();
-    BuildClusterVisPSO();
 
-    InitPassMgrs();
+    BuildPSO();
 
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
@@ -238,24 +228,6 @@ void Graphics::BuildShadersAndInputLayout()
 	mvsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "VS", "vs_5_1");
 	mpsByteCode = d3dUtil::CompileShader(L"..\\shaders\\dx12\\color.hlsl", nullptr, "PS", "ps_5_1");
 
-	shadowVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\shadow.hlsl", nullptr, "VS", "vs_5_1");
-	shadowPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\shadow.hlsl", nullptr, "PS", "ps_5_1");
-
-	skyVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "VS", "vs_5_1");
-	skyPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\sky.hlsl", nullptr, "PS", "ps_5_1");
-
-    clusterVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "VS", "vs_5_1");
-    clusterGS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "GS", "gs_5_1");
-    clusterPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster.hlsl", nullptr, "PS", "ps_5_1");
-
-    clusterCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\cluster\\lightlist.hlsl", nullptr, "CS", "cs_5_1");
-
-    debugCS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\debug.hlsl", nullptr, "CS", "cs_5_1");
-
-    clusterVisVS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "VS", "vs_5_1");
-    clusterVisGS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "GS", "gs_5_1");
-    clusterVisPS = d3dUtil::CompileShader(L"..\\shaders\\dx12\\debug\\clusterVis.hlsl", nullptr, "PS", "ps_5_1");
-
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, vertex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -315,72 +287,6 @@ void Graphics::BuildPSO()
     psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
     psoDesc.DSVFormat = mDepthStencilFormat;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
-
-    psoDesc.VS = {
-        reinterpret_cast<BYTE*>(clusterVS->GetBufferPointer()), 
-		clusterVS->GetBufferSize() 
-    };
-    psoDesc.GS = {
-        reinterpret_cast<BYTE*>(clusterGS->GetBufferPointer()), 
-		clusterGS->GetBufferSize() 
-    };
-    psoDesc.PS = {
-        reinterpret_cast<BYTE*>(clusterPS->GetBufferPointer()), 
-		clusterPS->GetBufferSize() 
-    };
-
-    // cluster depth...
-	D3D12_RASTERIZER_DESC rasterDescFront;
-	rasterDescFront.AntialiasedLineEnable = FALSE;
-	rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-	rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
-	rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-	rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-	rasterDescFront.DepthClipEnable = TRUE;
-	rasterDescFront.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterDescFront.ForcedSampleCount = 0;
-	rasterDescFront.FrontCounterClockwise = FALSE;
-	rasterDescFront.MultisampleEnable = FALSE;
-	rasterDescFront.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-
-    psoDesc.RasterizerState = rasterDescFront;
-	
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
-	psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_MAX;
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
-
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterPSO)));
-
-    // compute shader, cluster depth pipeline state
-    D3D12_COMPUTE_PIPELINE_STATE_DESC computeDesc = {};
-	computeDesc.pRootSignature = CSRootSignature.Get();
-	computeDesc.CS =
-	{
-		reinterpret_cast<BYTE*>(clusterCS->GetBufferPointer()),
-		clusterCS->GetBufferSize()
-	};
-	computeDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&computePSO)));
-
-    D3D12_COMPUTE_PIPELINE_STATE_DESC debugDesc = {};
-    debugDesc.pRootSignature = CSRootSignature.Get();
-	debugDesc.CS =
-	{
-		reinterpret_cast<BYTE*>(debugCS->GetBufferPointer()),
-		debugCS->GetBufferSize()
-	};
-    debugDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&debugDesc, IID_PPV_ARGS(&debugPSO)));
 }
 
 void Graphics::LoadAssets()
@@ -591,14 +497,6 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
     mLastMousePos.y = y;
 }
 
-void Graphics::BuildFrameResources()
-{
-}
-
-void Graphics::BuildShaderResourceView()
-{   
-}
-
 void Graphics::DrawShadowMap()
 {
     shadowMgr->PrePass();
@@ -613,25 +511,6 @@ void Graphics::DrawSkyBox()
     skyBoxMgr->PrePass();
     skyBoxMgr->Pass();
     skyBoxMgr->PostPass();
-}
-
-void Graphics::InitDescriptorHeaps()
-{
-}
-
-void Graphics::InitSRV()
-{
-    // baseColor/normal/specular + pre-Z + cluster structure
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
-    heapMgr->GetNewRTV(rtvCpu, rtvGpu);
-
-    clusterDepth = std::make_unique<Resource>(md3dDevice.Get(), ClusterX, ClusterY, srvCpu, srvGpu, rtvCpu);
-    clusterDepth->BuildRenderTargetArray(3, DXGI_FORMAT_R8G8_UNORM);
 }
 
 void Graphics::PreZPass()
@@ -673,369 +552,23 @@ void Graphics::DrawObjects(DrawType drawType)
 
 void Graphics::DrawLines()
 {
-    mCommandList->SetPipelineState(clusterVisPSO.Get());
-    mCommandList->SetGraphicsRootSignature(clusterVisSignature.Get());
-
-    auto passAddr = constantMgr->GetCameraPassConstant();
-    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
-    // mCommandList->SetGraphicsRootConstantBufferView(3, );
-    mCommandList->SetGraphicsRootConstantBufferView(2, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
-    // mCommandList->SetGraphicsRootDescriptorTable(3, HeadTableHandle);
-    // mCommandList->SetGraphicsRootDescriptorTable(4, NodeTableHandle);
-    mCommandList->SetGraphicsRootDescriptorTable(3, lightCullMgr->srvGpu[0]);
-    mCommandList->SetGraphicsRootDescriptorTable(4, lightCullMgr->srvGpu[1]);
+    debugVisMgr->PrePass();
 
     DrawObjects(DrawType::WhiteLines);
 }
 
 void Graphics::PrepareCluster()
 {
-    if (fixCamCB == nullptr){
-        PassUniform temp;
-        temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
-        temp.proj = glm::transpose(glm::perspective(45.0, 1.0, 1.0, 20.0));
-        fixCamCB = std::make_unique<UploadBuffer<PassUniform>>(md3dDevice.Get(), 1, true);
-        fixCamCB->CopyData(0, temp);
-    }
-
-    mCommandList->OMSetRenderTargets(1, &clusterDepth->WriteHandle(), true, nullptr);
-
-    mCommandList->RSSetViewports(1, &clusterDepth->Viewport());
-    mCommandList->RSSetScissorRects(1, &clusterDepth->ScissorRect());
-
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	// mCommandList->ClearRenderTargetView(clusterDepth->WriteHandle(),  Colors::Black, 0, nullptr);
-	
-    mCommandList->SetPipelineState(clusterPSO.Get());
-    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
-    auto passAddr = fixCamCB->Resource()->GetGPUVirtualAddress();
-    mCommandList->SetGraphicsRootConstantBufferView(0, passAddr);
-
-    DrawObjects(DrawType::PointLight);
-
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(clusterDepth->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
     clusterMgr->PrePass();
     DrawObjects(DrawType::PointLight);
     clusterMgr->PostPass();
 }   
-
-void Graphics::InitUAV()
-{
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-
-    // debug compute shader texture
-    D3D12_RESOURCE_DESC texDesc;
-    ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
-    texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    texDesc.Alignment = 0;
-    texDesc.Width = 16;
-    texDesc.Height = 8;
-    texDesc.DepthOrArraySize = 1;
-    texDesc.MipLevels = 1;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texDesc.SampleDesc.Count = 1;
-    texDesc.SampleDesc.Quality = 0;
-    texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-        D3D12_HEAP_FLAG_NONE,
-        &texDesc,
-        D3D12_RESOURCE_STATE_COMMON,
-        nullptr,
-        IID_PPV_ARGS(&debugTexture))
-    );
-    debugTexture->SetName(L"debugTexture");
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-
-    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    uavDesc.Texture2D.MipSlice = 0;
-
-    md3dDevice->CreateUnorderedAccessView(debugTexture.Get(), nullptr, &uavDesc, srvCpu);
-
-    DebugTableHandle = srvGpu;
-
-	CD3DX12_RESOURCE_DESC uav_counter_resource_desc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, sizeof(unsigned int), 1, 1, 1,
-		DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	CD3DX12_RESOURCE_DESC uav_counter_uav_resource_desc = uav_counter_resource_desc;
-	uav_counter_uav_resource_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-		D3D12_HEAP_FLAG_NONE,
-		&uav_counter_uav_resource_desc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		nullptr,
-		IID_PPV_ARGS(&HeadTableCounter)
-    );
-
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    HeadTableHandle = srvGpu;
-
-    CD3DX12_RESOURCE_DESC HeadDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (ClusterX*ClusterY*ClusterZ) * sizeof(TempOffset), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	HeadDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-		D3D12_HEAP_FLAG_NONE,
-		&HeadDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		nullptr,
-		IID_PPV_ARGS(&HeadTable)
-    );
-    HeadTable->SetName(L"HeadTable");
-
-	// still head table, uav desc set up
-	D3D12_UNORDERED_ACCESS_VIEW_DESC lll_uav_view_desc;
-	ZeroMemory(&lll_uav_view_desc, sizeof(lll_uav_view_desc));
-	lll_uav_view_desc.Format = DXGI_FORMAT_UNKNOWN; //Needs to be UNKNOWN for structured buffer
-	lll_uav_view_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-	lll_uav_view_desc.Buffer.FirstElement = 0;
-	lll_uav_view_desc.Buffer.NumElements = ClusterX*ClusterY*ClusterZ;
-	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempOffset); //2 uint32s in struct
-	lll_uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; //Not a raw view
-	lll_uav_view_desc.Buffer.CounterOffsetInBytes = 0; //First element in UAV counter resource
-
-	md3dDevice->CreateUnorderedAccessView(HeadTable.Get(), HeadTableCounter.Get(), &lll_uav_view_desc, srvCpu);
-
-    // node table, contain lightID & next pointer
-    // this table need a counter
-	md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-		D3D12_HEAP_FLAG_NONE,
-		&uav_counter_uav_resource_desc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		nullptr,
-		IID_PPV_ARGS(&NodeTableCounter)
-    );
-
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    NodeTableHandle = srvGpu;
-
-    // TODO: 扩大 nodetable 容量为 16*8*24*MaxLight
-    CD3DX12_RESOURCE_DESC NodeDesc(D3D12_RESOURCE_DIMENSION_BUFFER, 0, (2048) * sizeof(TempNode), 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
-	NodeDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
-		D3D12_HEAP_FLAG_NONE,
-		&NodeDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		nullptr,
-		IID_PPV_ARGS(&NodeTable)
-    );
-
-    lll_uav_view_desc.Buffer.NumElements = 2048; // MaxLightCount * clusterX * clusterY * clusterZ
-	lll_uav_view_desc.Buffer.StructureByteStride = sizeof(TempNode); //2 uint32s in struct
-	md3dDevice->CreateUnorderedAccessView(NodeTable.Get(), NodeTableCounter.Get(), &lll_uav_view_desc, srvCpu);
-    NodeTable->SetName(L"NodeTable");
-
-    // light data look up table
-    vector<TempLight> lights;
-    TempLight l0;
-    
-    l0.pos = glm::vec3(1999, 12, 22);
-    l0.radiance = 10.0;
-    for(int i = 0; i < 3; i++){
-        l0.id = i;
-        lights.push_back(l0);
-    }
-    unsigned int byteSize = sizeof(TempLight) * lights.size();
-
-    LightTable = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), lights.data(), byteSize, LightUploadBuffer);
-    LightTable->SetName(L"LightTable");
-
-    // head table clear buffer
-    vector<TempOffset> cleardata;
-    cleardata.resize(ClusterX*ClusterY*ClusterZ);
-    for(TempOffset& u: cleardata) u.offset = 0;
-    byteSize = sizeof(TempOffset) * cleardata.size();
-    headClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), cleardata.data(), byteSize, headUploadBuffer);
-
-    // node table counter clear buffer
-    unsigned int counter = 1;
-    nodeCounterClearBuffer = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), &counter, sizeof(unsigned int), nodeUploadBuffer);
-}
-
-void Graphics::PrepareComputeShader()
-{
-    // compute shader root signature
-	CD3DX12_DESCRIPTOR_RANGE uavTable0;
-	uavTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-
-	CD3DX12_DESCRIPTOR_RANGE uavTable1;
-	uavTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);
-
-	CD3DX12_DESCRIPTOR_RANGE uavTable2;
-	uavTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2);
-
-    CD3DX12_DESCRIPTOR_RANGE depthTable;
-    depthTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[6];
-
-	// Perfomance TIP: Order from most frequent to least frequent.
-	slotRootParameter[0].InitAsDescriptorTable(1, &uavTable0);
-	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable1);
-	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable2);
-    slotRootParameter[3].InitAsDescriptorTable(1, &depthTable);
-    slotRootParameter[4].InitAsShaderResourceView(1);
-    slotRootParameter[5].InitAsConstantBufferView(0);
-
-	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter,
-		0, nullptr,
-		D3D12_ROOT_SIGNATURE_FLAG_NONE);
-
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-	ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
-
-	if(errorBlob != nullptr)
-	{
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	}
-	ThrowIfFailed(hr);
-
-	ThrowIfFailed(md3dDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(CSRootSignature.GetAddressOf())));
-}
 
 void Graphics::ExecuteComputeShader()
 {
     lightCullMgr->PrePass();
     lightCullMgr->Pass();
     lightCullMgr->PostPass();
-
-    // TODO: clear first
-    // ??? clear uav will bug
-    // ??? no clear will auto clear
-    ClearUAVs();
-
-    int lightCount = 3;
-
-    // compute
-    mCommandList->SetPipelineState(computePSO.Get());
-    mCommandList->SetComputeRootSignature(CSRootSignature.Get());
-    mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
-    mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
-    mCommandList->SetComputeRootConstantBufferView(5, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
-    mCommandList->Dispatch(lightCount, 1, 1);
-
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
-
-    mCommandList->SetPipelineState(debugPSO.Get());
-    mCommandList->SetComputeRootSignature(CSRootSignature.Get());
-    mCommandList->SetComputeRootDescriptorTable(0, HeadTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(1, NodeTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(2, DebugTableHandle);
-    mCommandList->SetComputeRootDescriptorTable(3, clusterDepth->readHandle);
-    mCommandList->SetComputeRootShaderResourceView(4, LightTable->GetGPUVirtualAddress());
-    mCommandList->SetComputeRootConstantBufferView(5, constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress());
-    mCommandList->Dispatch(1, 1, 1);
-
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
-}
-
-void Graphics::ClearUAVs()
-{
-    // md3dDevice->TransitionResources(2, mCommandList, resources, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(HeadTable.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(NodeTableCounter.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST));
-	
-    mCommandList->CopyResource(HeadTable.Get(), headClearBuffer.Get());
-    mCommandList->CopyResource(NodeTableCounter.Get(), nodeCounterClearBuffer.Get());
-	
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(HeadTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(NodeTableCounter.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-}
-
-void Graphics::PrepareClusterVis()
-{
-    CD3DX12_ROOT_PARAMETER slotRootParameter[5];
-    // 根签名
-	CD3DX12_DESCRIPTOR_RANGE uavTable0;
-	uavTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-
-	CD3DX12_DESCRIPTOR_RANGE uavTable1;
-	uavTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);
-
-	// Perfomance TIP: Order from most frequent to least frequent.
-    slotRootParameter[0].InitAsConstantBufferView(0);
-    slotRootParameter[1].InitAsConstantBufferView(1);
-    slotRootParameter[2].InitAsConstantBufferView(2);
-	slotRootParameter[3].InitAsDescriptorTable(1, &uavTable0);
-	slotRootParameter[4].InitAsDescriptorTable(1, &uavTable1);
-
-	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-	ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
-
-	if(errorBlob != nullptr)
-	{
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	}
-	ThrowIfFailed(hr);
-
-	ThrowIfFailed(md3dDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(clusterVisSignature.GetAddressOf())));
-}
-
-void Graphics::BuildClusterVisPSO()
-{
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-    psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
-    psoDesc.pRootSignature = clusterVisSignature.Get();
-
-    psoDesc.VS = 
-	{ 
-		reinterpret_cast<BYTE*>(clusterVisVS->GetBufferPointer()), 
-		clusterVisVS->GetBufferSize() 
-	};
-    psoDesc.GS = 
-    {
-        reinterpret_cast<BYTE*>(clusterVisGS->GetBufferPointer()), 
-		clusterVisGS->GetBufferSize() 
-    };
-    psoDesc.PS = 
-	{ 
-		reinterpret_cast<BYTE*>(clusterVisPS->GetBufferPointer()), 
-		clusterVisPS->GetBufferSize() 
-	};
-
-    D3D12_DEPTH_STENCIL_DESC depthDesc = {};
-    depthDesc.DepthEnable = false;
-
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = true;
-    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = depthDesc;// CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = mBackBufferFormat;
-    psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-    psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-    psoDesc.DSVFormat = mDepthStencilFormat;
-    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&clusterVisPSO)));
 }
 
 // 目前只能放在最后, 目前和 baseColor/normal/matellic 的 srvcounter 有冲突的地方
@@ -1103,5 +636,13 @@ void Graphics::InitPassMgrs()
         lightCullMgr->srvGpu[i] = srvGpu;
     }
     lightCullMgr->clusterDepth = clusterMgr->srvGpu;
+    lightCullMgr->constantMgr = constantMgr;
     lightCullMgr->Init();
+
+    debugVisMgr = std::make_unique<DebugVisMgr>(md3dDevice.Get(), mCommandList.Get());
+    debugVisMgr->offsetTable = lightCullMgr->srvGpu[0];
+    debugVisMgr->entryTable = lightCullMgr->srvGpu[1];
+    debugVisMgr->clusterDepth = clusterMgr->srvGpu;
+    debugVisMgr->constantMgr = constantMgr;
+    debugVisMgr->Init();
 }

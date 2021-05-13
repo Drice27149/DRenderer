@@ -2,6 +2,7 @@
 #include "Resource.hpp"
 #include "Struct.hpp"
 #include "UploadBuffer.h"
+#include "ConstantMgr.hpp"
 
 class LightCullMgr: public PassMgr {
 public:
@@ -45,5 +46,5 @@ public:
     unsigned int clusterY;
     unsigned int clusterZ;
     // tempory hack
-    std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
+    std::shared_ptr<ConstantMgr> constantMgr;
 };
