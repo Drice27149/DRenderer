@@ -60,8 +60,6 @@ private:
     void PrepareCluster();
     void ExecuteComputeShader();
 
-    std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
-
 private:
     
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
@@ -74,19 +72,6 @@ private:
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
-
-    XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
-    XMFLOAT4X4 mView = MathHelper::Identity4x4();
-    XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-
-    float mTheta = 1.5f*XM_PI;
-    float mPhi = XM_PIDIV4;
-    float mRadius = 5.0f;
-
-    std::vector<TTexture> textures;
-
-    TTexture MyTex;
-    POINT mLastMousePos;
 
     TTexture CubeTex;
 

@@ -30,7 +30,6 @@ void ClusterMgr::BuildPSO()
     psoDesc.InputLayout = { inputLayout.data(), (unsigned int)inputLayout.size() };
     psoDesc.pRootSignature = rootSig.Get();
 
-    // cluster depth...
 	D3D12_RASTERIZER_DESC rasterDescFront;
 	rasterDescFront.AntialiasedLineEnable = FALSE;
 	rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;

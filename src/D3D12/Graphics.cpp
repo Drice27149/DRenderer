@@ -1,6 +1,7 @@
 #include "Graphics.hpp"
 #include "DEngine.hpp"
 #include "GraphicAPI.hpp"
+#include "Struct.hpp"
 #include "stb_image.h"
 
 const int FrameCount = 3;
@@ -50,10 +51,6 @@ bool Graphics::Initialize()
 void Graphics::OnResize()
 {
 	D3DApp::OnResize();
-
-    // The window resized, so update the aspect ratio and recompute the projection matrix.
-    XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
-    XMStoreFloat4x4(&mProj, P);
 }
 
 void Graphics::Update(const GameTimer& gt)
@@ -291,19 +288,19 @@ void Graphics::BuildPSO()
 
 void Graphics::LoadAssets()
 {
-    if(DEngine::gobj == nullptr) return ;
-    // Ŀǰ, ����ֻ��һ�� mesh
-    const Mesh& mesh = DEngine::gobj->meshes[0];
-    if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
-        TTexture baseColorTex;
-        CreateTextureFromImage(mesh.texns[aiTextureType_DIFFUSE], baseColorTex.Resource, baseColorTex.UploadHeap);
-        textures.push_back(baseColorTex);
-    }
-    if (mesh.mask & (1 << aiTextureType_NORMALS)) {
-        TTexture normalTex;
-        CreateTextureFromImage(mesh.texns[aiTextureType_NORMALS], normalTex.Resource, normalTex.UploadHeap);
-        textures.push_back(normalTex);
-    }
+    // if(DEngine::gobj == nullptr) return ;
+    // // Ŀǰ, ����ֻ��һ�� mesh
+    // const Mesh& mesh = DEngine::gobj->meshes[0];
+    // if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
+    //     TTexture baseColorTex;
+    //     CreateTextureFromImage(mesh.texns[aiTextureType_DIFFUSE], baseColorTex.Resource, baseColorTex.UploadHeap);
+    //     textures.push_back(baseColorTex);
+    // }
+    // if (mesh.mask & (1 << aiTextureType_NORMALS)) {
+    //     TTexture normalTex;
+    //     CreateTextureFromImage(mesh.texns[aiTextureType_NORMALS], normalTex.Resource, normalTex.UploadHeap);
+    //     textures.push_back(normalTex);
+    // }
 }
 
 // TODO: improve load speed, too slow now 
@@ -371,63 +368,6 @@ void Graphics::CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>&m_textur
 	}
 }
 
-std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> Graphics::GetStaticSamplers()
-{
-	// Applications usually only need a handful of samplers.  So just define them all up front
-	// and keep them available as part of the root signature.  
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
-		0, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-		1, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-		2, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-		3, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
-		4, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
-		0.0f,                             // mipLODBias
-		8);                               // maxAnisotropy
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
-		5, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
-		0.0f,                              // mipLODBias
-		8);                                // maxAnisotropy
-
-	return { 
-		pointWrap, pointClamp,
-		linearWrap, linearClamp, 
-		anisotropicWrap, anisotropicClamp };
-}
-
 void Graphics::OnMouseZoom(WPARAM state)
 {
     if(DEngine::instance != nullptr){
@@ -466,35 +406,6 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 {
     if(DEngine::instance != nullptr)
             DEngine::GetInputMgr().Tick((float)x, (float)y);
-
-    if((btnState & MK_LBUTTON) != 0)
-    {
-        // Make each pixel correspond to a quarter of a degree.
-        float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-        float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
-
-        // Update angles based on input to orbit camera around box.
-        mTheta += dx;
-        mPhi += dy;
-
-        // Restrict the angle mPhi.
-        mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-    }
-    else if((btnState & MK_RBUTTON) != 0)
-    {
-        // Make each pixel correspond to 0.005 unit in the scene.
-        float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
-        float dy = 0.005f*static_cast<float>(y - mLastMousePos.y);
-
-        // Update the camera radius based on input.
-        mRadius += dx - dy;
-
-        // Restrict the radius.
-        mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
-    }
-
-    mLastMousePos.x = x;
-    mLastMousePos.y = y;
 }
 
 void Graphics::DrawShadowMap()

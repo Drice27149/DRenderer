@@ -202,6 +202,22 @@
 ### 退出流程
 
 * ```LaunchWindows.cpp: GuardedMain``` 
+  
   * ```EditorExit()```
 * ```LaunchWindows.cpp WinMain```
+  
   * ```FEngineLoop::AppExit()```
+  
+  * ```c++
+    	struct EngineLoopCleanupGuard 
+    	{ 
+    		~EngineLoopCleanupGuard()
+    		{
+    			EngineExit();
+    		}
+    	} CleanupGuard;
+    // 强制保证退出
+    
+    ```
+  
+  * 
