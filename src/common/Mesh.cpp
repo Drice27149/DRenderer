@@ -6,8 +6,8 @@ Mesh::Mesh()
 {
 }
 
-Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids, vector<string> texns, int mask):
-vs(vs), ids(ids), texns(texns)
+Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids):
+vs(vs), ids(ids)
 {
     // texs.resize(aiTextureType_UNKNOWN + 1);
     // for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {

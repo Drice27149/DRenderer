@@ -18,7 +18,7 @@ struct VertexIn
 	float3 normal: NORMAL;
     float2 texcoord: TEXCOORD;
 	float3 tangent: TANGENT;
-	float3 bitangent: COLOR;
+	float3 bitangent: TANGENT1;
 };
 
 struct VertexOut

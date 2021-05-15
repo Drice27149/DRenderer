@@ -1,3 +1,5 @@
+#pragma once
+
 #include "PassMgr.hpp"
 #include "Resource.hpp"
 #include "Struct.hpp"
@@ -21,6 +23,12 @@ public:
     void Pass() override;
     void PrePass() override;
     void PostPass() override;
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetOffsetHandle(){ return srvGpu[0]; } 
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetEntryHandle(){ return srvGpu[1]; } 
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetLightHnadle(){ return srvGpu[2]; } 
+    D3D12_GPU_VIRTUAL_ADDRESS GetLightTable(){ return lightTable->GetResource()->GetGPUVirtualAddress(); }
+    D3D12_GPU_VIRTUAL_ADDRESS GetClusterInfo(){ return constantMgr->clusterInfo->Resource()->GetGPUVirtualAddress(); }  
 
     void ClearUAVS();
 public:

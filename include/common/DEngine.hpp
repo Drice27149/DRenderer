@@ -3,7 +3,6 @@
 #include "Global.hpp"
 #include "InputMgr.hpp"
 #include "CamMgr.hpp"
-#include "TextureMgr.hpp"
 #include "SceneMgr.hpp"
 #include "Object.hpp"
 
@@ -13,7 +12,6 @@ public:
     static void Launch();
     static InputMgr& GetInputMgr(){ return instance->inputMgr; }
     static CamMgr& GetCamMgr(){ return instance->camMgr; }
-    static TextureMgr& GetTexMgr() { return instance->texMgr; }
     static SceneMgr& GetSceneMgr(){ return instance->sceneMgr; }
     static void Tick();
     static void LogError(string s);
@@ -25,6 +23,5 @@ public:
     static vector<Mesh*> meshes;
     CamMgr camMgr;
     InputMgr inputMgr;
-    TextureMgr texMgr;
     SceneMgr sceneMgr;
 };

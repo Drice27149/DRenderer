@@ -1,3 +1,5 @@
+#pragma once
+
 #include "d3dUtil.h"
 using Microsoft::WRL::ComPtr;
 

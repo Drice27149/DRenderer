@@ -2,6 +2,8 @@
 
 Object::Object()
 {
+	mask = 0;
+
 	model = mat4(1.0);
 	drawType = DrawType::Normal;
 }

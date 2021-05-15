@@ -14,4 +14,5 @@ struct ObjectUniform
 {
     glm::mat4 model;
     unsigned int id;
+    unsigned int mask;
 };

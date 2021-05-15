@@ -13,6 +13,8 @@
 #include "ClusterMgr.hpp"
 #include "LightCullMgr.hpp"
 #include "DebugVisMgr.hpp"
+#include "TextureMgr.hpp"
+#include "PBRMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -40,64 +42,50 @@ private:
     virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
     virtual void OnMouseZoom(WPARAM state)override;
 
-    void LoadAssets();
-    void CreateTextureFromImage(string fn, ComPtr<ID3D12Resource>& m_texture, ComPtr<ID3D12Resource>& textureUploadHeap);
-
     void BuildDescriptorHeaps();
-    void BuildRootSignature();
-    void BuildShadersAndInputLayout();
-    void BuildBoxGeometry(); // TOOD: delete
+    // 加载模型贴图
+    void UploadTextures();
+    // 加载模型
+    void UploadMeshes(); 
 
-    void BuildPSO();
+    // new, for decouple
+    void InitPassMgrs();
 
     // New
     void DrawSkyBox();
     void DrawShadowMap();
     void DrawObjects(DrawType drawType);
     void DrawLines();
+    void DrawOpaque();
 
     void PreZPass();
     void PrepareCluster();
     void ExecuteComputeShader();
-
-private:
     
-    ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-
-	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
-
-    ComPtr<ID3DBlob> mvsByteCode = nullptr;
-    ComPtr<ID3DBlob> mpsByteCode = nullptr;
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-
-    ComPtr<ID3D12PipelineState> mPSO = nullptr;
-
-    TTexture CubeTex;
-
+private:
     int CurrentFrame = 0;
     int PassCount = 2;
-    int TextureCount = 8;
     int ClusterX = 16;
     int ClusterY = 8;
     int ClusterZ = 4;
 
 //  -- begin of the new journey
-    std::unique_ptr<DMesh> objMesh = nullptr;
-    std::unique_ptr<DMesh> skyMesh = nullptr;
+    std::shared_ptr<DMesh> objMesh = nullptr;
 
 public:
-    // pass mgr, 各种 pass 管理类
+    // 资源管理
     std::shared_ptr<ConstantMgr> constantMgr = nullptr;
+    std::shared_ptr<HeapMgr> heapMgr = nullptr;
+    std::shared_ptr<TextureMgr> textureMgr = nullptr;
+    // pass 管理
     std::unique_ptr<PreZMgr> preZMgr = nullptr;
-    std::unique_ptr<ShadowMgr> shadowMgr = nullptr;
-    std::unique_ptr<HeapMgr> heapMgr = nullptr;
+    std::shared_ptr<ShadowMgr> shadowMgr = nullptr;
     std::unique_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
     std::unique_ptr<ClusterMgr> clusterMgr = nullptr;
-    std::unique_ptr<LightCullMgr> lightCullMgr = nullptr;
+    std::shared_ptr<LightCullMgr> lightCullMgr = nullptr;
     std::unique_ptr<DebugVisMgr> debugVisMgr = nullptr;
+    std::unique_ptr<PBRMgr> pbrMgr = nullptr;
+
 public:
-    // new, for decouple
-    void InitPassMgrs();
 };
 

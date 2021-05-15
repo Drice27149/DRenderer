@@ -1,11 +1,6 @@
 #include "AssimpLoader.hpp"
 #include "DEngine.hpp"
 
-AssimpLoader::AssimpLoader()
-{
-    meshCnt = 0;
-}
-
 void AssimpLoader::ProcessNode(aiNode *node, const aiScene *scene)
 {
     for(unsigned int i = 0; i < node->mNumMeshes; i++){
@@ -24,9 +19,6 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     meshCnt++;
     vs.clear();
     ids.clear();
-    texs.clear();
-    texs.resize(aiTextureType_UNKNOWN + 1);
-    mask = 0;
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++){
         Vertex v;
@@ -49,7 +41,7 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     ProcessMaterial(material);
     
-    Mesh* newMesh = new Mesh(vs, ids, texs, mask);
+    Mesh* newMesh = new Mesh(vs, ids);
     obj->meshes.push_back(*newMesh);
 }
 
@@ -59,15 +51,13 @@ void AssimpLoader::ProcessMaterial(aiMaterial* mat)
     for(int it = aiTextureType_NONE ; it <= aiTextureType_UNKNOWN; it++){
         aiTextureType texType = static_cast<aiTextureType>(it); 
         if(mat->GetTextureCount(texType)){
-            mask |= 1 << it;
+            obj->mask |= 1 << it;
             // 只取第一张贴图, 因为多出来的大概率是重复的同一个
             aiString texn;
             mat->GetTexture(texType, 0, &texn);
             string fulltexn = fpath + string(texn.C_Str());
 
-            // cout << "it = " << it << ", " << fulltexn << "\n";
-
-            texs[it] = fulltexn;
+            obj->texns[it] = fulltexn;
         }
     }
 }
@@ -75,6 +65,7 @@ void AssimpLoader::ProcessMaterial(aiMaterial* mat)
 void AssimpLoader::LoadFile(Object* obj, string fn)
 {
     this->obj = obj;
+    obj->texns.resize(aiTextureType_UNKNOWN + 1);
 
     meshCnt = 0;
 

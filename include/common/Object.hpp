@@ -18,6 +18,10 @@ public:
 	void Transform(mat4 trans);
 	void Scale(float rate);
 public:
+	// 材质贴图 mask, 若存在相应的贴图则对应位置为1
+	unsigned int mask;
+	std::vector<std::string> texns;
+public:
 	mat4 model;
 	DrawType drawType;
 	int id;

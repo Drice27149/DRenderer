@@ -24,7 +24,7 @@ struct VertexIn
 	float3 normal: NORMAL;
     float2 texcoord: TEXCOORD;
 	float3 tangent: TANGENT;
-	float3 bitangent: COLOR;
+	float3 bitangent: TANGENT1;
 	uint x: TEXCOORD1;
 	uint y: TEXCOORD2;
 	uint z: TEXCOORD3;

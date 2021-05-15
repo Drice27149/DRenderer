@@ -60,6 +60,7 @@ void ConstantMgr::UpdateObjConstants()
         ObjectUniform temp;
         temp.model = glm::transpose(obj->model);
         temp.id = obj->id;
+        temp.mask = obj->mask;
         objCB->CopyData(index, temp);
         index++;
 

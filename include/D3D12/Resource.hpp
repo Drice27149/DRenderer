@@ -81,6 +81,8 @@ public:
 	}
 
 	ID3D12Resource* GetCounterResource() { return CntResource.Get(); }
+
+	void BuildImageTexture(std::string fn);
 };
 
  
