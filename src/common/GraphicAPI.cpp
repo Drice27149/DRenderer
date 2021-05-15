@@ -52,311 +52,311 @@ float skyv[] = {
         1.0f, -1.0f,  1.0f
 };
 
-GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
-     glfwInit();
-     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+// GLFWwindow* GraphicAPI::InitOpenGL(int width, int height) {
+//     //  glfwInit();
+//     //  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//     //  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//     //  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-     GLFWwindow* window = glfwCreateWindow(width, height, "DRenderer", NULL, NULL);
-     if (window == NULL)
-     {
-         std::cout << "fail to create window" << std::endl;
-         glfwTerminate();
-         return NULL;
-     }
+//     //  GLFWwindow* window = glfwCreateWindow(width, height, "DRenderer", NULL, NULL);
+//     //  if (window == NULL)
+//     //  {
+//     //      std::cout << "fail to create window" << std::endl;
+//     //      glfwTerminate();
+//     //      return NULL;
+//     //  }
 
-     glfwMakeContextCurrent(window);
+//     //  glfwMakeContextCurrent(window);
 
-     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-     {
-         std::cout << "Failed to initialize GLAD" << std::endl;
-         return NULL;
-     }
+//     //  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+//     //  {
+//     //      std::cout << "Failed to initialize GLAD" << std::endl;
+//     //      return NULL;
+//     //  }
 
-    glViewport(0, 0, width, height);
+//     // glViewport(0, 0, width, height);
 
-    return window;
-}
+//     // return window;
+// }
 
-void GraphicAPI::BindInputEvent(){
-    glfwSetFramebufferSizeCallback(DEngine::window, GraphicAPI::FramebufferSizeCallback);
-    glfwSetMouseButtonCallback(DEngine::window, GraphicAPI::MouseButtonCallBack);
-    glfwSetCursorPosCallback(DEngine::window, GraphicAPI::MouseMoveCallBack);
-    glfwSetKeyCallback(DEngine::window, GraphicAPI::KeyCallBack);
-    glfwSetScrollCallback(DEngine::window, GraphicAPI::ScrollCallBack);
-}
+// void GraphicAPI::BindInputEvent(){
+//     glfwSetFramebufferSizeCallback(DEngine::window, GraphicAPI::FramebufferSizeCallback);
+//     glfwSetMouseButtonCallback(DEngine::window, GraphicAPI::MouseButtonCallBack);
+//     glfwSetCursorPosCallback(DEngine::window, GraphicAPI::MouseMoveCallBack);
+//     glfwSetKeyCallback(DEngine::window, GraphicAPI::KeyCallBack);
+//     glfwSetScrollCallback(DEngine::window, GraphicAPI::ScrollCallBack);
+// }
 
-void GraphicAPI::MouseMoveCallBack(GLFWwindow* window, double x, double y)
-{
-    InputMgr& inputMgr = DEngine::GetInputMgr();
-    inputMgr.Tick(x, y);
-}
+// void GraphicAPI::MouseMoveCallBack(GLFWwindow* window, double x, double y)
+// {
+//     InputMgr& inputMgr = DEngine::GetInputMgr();
+//     inputMgr.Tick(x, y);
+// }
 
-void GraphicAPI::MouseButtonCallBack(GLFWwindow* window, int button, int action, int mods)
-{
-    InputMgr& inputMgr = DEngine::GetInputMgr();
-    if(button == GLFW_MOUSE_BUTTON_LEFT){
-        if(GLFW_PRESS == action) 
-            inputMgr.OnLMouseDown();
-        else
-            inputMgr.OnLMouseRelease();
-    }
-    else if(button == GLFW_MOUSE_BUTTON_RIGHT){
-        if(GLFW_PRESS == action) 
-            inputMgr.OnRMouseDown();
-        else
-            inputMgr.OnRMouseRelease();
-    }
-    else{
-        // ²»´¦Àí
-    }
-}
+// void GraphicAPI::MouseButtonCallBack(GLFWwindow* window, int button, int action, int mods)
+// {
+//     InputMgr& inputMgr = DEngine::GetInputMgr();
+//     if(button == GLFW_MOUSE_BUTTON_LEFT){
+//         if(GLFW_PRESS == action) 
+//             inputMgr.OnLMouseDown();
+//         else
+//             inputMgr.OnLMouseRelease();
+//     }
+//     else if(button == GLFW_MOUSE_BUTTON_RIGHT){
+//         if(GLFW_PRESS == action) 
+//             inputMgr.OnRMouseDown();
+//         else
+//             inputMgr.OnRMouseRelease();
+//     }
+//     else{
+//         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//     }
+// }
 
-void GraphicAPI::ScrollCallBack(GLFWwindow* window, double dx, double dy)
-{
-    if(dy > 0)
-        DEngine::GetInputMgr().OnZoomIn();
-    else
-        DEngine::GetInputMgr().OnZoomOut();
-}
+// void GraphicAPI::ScrollCallBack(GLFWwindow* window, double dx, double dy)
+// {
+//     if(dy > 0)
+//         DEngine::GetInputMgr().OnZoomIn();
+//     else
+//         DEngine::GetInputMgr().OnZoomOut();
+// }
 
-void GraphicAPI::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
+// void GraphicAPI::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+// {
+//     glViewport(0, 0, width, height);
+// }
 
-void GraphicAPI::KeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if(action == GLFW_PRESS || GLFW_REPEAT == action){
-        if(key == GLFW_KEY_W){
-            // TODO: ÐÞÕýÒÆ¶¯µÄ¾ßÌåÖµ
-            DEngine::GetInputMgr().OnZoomIn();
-        }
-        if(key == GLFW_KEY_S){
-            DEngine::GetInputMgr().OnZoomOut();
-        }
-        if(key == GLFW_KEY_A){
-            DEngine::GetInputMgr().OnMoveLeft();
-        }
-        if(key == GLFW_KEY_D){
-            DEngine::GetInputMgr().OnMoveRight();
-        }
-    }
-}
+// void GraphicAPI::KeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
+// {
+//     if(action == GLFW_PRESS || GLFW_REPEAT == action){
+//         if(key == GLFW_KEY_W){
+//             // TODO: ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½Öµ
+//             DEngine::GetInputMgr().OnZoomIn();
+//         }
+//         if(key == GLFW_KEY_S){
+//             DEngine::GetInputMgr().OnZoomOut();
+//         }
+//         if(key == GLFW_KEY_A){
+//             DEngine::GetInputMgr().OnMoveLeft();
+//         }
+//         if(key == GLFW_KEY_D){
+//             DEngine::GetInputMgr().OnMoveRight();
+//         }
+//     }
+// }
 
-void GraphicAPI::LoadMesh(Mesh& mesh)
-{
-    GraphicData& gd = mesh.gd;
-    glGenVertexArrays(1, &(gd.VAO));
-    glBindVertexArray(gd.VAO);
-    // ¶¥µã»º³å
-    glGenBuffers(1, &(gd.VBO));
-    glBindBuffer(GL_ARRAY_BUFFER, gd.VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * (mesh.vs.size()), mesh.vs.data(), GL_STATIC_DRAW);
-    // Ë÷Òý»º³å
-    glGenBuffers(1, &(gd.EBO));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gd.EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * (mesh.ids.size()), mesh.ids.data(), GL_STATIC_DRAW);
-    // ÅäÖÃ¶¥µãÊôÐÔ, ÓÃÓÚshaderÖÐ¶ÁÈ¡
-    // ¶¥µã×ø±ê
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vertex));
-    // ¶¥µã·¨Ïß
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    // ÎÆÀí×ø±ê
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
-    // ÇÐÏß·½Ïò
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-    // bÇÐÏß·½Ïò
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
-}
+// void GraphicAPI::LoadMesh(Mesh& mesh)
+// {
+//     GraphicData& gd = mesh.gd;
+//     glGenVertexArrays(1, &(gd.VAO));
+//     glBindVertexArray(gd.VAO);
+//     // ï¿½ï¿½ï¿½ã»ºï¿½ï¿½
+//     glGenBuffers(1, &(gd.VBO));
+//     glBindBuffer(GL_ARRAY_BUFFER, gd.VBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * (mesh.vs.size()), mesh.vs.data(), GL_STATIC_DRAW);
+//     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//     glGenBuffers(1, &(gd.EBO));
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gd.EBO);
+//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * (mesh.ids.size()), mesh.ids.data(), GL_STATIC_DRAW);
+//     // ï¿½ï¿½ï¿½Ã¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½shaderï¿½Ð¶ï¿½È¡
+//     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//     glEnableVertexAttribArray(0);
+//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vertex));
+//     // ï¿½ï¿½ï¿½ã·¨ï¿½ï¿½
+//     glEnableVertexAttribArray(1);
+//     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+//     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//     glEnableVertexAttribArray(2);
+//     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+//     // ï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½
+//     glEnableVertexAttribArray(3);
+//     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+//     // bï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½
+//     glEnableVertexAttribArray(4);
+//     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+// }
 
-void* GraphicAPI::FuckImage(string fn, int& width, int& height, int& channels)
-{
-    return stbi_load(fn.c_str(), &width, &height, &channels, 0);
-}
+// void* GraphicAPI::FuckImage(string fn, int& width, int& height, int& channels)
+// {
+//     return stbi_load(fn.c_str(), &width, &height, &channels, 0);
+// }
 
-void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
-{
-    glGenTextures(1, &(tex.id));
-    glBindTexture(GL_TEXTURE_2D, tex.id);
-    int width = 0, height = 0, nrChannels = 0;
-    // ÊúÖ±·´×ª
-    if (vflip) stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(fn.c_str(), &width, &height, &nrChannels, 0);
-    if (data && nrChannels > 0) {
+// void GraphicAPI::LoadImageTexture(Texture& tex, string fn, bool vflip)
+// {
+//     glGenTextures(1, &(tex.id));
+//     glBindTexture(GL_TEXTURE_2D, tex.id);
+//     int width = 0, height = 0, nrChannels = 0;
+//     // ï¿½ï¿½Ö±ï¿½ï¿½×ª
+//     if (vflip) stbi_set_flip_vertically_on_load(true);
+//     unsigned char* data = stbi_load(fn.c_str(), &width, &height, &nrChannels, 0);
+//     if (data && nrChannels > 0) {
         
-        if (nrChannels == 1) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
-        }
-        else if (nrChannels == 2) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
-        }
-        else if (nrChannels == 3) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        }
-        else if (nrChannels == 4) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        }
-        else {
-            int channelsOutOfBounds = 1;
-            assert(channelsOutOfBounds);
-        }
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-}
+//         if (nrChannels == 1) {
+//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+//         }
+//         else if (nrChannels == 2) {
+//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+//         }
+//         else if (nrChannels == 3) {
+//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+//         }
+//         else if (nrChannels == 4) {
+//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+//         }
+//         else {
+//             int channelsOutOfBounds = 1;
+//             assert(channelsOutOfBounds);
+//         }
+//         glGenerateMipmap(GL_TEXTURE_2D);
+//     }
+//     else {
+//         std::cout << "Failed to load texture" << std::endl;
+//     }
+// }
 
-void GraphicAPI::LoadImageCubeMap(CubeMap& cube, vector<string> faces)
-{
-    assert(faces.size() == 6);
+// void GraphicAPI::LoadImageCubeMap(CubeMap& cube, vector<string> faces)
+// {
+//     assert(faces.size() == 6);
     
-    glGenTextures(1, &(cube.id));
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
+//     glGenTextures(1, &(cube.id));
+//     glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
 
-    int width, height, nrChannels;
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-            );
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+//     int width, height, nrChannels;
+//     for (unsigned int i = 0; i < faces.size(); i++)
+//     {
+//         unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+//         if (data)
+//         {
+//             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+//                          0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+//             );
+//             stbi_image_free(data);
+//         }
+//         else
+//         {
+//             std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+//             stbi_image_free(data);
+//         }
+//     }
+//     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    // Ìì¿ÕºÐµÄÈý½ÇÐÎÆ¬
-    glGenVertexArrays(1, &(cube.vao));
-    glBindVertexArray(cube.vao);
+//     // ï¿½ï¿½ÕºÐµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬
+//     glGenVertexArrays(1, &(cube.vao));
+//     glBindVertexArray(cube.vao);
 
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*36*3, skyv, GL_STATIC_DRAW);
+//     unsigned int VBO;
+//     glGenBuffers(1, &VBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*36*3, skyv, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float)*3, (void*)0);
-}
+//     glEnableVertexAttribArray(0);
+//     glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float)*3, (void*)0);
+// }
 
-void GraphicAPI::BeforeRendering()
-{
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
+// void GraphicAPI::BeforeRendering()
+// {
+//     glEnable(GL_DEPTH_TEST);
+//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// }
 
-void GraphicAPI::AfterRendering()
-{
-    glfwSwapBuffers(DEngine::window);
-    glfwPollEvents();
-}
+// void GraphicAPI::AfterRendering()
+// {
+//     glfwSwapBuffers(DEngine::window);
+//     glfwPollEvents();
+// }
 
-// TODO: ¶¨Òå RenderMgr
-void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
-{
-    glBindVertexArray(mesh.gd.VAO);
+// // TODO: ï¿½ï¿½ï¿½ï¿½ RenderMgr
+// void GraphicAPI::Temp_DrawMesh(Mesh& mesh, Shader& sh)
+// {
+//     glBindVertexArray(mesh.gd.VAO);
 
-    mat4 view = DEngine::GetCamMgr().GetViewTransform();
-    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
+//     mat4 view = DEngine::GetCamMgr().GetViewTransform();
+//     mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
     
-    sh.use();
-    // Ä£ÐÍ±ä»»ºÍÍ¸ÊÓÍ¶Ó°±ä»»
-    sh.setMat4("view", view);
-    sh.setMat4("proj", projection);
-    sh.setFloat("gloss", 128.0);
-    sh.setVec3("light0.color", vec3(1.0, 1.0, 1.0));
-    sh.setVec3("viewPos", DEngine::GetCamMgr().GetViewPos());
-    // ¶¨Î»ÎÆÀíÌùÍ¼
-    // TODO: »¹ÓÐºÜ¶àÎÆÀíÌùÍ¼
-    int texNum = 0;
-    if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
-        glActiveTexture(GL_TEXTURE0 + texNum);
-        glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_DIFFUSE].id);
-        sh.setInt("modelTex.baseColor", texNum);
-        texNum++;
-    }
-    if (mesh.mask & (1 << aiTextureType_NORMALS)) {
-        glActiveTexture(GL_TEXTURE0 + texNum);
-        glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_NORMALS].id);
-        sh.setInt("modelTex.normal", texNum);
-        texNum++;
-    }
-    if(mesh.mask & (1 << aiTextureType_LIGHTMAP)){
-        glActiveTexture(GL_TEXTURE0 + texNum);
-        glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_LIGHTMAP].id);
-        sh.setInt("modelTex.metallicRoughness", texNum);
-        texNum++;
-    }
+//     sh.use();
+//     // Ä£ï¿½Í±ä»»ï¿½ï¿½Í¸ï¿½ï¿½Í¶Ó°ï¿½ä»»
+//     sh.setMat4("view", view);
+//     sh.setMat4("proj", projection);
+//     sh.setFloat("gloss", 128.0);
+//     sh.setVec3("light0.color", vec3(1.0, 1.0, 1.0));
+//     sh.setVec3("viewPos", DEngine::GetCamMgr().GetViewPos());
+//     // ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
+//     // TODO: ï¿½ï¿½ï¿½ÐºÜ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
+//     int texNum = 0;
+//     if (mesh.mask & (1 << aiTextureType_DIFFUSE)) {
+//         glActiveTexture(GL_TEXTURE0 + texNum);
+//         glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_DIFFUSE].id);
+//         sh.setInt("modelTex.baseColor", texNum);
+//         texNum++;
+//     }
+//     if (mesh.mask & (1 << aiTextureType_NORMALS)) {
+//         glActiveTexture(GL_TEXTURE0 + texNum);
+//         glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_NORMALS].id);
+//         sh.setInt("modelTex.normal", texNum);
+//         texNum++;
+//     }
+//     if(mesh.mask & (1 << aiTextureType_LIGHTMAP)){
+//         glActiveTexture(GL_TEXTURE0 + texNum);
+//         glBindTexture(GL_TEXTURE_2D, mesh.texs[aiTextureType_LIGHTMAP].id);
+//         sh.setInt("modelTex.metallicRoughness", texNum);
+//         texNum++;
+//     }
 
-    glDrawElements(GL_TRIANGLES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
-}
+//     glDrawElements(GL_TRIANGLES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
+// }
 
-void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
-{
-    glBindVertexArray(mesh.gd.VAO);
+// void GraphicAPI::Temp_DrawGrid(Mesh& mesh, Shader& sh)
+// {
+//     glBindVertexArray(mesh.gd.VAO);
 
-    mat4 model = glm::mat4(1.0);
-    mat4 view = DEngine::GetCamMgr().GetViewTransform();
-    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
+//     mat4 model = glm::mat4(1.0);
+//     mat4 view = DEngine::GetCamMgr().GetViewTransform();
+//     mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
     
-    sh.use();
-    // Ä£ÐÍ±ä»»ºÍÍ¸ÊÓÍ¶Ó°±ä»»
-    sh.setMat4("model", model);
-    sh.setMat4("view", view);
-    sh.setMat4("proj", projection);
+//     sh.use();
+//     // Ä£ï¿½Í±ä»»ï¿½ï¿½Í¸ï¿½ï¿½Í¶Ó°ï¿½ä»»
+//     sh.setMat4("model", model);
+//     sh.setMat4("view", view);
+//     sh.setMat4("proj", projection);
 
-    glDrawElements(GL_LINES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
-}
+//     glDrawElements(GL_LINES, mesh.ids.size(), GL_UNSIGNED_INT, 0);
+// }
 
-void GraphicAPI::Temp_DrawObject(Object& obj, Shader& sh)
-{
-    sh.use();
-    sh.setMat4("model", obj.model);
-    for (Mesh& mesh : obj.meshes) {
-        GraphicAPI::Temp_DrawMesh(mesh, sh);
-    }
-}
+// void GraphicAPI::Temp_DrawObject(Object& obj, Shader& sh)
+// {
+//     sh.use();
+//     sh.setMat4("model", obj.model);
+//     for (Mesh& mesh : obj.meshes) {
+//         GraphicAPI::Temp_DrawMesh(mesh, sh);
+//     }
+// }
 
-void GraphicAPI::Temp_DrawSkyBox(CubeMap& cube, Shader& sh)
-{
-    glBindVertexArray(cube.vao);
+// void GraphicAPI::Temp_DrawSkyBox(CubeMap& cube, Shader& sh)
+// {
+//     glBindVertexArray(cube.vao);
 
-    mat4 model = glm::mat4(1.0);
-    mat4 view = DEngine::GetCamMgr().GetViewTransform();
-    mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
+//     mat4 model = glm::mat4(1.0);
+//     mat4 view = DEngine::GetCamMgr().GetViewTransform();
+//     mat4 projection = DEngine::GetCamMgr().GetProjectionTransform();
 
-    sh.use();
-    // Ä£ÐÍ±ä»»ºÍÍ¸ÊÓÍ¶Ó°±ä»»
-    sh.setMat4("model", glm::inverse(view));
-    sh.setMat4("view", view);
-    sh.setMat4("proj", projection);
+//     sh.use();
+//     // Ä£ï¿½Í±ä»»ï¿½ï¿½Í¸ï¿½ï¿½Í¶Ó°ï¿½ä»»
+//     sh.setMat4("model", glm::inverse(view));
+//     sh.setMat4("view", view);
+//     sh.setMat4("proj", projection);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
-    sh.setInt("skybox", 0);
+//     glActiveTexture(GL_TEXTURE0);
+//     glBindTexture(GL_TEXTURE_CUBE_MAP, cube.id);
+//     sh.setInt("skybox", 0);
 
-    glDepthMask(GL_FALSE);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glDepthMask(GL_TRUE);
-}
+//     glDepthMask(GL_FALSE);
+//     glDrawArrays(GL_TRIANGLES, 0, 36);
+//     glDepthMask(GL_TRUE);
+// }
 
 
 

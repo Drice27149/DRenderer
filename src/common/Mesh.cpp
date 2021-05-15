@@ -4,15 +4,11 @@
 
 Mesh::Mesh()
 {
-    mask = 0;
 }
 
 Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids, vector<string> texns, int mask):
-vs(vs), ids(ids), texns(texns), mask(mask)
+vs(vs), ids(ids), texns(texns)
 {
-    // // ���ض����Լ���������
-    // GraphicAPI::LoadMesh(*this);
-    // // ����������ͼ
     // texs.resize(aiTextureType_UNKNOWN + 1);
     // for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
     //     if (mask & (1 << it)) {
@@ -48,8 +44,6 @@ Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
     }
     ids.resize(vs.size());
     for(int i = 0; i < vs.size(); i++) ids[i] = i;
-
-    GraphicAPI::LoadMesh(*this);
 }
 
 Panel::Panel(vec3 a, vec3 b, vec3 c, vec3 d)

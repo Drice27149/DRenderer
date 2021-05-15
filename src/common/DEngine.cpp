@@ -17,7 +17,7 @@ void DEngine::Launch()
 
 void DEngine::Tick()
 {
-    instance->GetRenderMgr().Render();
+    // instance->GetRenderMgr().Render();
 }
 
 void DEngine::LogError(string s)
