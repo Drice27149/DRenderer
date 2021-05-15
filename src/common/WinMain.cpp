@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         AssimpLoader ld;
 
         for(int i = 0; i < 1; i++){
-            string fn = "../assets/models/hulkbuster/scene.gltf";
+            string fn = "../assets/models/fallout_car_2/scene.gltf";
             // string fn = fns[i];
            
             Object* nobj = new Object();

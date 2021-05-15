@@ -1,6 +1,8 @@
 Texture2D gShadowMap: register(t0);
 Texture2D gNormalMap: register(t1);
 Texture2D gDiffuseMap: register(t2);
+Texture2D gMetallicMap: register(t3);
+Texture2D gEmissiveMap: register(t4);
 
 SamplerState gsamLinear: register(s0);
 
@@ -10,6 +12,7 @@ cbuffer RealPass : register(b0)
 	float4x4 _Proj;
 	float4x4 _SMView;
 	float4x4 _SMProj;
+	float3 _CamPos;
 };
 
 cbuffer RealObject: register(b1)
@@ -33,4 +36,5 @@ struct VertexOut
 	float3 T: TEXCOORD1;
 	float3 N: TEXCOORD2;
 	float4 clipPos: TEXCOORD3;
+	float3 worldPos: TEXCOORD4;
 };

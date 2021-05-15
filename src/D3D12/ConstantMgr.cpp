@@ -46,6 +46,7 @@ void ConstantMgr::UpdatePassConstants()
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     temp.SMView = glm::transpose(tempLight);
     temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    temp.CamPos = DEngine::GetCamMgr().GetViewPos();
     passCB->CopyData(1, temp);
 }
 

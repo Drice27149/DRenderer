@@ -1,6 +1,7 @@
 
 #include "define.hlsl"
 
+// NoH: n dot h, a: alpha (roughness?)
 float D_GGX(float NoH, float a) {
     float a2 = a * a;
     float f = (NoH * a2 - NoH) * NoH + 1.0;
@@ -22,7 +23,7 @@ float Fd_Lambert() {
     return 1.0 / PI;
 }
 
-void BRDF(vec3 n, vec3 v, vec3 l, vec3 diffuseColor, float a, float f0, float perceptualRoughness) {
+float3 BRDF(vec3 n, vec3 v, vec3 l, vec3 diffuseColor, float a, float3 f0, float perceptualRoughness) {
     vec3 h = normalize(v + l);
 
     float NoV = abs(dot(n, v)) + 0.00001;
@@ -44,4 +45,5 @@ void BRDF(vec3 n, vec3 v, vec3 l, vec3 diffuseColor, float a, float f0, float pe
     vec3 Fd = diffuseColor * Fd_Lambert();
 
     // apply lighting...
+    return Fd + Fr;
 }

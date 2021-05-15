@@ -8,6 +8,7 @@ struct PassUniform
     glm::mat4 proj;
     glm::mat4 SMView;
     glm::mat4 SMProj;
+    glm::vec3 CamPos;
 };
 
 struct ObjectUniform
