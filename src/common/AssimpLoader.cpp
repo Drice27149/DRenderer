@@ -42,7 +42,7 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
     ProcessMaterial(material);
     
     Mesh* newMesh = new Mesh(vs, ids);
-    obj->meshes.push_back(*newMesh);
+    obj->MergeMesh(*newMesh);
 }
 
 void AssimpLoader::ProcessMaterial(aiMaterial* mat)

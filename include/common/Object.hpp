@@ -17,6 +17,7 @@ public:
 	vector<Mesh> meshes;
 	void Transform(mat4 trans);
 	void Scale(float rate);
+	void MergeMesh(Mesh& mesh);
 public:
 	// 材质贴图 mask, 若存在相应的贴图则对应位置为1
 	unsigned int mask;

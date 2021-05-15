@@ -20,3 +20,20 @@ void Object::Scale(float rate)
 	
 	model = model * scaleM;
 }
+
+void Object::MergeMesh(Mesh& mesh)
+{
+	if(meshes.size() == 0) 
+		meshes.push_back(mesh);
+	else{
+		Mesh& org = meshes[0];
+		int offvs = org.vs.size();
+		int offids = org.ids.size();
+		for(Vertex v: mesh.vs){
+			org.vs.push_back(v);
+		}
+		for(unsigned int id: mesh.ids){
+			org.ids.push_back(offvs + id);
+		}
+	}
+}

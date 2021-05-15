@@ -31,8 +31,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         AssimpLoader ld;
 
         for(int i = 0; i < 1; i++){
-            // string fn = "../assets/corvette_stingray/scene.gltf";
-            string fn = fns[i];
+            string fn = "../assets/models/corvette_stingray/scene.gltf";
+            // string fn = fns[i];
            
             Object* nobj = new Object();
             ld.LoadFile(nobj, fn);

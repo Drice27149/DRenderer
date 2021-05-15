@@ -21,11 +21,11 @@ bool Graphics::Initialize()
 		
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+    // build it before texture loading
+    BuildDescriptorHeaps();
 
     UploadMeshes();
     UploadTextures();
-
-    BuildDescriptorHeaps();
 
     InitPassMgrs();
 
