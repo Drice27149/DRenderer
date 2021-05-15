@@ -272,7 +272,7 @@ void Graphics::DrawObjects(DrawType drawType)
     for(Object* obj: DEngine::gobjs){
         mCommandList->SetGraphicsRootConstantBufferView(1, objectAddr);
 
-        for(Mesh mesh: obj->meshes){
+        for(Mesh& mesh: obj->meshes){
             int idSize = mesh.ids.size();
             if(obj->drawType == drawType) 
                 mCommandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);

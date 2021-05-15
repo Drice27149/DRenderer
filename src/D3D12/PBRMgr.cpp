@@ -132,7 +132,7 @@ void PBRMgr::Pass()
             }
         }
         // rendering
-        for(Mesh mesh: obj->meshes){
+        for(Mesh& mesh: obj->meshes){
             int idSize = mesh.ids.size();
 
             if(obj->drawType == DrawType::Normal) 

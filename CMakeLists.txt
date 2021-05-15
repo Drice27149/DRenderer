@@ -38,4 +38,4 @@ target_link_libraries(DRenderer
     dxgi.lib
 )
 
-install(TARGETS DRenderer RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/out)
+install(TARGETS DRenderer RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/out CONFIGURATIONS Release)
