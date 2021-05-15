@@ -1,6 +1,7 @@
-Texture2D gDiffuseMap: register(t0);
+Texture2D gShadowMap: register(t0);
 Texture2D gNormalMap: register(t1);
-Texture2D gShadowMap: register(t2);
+Texture2D gDiffuseMap: register(t2);
+
 SamplerState gsamLinear: register(s0);
 
 cbuffer RealPass : register(b0)

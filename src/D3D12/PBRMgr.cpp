@@ -110,7 +110,7 @@ void PBRMgr::CreateResources()
     mapping[aiTextureType_NORMALS] = 3;
     mapping[aiTextureType_DIFFUSE] = 4;
     // @TODO: metallic roughness = 5
-    // mapping[aiTextureType_xxx] = 5;
+    mapping[aiTextureType_LIGHTMAP] = 5;
     mapping[aiTextureType_EMISSIVE] = 6;
 }
 

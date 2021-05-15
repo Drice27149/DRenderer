@@ -58,25 +58,34 @@ void DebugVisMgr::BuildPSO()
     psoDesc.SampleDesc.Quality = 0;
     psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-    psoDesc.VS = 
-	{ 
+    psoDesc.VS = { 
 		reinterpret_cast<BYTE*>(vs->GetBufferPointer()), 
 		vs->GetBufferSize() 
 	};
-
-    psoDesc.GS = 
-    {
+    psoDesc.GS = {
         reinterpret_cast<BYTE*>(gs->GetBufferPointer()), 
 		gs->GetBufferSize() 
     };
-
-    psoDesc.PS = 
-	{ 
+    psoDesc.PS = { 
 		reinterpret_cast<BYTE*>(ps->GetBufferPointer()), 
 		ps->GetBufferSize() 
 	};
-
     ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+
+    // build extra pso for grid
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.VS = 
+	{ 
+		reinterpret_cast<BYTE*>(exvs->GetBufferPointer()), 
+		exvs->GetBufferSize() 
+	};
+    psoDesc.GS = { nullptr, 0 };
+    psoDesc.PS = 
+	{ 
+		reinterpret_cast<BYTE*>(exps->GetBufferPointer()), 
+		exps->GetBufferSize() 
+	};
+    ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&expso)));
 }
 
 void DebugVisMgr::CreateResources()
@@ -88,6 +97,8 @@ void DebugVisMgr::CompileShaders()
 	vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\debug\\cluster.hlsl", nullptr, "VS", "vs_5_1");
     gs = d3dUtil::CompileShader(L"..\\assets\\shaders\\debug\\cluster.hlsl", nullptr, "GS", "gs_5_1");
 	ps = d3dUtil::CompileShader(L"..\\assets\\shaders\\debug\\cluster.hlsl", nullptr, "PS", "ps_5_1");
+    exvs = d3dUtil::CompileShader(L"..\\assets\\shaders\\debug\\line.hlsl", nullptr, "VS", "vs_5_1");
+    exps = d3dUtil::CompileShader(L"..\\assets\\shaders\\debug\\line.hlsl", nullptr, "PS", "ps_5_1");
 }
 
 void DebugVisMgr::Init()
@@ -102,11 +113,12 @@ void DebugVisMgr::Init()
 
 void DebugVisMgr::Pass()
 {
+
 }
 
 void DebugVisMgr::PrePass()
 {
-    commandList->SetPipelineState(pso.Get());
+    commandList->SetPipelineState(expso.Get());
     commandList->SetGraphicsRootSignature(rootSig.Get());
 
     auto passAddr = constantMgr->GetCameraPassConstant();

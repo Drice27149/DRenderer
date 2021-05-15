@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         AssimpLoader ld;
 
         for(int i = 0; i < 1; i++){
-            string fn = "../assets/models/corvette_stingray/scene.gltf";
+            string fn = "../assets/models/hulkbuster/scene.gltf";
             // string fn = fns[i];
            
             Object* nobj = new Object();
@@ -39,21 +39,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
             nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
             nobj->drawType = DrawType::Normal;
+            nobj->Scale(0.02);
+            nobj->Transform(glm::rotate(glm::mat4(1.0), 0.5f*3.1415926f, glm::vec3(1.0, 0.0, 0.0)));
+            nobj->Transform(glm::rotate(glm::mat4(1.0), 3.1415926f, glm::vec3(0.0, 0.0, 1.0)));
 
             DEngine::gobjs.push_back(nobj);
         }
 
         // debug cluster
-        Object cluster;
-        cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 20.0, 16, 8, 4));
-        cluster.drawType = DrawType::WhiteLines;
-        cluster.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0,3.0,12.0)));
-        DEngine::gobjs.push_back(&cluster);
+        // Object cluster;
+        // cluster.meshes.push_back(Frustum(45.0, 1.0, 1.0, 20.0, 16, 8, 4));
+        // cluster.drawType = DrawType::WhiteLines;
+        // cluster.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0,3.0,12.0)));
+        // DEngine::gobjs.push_back(&cluster);
 
-        Object panel;
-        panel.meshes.push_back(Panel());
-        panel.drawType = DrawType::Normal;
-        DEngine::gobjs.push_back(&panel);
+        Object grid;
+        grid.meshes.push_back(Grid());
+        grid.drawType = DrawType::WhiteLines;
+        DEngine::gobjs.push_back(&grid);
+
+        // @TODO: fall back texture for no uv or no baseColor
+        // Object panel;
+        // panel.meshes.push_back(Panel());
+        // panel.drawType = DrawType::Normal;
+        // DEngine::gobjs.push_back(&panel);
 
         Light pointLight(DrawType::PointLight);
         pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));

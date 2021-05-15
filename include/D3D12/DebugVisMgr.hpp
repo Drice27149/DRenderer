@@ -19,4 +19,9 @@ public:
     CD3DX12_GPU_DESCRIPTOR_HANDLE clusterDepth;
     // hack
     std::shared_ptr<ConstantMgr> constantMgr;
+public:
+    // extra pass for grid
+    ComPtr<ID3DBlob> exvs;
+    ComPtr<ID3DBlob> exps;
+    ComPtr<ID3D12PipelineState> expso;
 };

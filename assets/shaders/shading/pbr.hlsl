@@ -1,39 +1,5 @@
-Texture2D gShadowMap: register(t0);
-Texture2D gNormalMap: register(t1);
-Texture2D gDiffuseMap: register(t2);
-
-SamplerState gsamLinear: register(s0);
-
-cbuffer RealPass : register(b0)
-{
-	float4x4 _View;
-	float4x4 _Proj;
-	float4x4 _SMView;
-	float4x4 _SMProj;
-};
-
-cbuffer RealObject: register(b1)
-{
-	float4x4 _model;
-};
-
-struct VertexIn
-{
-	float3 vertex: POSITION;
-	float3 normal: NORMAL;
-    float2 texcoord: TEXCOORD;
-	float3 tangent: TANGENT;
-	float3 bitangent: TANGENT1;
-};
-
-struct VertexOut
-{
-	float4 pos: SV_POSITION;
-	float2 uv: TEXCOORD;
-	float3 T: TEXCOORD1;
-	float3 N: TEXCOORD2;
-	float4 clipPos: TEXCOORD3;
-};
+#include "common.hlsl"
+#include "brdf.hlsl"
 
 VertexOut VS(VertexIn vin)
 {
@@ -96,8 +62,9 @@ float GetShadowBlur(float4 clipPos)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-	float4 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv);
-	baseColor = float4(1.0, 1.0, 1.0, 1.0);
+	float3 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv).rgb;
+	return float4(baseColor, 1.0);
+	// baseColor = float4(1.0, 1.0, 1.0, 1.0);
 	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
@@ -105,13 +72,10 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 lightDir = normalize(GetLightDir());
 	float lightRate = dot(lightDir, normal);
 
-	baseColor =	float4((baseColor.rgb) * lightRate, 1.0);
+	baseColor =	float4((baseColor) * lightRate, 1.0);
 
 	float shadowBlur = GetShadowBlur(pin.clipPos);
-	lightRate = lightRate * (1.0 - shadowBlur);
+	// lightRate = lightRate * (1.0 - shadowBlur);
 
-	// temp
-	// return float4(0.5, 0.5, 0.0, 1.0);
-
-	return float4(lightRate, lightRate, lightRate, 1.0);
+	return float4(baseColor, 1.0);
 }
