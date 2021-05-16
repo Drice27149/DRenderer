@@ -65,8 +65,6 @@ void Graphics::UploadTextures()
     textureMgr->Init();
 }
 
-// 目前只能放在最后, 目前和 baseColor/normal/matellic 的 srvcounter 有冲突的地方
-// 重构之后会放到比较前面的位置
 void Graphics::InitPassMgrs()
 {
     // 常量 (uniform) 管理类
@@ -149,7 +147,7 @@ void Graphics::InitPassMgrs()
     pbrMgr->shadowMgr = shadowMgr;
     pbrMgr->objMesh = objMesh;
     pbrMgr->Init();
-
+    // gui
     guiMgr = std::make_unique<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
     guiMgr->heapMgr = heapMgr;
     guiMgr->mhMainWnd = mhMainWnd;

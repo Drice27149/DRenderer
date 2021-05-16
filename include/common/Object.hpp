@@ -11,17 +11,37 @@ enum DrawType {
 	PointLight	// sphere
 };
 
+struct metaData {
+	std::string name;
+	unsigned long long offset;
+	metaData(std::string name, unsigned long long offset):name(name), offset(offset){}
+};
+
 class Object {
 public:
 	Object();
-	vector<Mesh> meshes;
 	void Transform(mat4 trans);
 	void Scale(float rate);
 	void MergeMesh(Mesh& mesh);
+	mat4 GetModelTransform();
 public:
-	// 材质贴图 mask, 若存在相应的贴图则对应位置为1
+	// transform data
+	float scale;
+	float roll;
+	float pitch;
+	float yaw;
+	float x;
+	float y;
+	float z;
+public:
+	// render data
 	unsigned int mask;
 	std::vector<std::string> texns;
+	// @TODO: shading model
+	// @TODO: material data
+	vector<Mesh> meshes;
+	// @TODO: reflection 
+	static std::vector<metaData> reflection;
 public:
 	mat4 model;
 	DrawType drawType;

@@ -10,6 +10,17 @@ Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
 std::vector<Object*> DEngine::gobjs;
 
+std::vector<metaData> Object::reflection = 
+{
+    metaData("scale", offsetof(Object, scale)),
+    metaData("x",offsetof(Object, x)),
+    metaData("y",offsetof(Object, y)),
+    metaData("z",offsetof(Object, z)),
+    metaData("pitch",offsetof(Object, pitch)),
+    metaData("yaw",offsetof(Object, yaw)),
+    metaData("roll",offsetof(Object, roll)),
+};
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
 {

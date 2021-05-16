@@ -2,6 +2,8 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+#include "DEngine.hpp"
+#include "Util.hpp"
 
 void GUIMgr::Init()
 {
@@ -13,7 +15,8 @@ void GUIMgr::Init()
 
     // Setup Dear ImGui style
     // ImGui::StyleColorsDark();
-    ImGui::StyleColorsClassic();
+    // ImGui::StyleColorsClassic();
+    ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
@@ -31,27 +34,89 @@ void GUIMgr::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    {
-        static float f = 0.0f;
-        static int counter = 0;
+    ImGui::Begin("Editor Window");
 
-        ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+    // {
+    //     static float f = 0.0f;
+    //     static int counter = 0;
 
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        // ImGui::Checkbox("Another Window", &show_another_window);
+    //     ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+    //     ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+    //     // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+    //     // ImGui::Checkbox("Another Window", &show_another_window);
 
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
+    //     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+    //     // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
+    //     if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+    //         counter++;
+    //     ImGui::SameLine();
+    //     ImGui::Text("counter = %d", counter);
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    //     ImGui::End();
+    // }
+
+    
+    // temp input buffer
+    static char inBuff[128][128];
+    static string recieve = "";
+    int id = 0;
+
+    auto callback = [](ImGuiInputTextCallbackData* data)->int{
+        std::string s;
+        for(int i = 0; i < data->BufSize; i++){
+            if((data->Buf[i]>='0' && data->Buf[i]<='9') || data->Buf[i]=='.')
+                s.push_back(data->Buf[i]);
+            else 
+                break;
+        }
+        recieve = s;
+        float value = String2Float(s);
+        float* desc = (float*)(data->UserData);
+        *desc = value;
+        return 0;
+    };
+
+    std::vector<Object*>& objs = DEngine::gobjs;
+    int tired = 0;
+    for(Object* obj: objs){
+        std::string nodeName = Int2String(tired++);
+        if(ImGui::TreeNode(nodeName.c_str())){
+            for(metaData& member: Object::reflection){
+                float* ptr = (float*)((unsigned long long)obj + member.offset);
+                std::string value = Float2String(*ptr, 6);
+                CopyStringToBuffer(value, inBuff[id]);
+                ImGui::InputText(member.name.c_str(), inBuff[id], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
+                id++;
+            }
+            ImGui::TreePop();
+        }
     }
+    ImGui::Button(recieve.c_str());
+
+    ImGui::End();
+
+    // static int mymy = 1;
+
+    // auto testFunc = [](ImGuiInputTextCallbackData* data){
+    //     mymy = !mymy;
+    //     return 0;
+    // };
+
+    // ImGui::Begin("test window");
+    // if(ImGui::TreeNode("testTree")){
+    //     static char mybuffer[128];
+    //     ImGui::InputText("test", mybuffer, 128, ImGuiInputTextFlags_CallbackCompletion, testFunc);
+    //     if (mymy) {
+    //         ImGui::Button("haha");
+    //     }
+    //     ImGui::TreePop();
+    // }
+    // ImGui::End();
+
+    // ImGui::ShowDemoWindow();
 
     ImGui::Render();
 }

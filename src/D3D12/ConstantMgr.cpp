@@ -59,7 +59,7 @@ void ConstantMgr::UpdateObjConstants()
     int index = 0;
     for(Object* obj: DEngine::gobjs){
         ObjectUniform temp;
-        temp.model = glm::transpose(obj->model);
+        temp.model = glm::transpose(obj->GetModelTransform());
         temp.id = obj->id;
         temp.mask = obj->mask;
         objCB->CopyData(index, temp);
