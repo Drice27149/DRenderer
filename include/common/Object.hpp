@@ -47,3 +47,13 @@ public:
 	DrawType drawType;
 	int id;
 };
+
+struct ObjJob {
+	std::string name;
+	std::shared_ptr<Object> obj;
+	ObjJob(std::string name, std::shared_ptr<Object> obj):
+	name(name), obj(obj)
+	{}
+};
+
+static std::vector<ObjJob> objJobs;

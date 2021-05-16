@@ -51,7 +51,7 @@ mat4 Object::GetModelTransform()
 	// rotation second
 	result = glm::rotate(result, glm::radians(pitch), vec3(1.0, 0.0, 0.0));
 	result = glm::rotate(result, glm::radians(yaw), vec3(0.0, 1.0, 0.0));
-	result = glm::rotate(result, glm::radians(pitch), vec3(0.0, 0.0, 1.0));
+	result = glm::rotate(result, glm::radians(roll), vec3(0.0, 0.0, 1.0));
 	// translation last
 	result = glm::translate(result, vec3(x, y, z));
 

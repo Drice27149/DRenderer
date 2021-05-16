@@ -5,6 +5,7 @@
 #include "DEngine.hpp"
 #include "Graphics.hpp"
 #include "Light.hpp"
+#include "Parallel.hpp"
 
 Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
@@ -35,26 +36,46 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
         Graphics theApp(hInstance);
 
+        // @TODO: 基于配置的场景加载
         DEngine::gobjs.clear();
 
-        vector<string> fns = { "../assets/models/LightShapes/sphere.obj", "../assets/models/LightShapes/cube.obj", "../assets/models/LightShapes/sphere.obj" };
+        // vector<string> fns = { "../assets/models/LightShapes/sphere.obj", "../assets/models/LightShapes/cube.obj", "../assets/models/LightShapes/sphere.obj" };
 
-        AssimpLoader ld;
+        // AssimpLoader ld;
 
-        for(int i = 0; i < 1; i++){
-            string fn = "../assets/models/fallout_car_2/scene.gltf";
-            // string fn = fns[i];
+        // for(int i = 0; i < 1; i++){
+        //     string fn = "../assets/models/hulkbuster/scene.gltf";
+        //     // string fn = fns[i];
            
-            Object* nobj = new Object();
-            ld.LoadFile(nobj, fn);
+        //     Object* nobj = new Object();
+        //     ld.LoadFile(nobj, fn);
 
-            nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
-            nobj->drawType = DrawType::Normal;
-            nobj->Scale(0.02);
-            nobj->Transform(glm::rotate(glm::mat4(1.0), 0.5f*3.1415926f, glm::vec3(1.0, 0.0, 0.0)));
-            nobj->Transform(glm::rotate(glm::mat4(1.0), 3.1415926f, glm::vec3(0.0, 0.0, 1.0)));
+        //     nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
+        //     nobj->drawType = DrawType::Normal;
+        //     nobj->Scale(0.02);
+        //     nobj->Transform(glm::rotate(glm::mat4(1.0), 0.5f*3.1415926f, glm::vec3(1.0, 0.0, 0.0)));
+        //     nobj->Transform(glm::rotate(glm::mat4(1.0), 3.1415926f, glm::vec3(0.0, 0.0, 1.0)));
 
-            DEngine::gobjs.push_back(nobj);
+        //     DEngine::gobjs.push_back(nobj);
+        // }
+
+        std::shared_ptr<Object> hulk = std::make_shared<Object>();
+        hulk->Scale(0.02);
+
+        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
+
+        auto WorkFunc = [](int64_t id)->void{
+            auto& job = objJobs[id];
+            AssimpLoader ld;
+            ld.LoadFile(job.obj.get(), job.name);
+        };
+
+        parallelInit();
+        parallelFor1D(WorkFunc, objJobs.size(), 1);
+        parallelCleanUp();
+
+        for(auto& job: objJobs){
+             DEngine::gobjs.push_back(job.obj.get());
         }
 
         // debug cluster

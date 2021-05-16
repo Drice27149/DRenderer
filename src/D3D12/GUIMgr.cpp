@@ -67,7 +67,7 @@ void GUIMgr::Update()
     auto callback = [](ImGuiInputTextCallbackData* data)->int{
         std::string s;
         for(int i = 0; i < data->BufSize; i++){
-            if((data->Buf[i]>='0' && data->Buf[i]<='9') || data->Buf[i]=='.')
+            if((data->Buf[i]>='0' && data->Buf[i]<='9') || data->Buf[i]=='.' || data->Buf[i]=='-')
                 s.push_back(data->Buf[i]);
             else 
                 break;
@@ -97,26 +97,6 @@ void GUIMgr::Update()
     ImGui::Button(recieve.c_str());
 
     ImGui::End();
-
-    // static int mymy = 1;
-
-    // auto testFunc = [](ImGuiInputTextCallbackData* data){
-    //     mymy = !mymy;
-    //     return 0;
-    // };
-
-    // ImGui::Begin("test window");
-    // if(ImGui::TreeNode("testTree")){
-    //     static char mybuffer[128];
-    //     ImGui::InputText("test", mybuffer, 128, ImGuiInputTextFlags_CallbackCompletion, testFunc);
-    //     if (mymy) {
-    //         ImGui::Button("haha");
-    //     }
-    //     ImGui::TreePop();
-    // }
-    // ImGui::End();
-
-    // ImGui::ShowDemoWindow();
 
     ImGui::Render();
 }
