@@ -41,21 +41,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // @TODO: 基于配置的场景加载
         DEngine::gobjs.clear();
 
-        int length = 100;
-        int count = 5;
-        float step = 1.0 / (float)(count-1);
-        int intStep = length / (count-1);
-        for(int i = 0; i < count; i++){
-            for(int j = 0; j < count; j++){
-                std::shared_ptr<Object> ball = std::make_shared<Object>();
-                objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", ball));
-                ball->Scale(0.1);
-                ball->roughness = (float)i * step;
-                ball->metallic = (float)j * step;
-                ball->x = i * intStep;
-                ball->y = j * intStep;
-            }
-        }
+        // IBL测试0: 小球, 基于参数的metallicRoughness
+        // int length = 100;
+        // int count = 5;
+        // float step = 1.0 / (float)(count-1);
+        // int intStep = length / (count-1);
+        // for(int i = 0; i < count; i++){
+        //     for(int j = 0; j < count; j++){
+        //         std::shared_ptr<Object> ball = std::make_shared<Object>();
+        //         objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", ball));
+        //         ball->Scale(0.1);
+        //         ball->roughness = (float)i * step;
+        //         ball->metallic = (float)j * step;
+        //         ball->x = i * intStep;
+        //         ball->y = j * intStep;
+        //     }
+        // }
+        // IBL测试1: 导入模型, 基于贴图的metallicRoughness
+        std::shared_ptr<Object> hulk = std::make_shared<Object>();
+        hulk->Scale(0.01);
+        hulk->pitch = 90;
+        hulk->yaw = 180;
+        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
 
         auto WorkFunc = [](int64_t id)->void{
             auto& job = objJobs[id];

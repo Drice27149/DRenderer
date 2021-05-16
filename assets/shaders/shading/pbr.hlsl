@@ -128,10 +128,21 @@ float4 PS(VertexOut pin) : SV_Target
 {
 	// float3 color = float3(1.0, 1.0, 1.0);
 	// color = color * dot(normalize(pin.N),normalize(GetLightDir()));
-	float3 baseColor = float3(1.0, 1.0, 1.0);
-	uint NUM_SAMPLE = 1024;
-	float3 fd = diffuseIBL(normalize(pin.N), (1.0-_metallic)*baseColor, NUM_SAMPLE);
-	float3 fr = specularIBL(normalize(pin.N), normalize(_CamPos - pin.worldPos), baseColor, _metallic, _roughness, NUM_SAMPLE);
-	return float4(fd + fr, 1.0);
+	float3 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv).rgb;
+	float ao = gMetallicMap.Sample(gsamLinear, pin.uv).r;
+	float roughness = gMetallicMap.Sample(gsamLinear, pin.uv).g;
+	float metallic = gMetallicMap.Sample(gsamLinear, pin.uv).b;
+	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
+	normal = normal*2.0 - 1.0;
+	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+
+	baseColor = float3(1.0, 1.0, 1.0);
+	roughness = _roughness;
+	metallic = _metallic;
+
+	uint NUM_SAMPLE = 512;
+	float3 fd = diffuseIBL(normalize(normal), (1.0-metallic)*baseColor, NUM_SAMPLE);
+	float3 fr = specularIBL(normalize(normal), normalize(_CamPos - pin.worldPos), baseColor, metallic, roughness, NUM_SAMPLE);
+	return float4((fd + fr) * ao, 1.0);
 	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
 }
