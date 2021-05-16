@@ -7,7 +7,7 @@ project ("DRenderer")
 
 file(GLOB_RECURSE MY_CPP ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
-file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/d3dApp/*.cpp)
+file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/d3dApp/*.cpp ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include) # include
 
@@ -20,6 +20,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include/common)
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include) # include
 
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/d3dApp) # include
+
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/imgui) # include
 
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib) # lib
 

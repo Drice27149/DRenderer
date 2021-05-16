@@ -2,6 +2,9 @@
 #include "DEngine.hpp"
 #include "GraphicAPI.hpp"
 #include "Struct.hpp"
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx12.h"
 
 const int FrameCount = 3;
 
@@ -146,6 +149,12 @@ void Graphics::InitPassMgrs()
     pbrMgr->shadowMgr = shadowMgr;
     pbrMgr->objMesh = objMesh;
     pbrMgr->Init();
+
+    guiMgr = std::make_unique<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
+    guiMgr->heapMgr = heapMgr;
+    guiMgr->mhMainWnd = mhMainWnd;
+    guiMgr->Init();
+    GUIInit = true;
 }
 
 void Graphics::OnResize()
@@ -156,6 +165,7 @@ void Graphics::OnResize()
 void Graphics::Update(const GameTimer& gt)
 {
     constantMgr->Update();
+    guiMgr->Update();
 }
 
 void Graphics::Draw(const GameTimer& gt)
@@ -196,6 +206,8 @@ void Graphics::Draw(const GameTimer& gt)
     DrawSkyBox();
     // debugvis
     DrawLines();
+    // GUI
+    DrawGUI();
 
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -341,4 +353,9 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 {
     if(DEngine::instance != nullptr)
             DEngine::GetInputMgr().Tick((float)x, (float)y);
+}
+
+void Graphics::DrawGUI()
+{
+    guiMgr->Draw();
 }

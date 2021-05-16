@@ -27,6 +27,8 @@ protected:
     virtual ~D3DApp();
 
 public:
+    // extra for imgui
+    bool GUIInit = false;
 
     static D3DApp* GetApp();
     

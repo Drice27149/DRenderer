@@ -15,6 +15,7 @@
 #include "DebugVisMgr.hpp"
 #include "TextureMgr.hpp"
 #include "PBRMgr.hpp"
+#include "GUIMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -57,6 +58,7 @@ private:
     void DrawObjects(DrawType drawType);
     void DrawLines();
     void DrawOpaque();
+    void DrawGUI();
 
     void PreZPass();
     void PrepareCluster();
@@ -85,7 +87,7 @@ public:
     std::shared_ptr<LightCullMgr> lightCullMgr = nullptr;
     std::unique_ptr<DebugVisMgr> debugVisMgr = nullptr;
     std::unique_ptr<PBRMgr> pbrMgr = nullptr;
-
+    std::unique_ptr<GUIMgr> guiMgr = nullptr;
 public:
 };
 
