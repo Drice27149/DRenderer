@@ -39,11 +39,12 @@ float3 BRDF(vec3 n, vec3 v, vec3 l, vec3 diffuseColor, float a, float3 f0, float
     float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
     // specular BRDF
+    // 还有一种表达方式是 D*F*G/4(~), 这里 V = G/4(~)
     vec3 Fr = (D * V) * F;
 
     // diffuse BRDF
     vec3 Fd = diffuseColor * Fd_Lambert();
 
     // apply lighting...
-    return Fd + Fr;
+    return (Fd + Fr);
 }

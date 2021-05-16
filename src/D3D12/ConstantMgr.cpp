@@ -62,6 +62,8 @@ void ConstantMgr::UpdateObjConstants()
         temp.model = glm::transpose(obj->GetModelTransform());
         temp.id = obj->id;
         temp.mask = obj->mask;
+        temp.metallic = obj->metallic;
+        temp.roughness = obj->roughness;
         objCB->CopyData(index, temp);
         index++;
 

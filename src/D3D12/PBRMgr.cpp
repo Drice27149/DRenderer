@@ -71,6 +71,10 @@ void PBRMgr::BuildRootSig()
     params[top++].InitAsDescriptorTable(1, &uavTable1);
 	params[top++].InitAsShaderResourceView(usedSrv++, D3D12_SHADER_VISIBILITY_PIXEL);
     params[top++].InitAsConstantBufferView(2);
+    // 11, skybox texture, for environment mapping
+    CD3DX12_DESCRIPTOR_RANGE srvTable;
+    srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, usedSrv++);
+    params[top++].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = GetStaticSamplers();
 
@@ -158,6 +162,7 @@ void PBRMgr::PrePass()
     commandList->SetGraphicsRootDescriptorTable(8, lightCullMgr->GetEntryHandle());
     commandList->SetGraphicsRootShaderResourceView(9, lightCullMgr->GetLightTable());
     commandList->SetGraphicsRootConstantBufferView(10, lightCullMgr->GetClusterInfo());
+    commandList->SetGraphicsRootDescriptorTable(11, skyBoxMgr->srvGpu);
 
     commandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
     commandList->IASetIndexBuffer(&objMesh->IndexBufferView());

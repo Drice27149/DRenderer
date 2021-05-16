@@ -10,6 +10,8 @@ Object::Object()
 	scale = 1.0;
 	x = y = z = 0.0;
 	pitch = roll = yaw = 0.0;
+	metallic = 0.0;
+	roughness = 1.0;
 }
 
 void Object::Transform(mat4 trans)

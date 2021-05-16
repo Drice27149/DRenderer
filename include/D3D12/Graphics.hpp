@@ -82,7 +82,7 @@ public:
     // pass 管理
     std::unique_ptr<PreZMgr> preZMgr = nullptr;
     std::shared_ptr<ShadowMgr> shadowMgr = nullptr;
-    std::unique_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
+    std::shared_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
     std::unique_ptr<ClusterMgr> clusterMgr = nullptr;
     std::shared_ptr<LightCullMgr> lightCullMgr = nullptr;
     std::unique_ptr<DebugVisMgr> debugVisMgr = nullptr;

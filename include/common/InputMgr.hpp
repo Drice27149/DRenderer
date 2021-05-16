@@ -5,8 +5,7 @@
 class InputMgr{
 public:
     InputMgr();
-    // 现在只能处理相机移动
-    // TODO: 处理场景物体的位移, 旋转, 缩放
+
     void Tick(float nx, float ny);
     void OnLMouseDown(){ lmouse = true; }
     void OnLMouseRelease(){ lmouse = false; }
@@ -18,10 +17,10 @@ public:
     void OnMoveRight();
 private:
     float x, y;
-    // 上一帧鼠标的坐标
+    // 锟斤拷一帧锟斤拷锟斤拷锟斤拷锟斤拷
     float lx, ly;
-    // 旋转
+    // 锟斤拷转
     bool lmouse;
-    // 位移
+    // 位锟斤拷
     bool rmouse;
 };

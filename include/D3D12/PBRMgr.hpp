@@ -6,6 +6,7 @@
 #include "ShadowMgr.hpp"
 #include "LightCullMgr.hpp"
 #include "DMesh.hpp"
+#include "SkyBoxMgr.hpp"
 
 class PBRMgr: public PassMgr {
 public:
@@ -25,6 +26,7 @@ public:
     std::shared_ptr<TextureMgr> textureMgr;
     std::shared_ptr<ShadowMgr> shadowMgr;
     std::shared_ptr<LightCullMgr> lightCullMgr;
+    std::shared_ptr<SkyBoxMgr> skyBoxMgr;
     // @TODO: 场景/物体管理
     std::shared_ptr<DMesh> objMesh;
 public:

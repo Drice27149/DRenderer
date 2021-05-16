@@ -33,6 +33,8 @@ public:
 	float x;
 	float y;
 	float z;
+	float metallic;
+	float roughness;
 public:
 	// render data
 	unsigned int mask;

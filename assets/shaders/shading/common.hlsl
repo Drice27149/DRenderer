@@ -3,6 +3,7 @@ Texture2D gNormalMap: register(t1);
 Texture2D gDiffuseMap: register(t2);
 Texture2D gMetallicMap: register(t3);
 Texture2D gEmissiveMap: register(t4);
+TextureCube gCubeMap: register(t6);
 
 SamplerState gsamLinear: register(s0);
 
@@ -18,6 +19,10 @@ cbuffer RealPass : register(b0)
 cbuffer RealObject: register(b1)
 {
 	float4x4 _model;
+	uint _id;
+    uint _mask;
+    float _metallic;
+    float _roughness;
 };
 
 struct VertexIn

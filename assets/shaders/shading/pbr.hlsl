@@ -1,5 +1,5 @@
-#include "common.hlsl"
 #include "brdf.hlsl"
+#include "IBL.hlsl"
 
 VertexOut VS(VertexIn vin)
 {
@@ -67,39 +67,21 @@ float GetShadowBlur(float4 clipPos)
 float4 shading(vec3 n, vec3 v, vec3 l, float2 uv, vec3 intensity)
 {
 	float3 baseColor = gDiffuseMap.Sample(gsamLinear, uv).rgb;
-	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
 	float roughness = gMetallicMap.Sample(gsamLinear, uv).g;
 	float metallic = gMetallicMap.Sample(gsamLinear, uv).b;
 	float3 diffuseColor = baseColor; // (1.0 - metallic) * baseColor;
 	float3 f0 = baseColor * metallic;
 	float a = roughness*roughness;
-	float3 color = BRDF(n, v, l, diffuseColor, a, f0, roughness);
-	color = color * intensity * ao;
+	float3 color = BRDF(n, v, l, diffuseColor, a, f0, roughness) * dot(n, l);
+	color = color * intensity;
+	float3 ambient = baseColor * float3(0.03, 0.03, 0.03);
+	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
+	color = color * ambient * ao;
 	return float4(color, 1.0);
 }
 
-float4 PS(VertexOut pin) : SV_Target
+float4 previousWork(VertexOut pin)
 {
-	// float3 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv).rgb;
-	// // return float4(baseColor, 1.0);
-	// // baseColor = float4(1.0, 1.0, 1.0, 1.0);
-	// float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
-	// normal = normal*2.0 - 1.0;
-	// normal = tangentToWorldNormal(normal, pin.N, pin.T);
-	// normal = normalize(pin.N);
-	// float3 lightDir = normalize(GetLightDir());
-	// float lightRate = dot(lightDir, normal);
-
-	// baseColor =	float4((baseColor) * lightRate, 1.0);
-
-	// float ao = gMetallicMap.Sample(gsamLinear, pin.uv).b;
-	// return float4(ao, ao, ao, 1.0);
-
-	// float shadowBlur = GetShadowBlur(pin.clipPos);
-	// // lightRate = lightRate * (1.0 - shadowBlur);
-
-	// return float4(baseColor, 1.0);
-
 	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
@@ -108,7 +90,48 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 lightDir = GetLightDir();
 
 	float4 color = shading(normal, viewDir, lightDir, pin.uv, 3.5);
-	// color.rgb = pow(color.rgb, float3(1.0/2.2, 1.0/2.2, 1.0/2.2));
 
 	return color;
+}
+
+float4 pbrSphereTest(VertexOut pin)
+{
+	float3 intensity = float3(2.0, 2.0, 2.0);
+
+	float3 n = normalize(pin.N);
+	float3 v = normalize(_CamPos - pin.worldPos);
+	float3 l = normalize(GetLightDir());
+
+	float3 baseColor = float3(1.0, 1.0, 1.0);
+	float metallic = _metallic;
+	float roughness = _roughness;
+	float3 f0 = baseColor * metallic;
+	float a = roughness*roughness;
+
+	float3 color = BRDF(n, v, l, baseColor, a, f0, roughness) * intensity * saturate(dot(n, l));
+	float3 ambient = float3(0.1, 0.1, 0.1);
+	color = color + ambient;
+
+	return float4(color, 1.0);
+}
+
+float4 pureIBL(VertexOut pin)
+{
+	float3 baseColor = float3(1.0, 1.0, 1.0);
+	float3 fd = diffuseIBL(normalize(pin.N), (1.0-_metallic)*baseColor, 128);
+	float3 fr = specularIBL(normalize(pin.N), normalize(_CamPos - pin.worldPos), baseColor, _metallic, _roughness, 128);
+	return float4(fd + fr, 1.0);
+	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
+}
+
+float4 PS(VertexOut pin) : SV_Target
+{
+	// float3 color = float3(1.0, 1.0, 1.0);
+	// color = color * dot(normalize(pin.N),normalize(GetLightDir()));
+	float3 baseColor = float3(1.0, 1.0, 1.0);
+	uint NUM_SAMPLE = 1024;
+	float3 fd = diffuseIBL(normalize(pin.N), (1.0-_metallic)*baseColor, NUM_SAMPLE);
+	float3 fr = specularIBL(normalize(pin.N), normalize(_CamPos - pin.worldPos), baseColor, _metallic, _roughness, NUM_SAMPLE);
+	return float4(fd + fr, 1.0);
+	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
 }

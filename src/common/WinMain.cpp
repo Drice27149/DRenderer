@@ -20,6 +20,8 @@ std::vector<metaData> Object::reflection =
     metaData("pitch",offsetof(Object, pitch)),
     metaData("yaw",offsetof(Object, yaw)),
     metaData("roll",offsetof(Object, roll)),
+    metaData("metallic", offsetof(Object, metallic)),
+    metaData("roughness", offsetof(Object, roughness)),
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -39,30 +41,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // @TODO: 基于配置的场景加载
         DEngine::gobjs.clear();
 
-        // vector<string> fns = { "../assets/models/LightShapes/sphere.obj", "../assets/models/LightShapes/cube.obj", "../assets/models/LightShapes/sphere.obj" };
-
-        // AssimpLoader ld;
-
-        // for(int i = 0; i < 1; i++){
-        //     string fn = "../assets/models/hulkbuster/scene.gltf";
-        //     // string fn = fns[i];
-           
-        //     Object* nobj = new Object();
-        //     ld.LoadFile(nobj, fn);
-
-        //     nobj->Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 1.8, 0.0)));
-        //     nobj->drawType = DrawType::Normal;
-        //     nobj->Scale(0.02);
-        //     nobj->Transform(glm::rotate(glm::mat4(1.0), 0.5f*3.1415926f, glm::vec3(1.0, 0.0, 0.0)));
-        //     nobj->Transform(glm::rotate(glm::mat4(1.0), 3.1415926f, glm::vec3(0.0, 0.0, 1.0)));
-
-        //     DEngine::gobjs.push_back(nobj);
-        // }
-
-        std::shared_ptr<Object> hulk = std::make_shared<Object>();
-        hulk->Scale(0.02);
-
-        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
+        int length = 100;
+        int count = 5;
+        float step = 1.0 / (float)(count-1);
+        int intStep = length / (count-1);
+        for(int i = 0; i < count; i++){
+            for(int j = 0; j < count; j++){
+                std::shared_ptr<Object> ball = std::make_shared<Object>();
+                objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", ball));
+                ball->Scale(0.1);
+                ball->roughness = (float)i * step;
+                ball->metallic = (float)j * step;
+                ball->x = i * intStep;
+                ball->y = j * intStep;
+            }
+        }
 
         auto WorkFunc = [](int64_t id)->void{
             auto& job = objJobs[id];

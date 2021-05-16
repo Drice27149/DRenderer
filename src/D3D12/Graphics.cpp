@@ -103,7 +103,7 @@ void Graphics::InitPassMgrs()
 
     // 天空盒管理类
     heapMgr->GetNewSRV(srvCpu, srvGpu);
-    skyBoxMgr = std::make_unique<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get(), srvCpu, srvGpu);
+    skyBoxMgr = std::make_shared<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get(), srvCpu, srvGpu);
     skyBoxMgr->constantMgr = constantMgr;
     skyBoxMgr->Init();
 
@@ -146,6 +146,7 @@ void Graphics::InitPassMgrs()
     pbrMgr->lightCullMgr = lightCullMgr;
     pbrMgr->shadowMgr = shadowMgr;
     pbrMgr->objMesh = objMesh;
+    pbrMgr->skyBoxMgr = skyBoxMgr;
     pbrMgr->Init();
     // gui
     guiMgr = std::make_unique<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
