@@ -62,10 +62,11 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
 {
     float3 irradiance = float3(0.0, 0.0, 0.0);
     float3x3 tangentSpace = computeTangetSpace(N);
-    float3 f0 = baseColor * metallic;
+    // UE4: 0.08
+    float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
     float a = roughness * roughness;
 
-    for(int i=0; i < NUM_SAMPLES; ++i)
+    for(int i = 0; i < NUM_SAMPLES; i++)
     {
         float2 rand_value = hammersley2D(i, NUM_SAMPLES);
         float3 H = mul(hemisphereSampleGGX(rand_value[0], rand_value[1], roughness), tangentSpace);

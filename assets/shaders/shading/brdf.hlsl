@@ -48,3 +48,28 @@ float3 BRDF(vec3 n, vec3 v, vec3 l, vec3 diffuseColor, float a, float3 f0, float
     // apply lighting...
     return (Fd + Fr);
 }
+
+float3 BRDF_Faliment(float3 N, float3 V, float3 L, float3 baseColor, float metallic, float roughness)
+{
+    float3 H = normalize(V + L);
+    float NoV = abs(dot(N, V)) + 0.00001;
+    float NoL = clamp(dot(N, L), 0.0, 1.0);
+    float NoH = clamp(dot(N, H), 0.0, 1.0);
+    float LoH = clamp(dot(L, H), 0.0, 1.0);
+    // UE4: roughness = pow(roughness, 4)
+    roughness = roughness * roughness;
+    // UE4: 0.04 -> 0.08
+    float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
+    float3 diffuseColor = (1.0 - metallic)*baseColor;
+
+    float D = D_GGX(NoH, roughness);
+    float3 F = F_Schlick(LoH, f0);
+    float Vis = V_SmithGGXCorrelated(NoV, NoL, roughness);
+
+    // specular BRDF, 还有一种表达方式是 D*F*G/4(~), 这里 V = G/4(~)
+    vec3 Fr = (D * Vis) * F;
+    // diffuse BRDF
+    vec3 Fd = diffuseColor * Fd_Lambert();
+    // apply lighting...
+    return (Fd + Fr);
+}
