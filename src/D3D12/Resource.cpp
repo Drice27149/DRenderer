@@ -1,5 +1,5 @@
 #include "Resource.hpp"
-#include "stb_image.h"
+#include "WICTextureLoader12.h"
  
 Resource::Resource(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height)
 {
@@ -337,63 +337,35 @@ void Resource::BuildUAV(unsigned int elements, unsigned int size, bool haveCount
 	md3dDevice->CreateUnorderedAccessView(mResource.Get(), CntResource?CntResource.Get():nullptr, &uavDesc, srvCpu);
 }
 
-void Resource::BuildImageTexture(std::string fn)
+void Resource::BuildTextureResource(std::string fn)
 {
-	// load image and create resource
-	int TextureWidth, TextureHeight;
-	int TexturePixelSize;
-
-	stbi_uc* pixBuffer = stbi_load(fn.c_str(), &TextureWidth, &TextureHeight, &TexturePixelSize, 0);
-
-    if(TexturePixelSize == 3){
-        pixBuffer = stbi_load(fn.c_str(), &TextureWidth, &TextureHeight, &TexturePixelSize, 4);
-        TexturePixelSize = 4;
-    }
-
-	D3D12_RESOURCE_DESC textureDesc = {};
-	textureDesc.MipLevels = 1;
-
-	if(TexturePixelSize == 4) 
-		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	else if(TexturePixelSize == 2)
-		textureDesc.Format = DXGI_FORMAT_R8G8_UNORM;
-	else
-		textureDesc.Format = DXGI_FORMAT_R8_UNORM;
-
-	textureDesc.Width = TextureWidth;
-	textureDesc.Height = TextureHeight;
-	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	textureDesc.DepthOrArraySize = 1;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
-	ThrowIfFailed(md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		nullptr,
-		IID_PPV_ARGS(&mResource)));
-
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource.Get(), 0, 1);
+	std::wstring wstringFn = std::wstring(fn.begin(), fn.end());
+	const wchar_t* wcharFn = wstringFn.c_str();
+	std::unique_ptr<uint8_t[]> wicData;
+	D3D12_SUBRESOURCE_DATA textureData;
+	// load resource data
+	ThrowIfFailed(DirectX::LoadWICTextureFromFile(
+		md3dDevice,
+		wcharFn,
+		&mResource,
+		wicData, 
+		textureData)
+	);
+	D3D12_RESOURCE_DESC textureDesc = mResource->GetDesc();
 	// Create the GPU upload buffer.
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource.Get(), 0, 1);	
 	ThrowIfFailed(md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&uploadBuffer)
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&uploadBuffer)
 		)
 	);
-	D3D12_SUBRESOURCE_DATA textureData = {};
-	textureData.pData = pixBuffer;
-	textureData.RowPitch = TextureWidth * TexturePixelSize;
-	textureData.SlicePitch = textureData.RowPitch * TextureHeight;
+	// upload the texture data to GPU
 	UpdateSubresources(commandList, mResource.Get(), uploadBuffer.Get(), 0, 0, 1, &textureData);
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-	
 	// build shader resource view
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

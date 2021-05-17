@@ -32,11 +32,12 @@ void TextureMgr::Init()
         job.texture = std::make_shared<Resource>(device, commandList);
         job.texture->srvCpu = job.srvCpu;
         job.texture->srvGpu = job.srvGpu;
-        job.texture->BuildImageTexture(job.name);
+        job.texture->BuildTextureResource(job.name);
     };
 
+    // TODO: thread safe
     parallelInit();
-    parallelFor1D(WorkFunc, textureJobs.size(), 1);
+    parallelFor1D(WorkFunc, textureJobs.size(), textureJobs.size());
     parallelCleanUp();
 
     for(auto& job: textureJobs){
