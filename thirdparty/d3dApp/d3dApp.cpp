@@ -166,7 +166,8 @@ void D3DApp::OnResize()
 		SwapChainBufferCount, 
 		mClientWidth, mClientHeight, 
 		mBackBufferFormat, 
-		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
+		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
+	);
 
 	mCurrBackBuffer = 0;
  
@@ -238,8 +239,15 @@ void D3DApp::OnResize()
 	mScreenViewport.Height   = static_cast<float>(mClientHeight);
 	mScreenViewport.MinDepth = 0.0f;
 	mScreenViewport.MaxDepth = 1.0f;
+	mScissorRect = { 0, 0, mClientWidth, mClientHeight };
 
-    mScissorRect = { 0, 0, mClientWidth, mClientHeight };
+	sScreenViewport.TopLeftX = 0;
+	sScreenViewport.TopLeftY = 0;
+	sScreenViewport.Width    = static_cast<float>(ssRate*mClientWidth);
+	sScreenViewport.Height   = static_cast<float>(ssRate*mClientHeight);
+	sScreenViewport.MinDepth = 0.0f;
+	sScreenViewport.MaxDepth = 1.0f;
+    sScissorRect = { 0, 0, ssRate*mClientWidth, ssRate*mClientHeight };
 }
  
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -530,9 +538,10 @@ void D3DApp::CreateSwapChain()
     sd.BufferDesc.Format = mBackBufferFormat;
     sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
     sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	// modified in compute shader
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.SampleDesc.Count = m4xMsaaState ? 4 : 1;
     sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.BufferCount = SwapChainBufferCount;
     sd.OutputWindow = mhMainWnd;
     sd.Windowed = true;

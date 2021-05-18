@@ -66,6 +66,7 @@ public:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE WriteHandle()const { return writeHandle; }
 	// New and decouple
 public:
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvCpu;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE xxxCpu;
@@ -83,6 +84,8 @@ public:
 	ID3D12Resource* GetCounterResource() { return CntResource.Get(); }
 
 	void BuildTextureResource(std::string fn);
+	void BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool enableDepth);
+	void AppendUAVTexture(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu);
 };
 
  

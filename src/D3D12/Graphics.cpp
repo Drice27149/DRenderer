@@ -154,6 +154,15 @@ void Graphics::InitPassMgrs()
     guiMgr->mhMainWnd = mhMainWnd;
     guiMgr->Init();
     GUIInit = true;
+    // AA
+    aaMgr = std::make_shared<AAMgr>(md3dDevice.Get(), mCommandList.Get());
+    aaMgr->sWidth = 4*mClientWidth;
+    aaMgr->sHeight = 4*mClientHeight;
+    aaMgr->width = mClientWidth;
+    aaMgr->height = mClientHeight;
+    aaMgr->ssRate = ssRate;
+    aaMgr->heapMgr = heapMgr;
+    aaMgr->Init();
 }
 
 void Graphics::OnResize()
@@ -187,16 +196,17 @@ void Graphics::Draw(const GameTimer& gt)
 
     ExecuteComputeShader();
 
+    aaMgr->PrePass();
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
     // Specify the buffers we are going to render to.
-	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	mCommandList->OMSetRenderTargets(1, &(aaMgr->rtvCpu), true, &(aaMgr->dsvCpu));
     // Clear the back buffer and depth buffer.
-    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    mCommandList->ClearRenderTargetView(aaMgr->rtvCpu, Colors::LightSteelBlue, 0, nullptr);
+    mCommandList->ClearDepthStencilView(aaMgr->dsvCpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-    mCommandList->RSSetViewports(1, &mScreenViewport);
-    mCommandList->RSSetScissorRects(1, &mScissorRect);
+    mCommandList->RSSetViewports(1, &sScreenViewport);
+    mCommandList->RSSetScissorRects(1, &sScissorRect);
 
     // real render
     // DrawObjects(DrawType::Normal);
@@ -219,6 +229,9 @@ void Graphics::Draw(const GameTimer& gt)
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 	
 	// swap the back and front buffers
+    // present 的时候, 并不能保证 backBuffer 已经渲染好了
+    // 当 cpu 很快的时候是可以这样 assume 的, 行吧
+    // TODO: fix this
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 

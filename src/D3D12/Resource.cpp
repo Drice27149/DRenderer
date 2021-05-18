@@ -183,17 +183,6 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 		D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-	// Performance tip: Tell the runtime at resource creation the desired clear value. 
-	// D3D12_CLEAR_VALUE clearValue;
-	// clearValue.Format = format;
-	// if (clear_color == 0)
-	// {
-	// 	float clearColor[] = { 0, 0, 0, 1 };
-	// 	memcpy(&clearValue.Color[0], &clearColor[0], 4 * sizeof(float));
-	// }
-	// else
-	// 	memcpy(&clearValue.Color[0], &clear_color[0], 4 * sizeof(float));
-
 	md3dDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
 		D3D12_HEAP_FLAG_NONE,
@@ -221,6 +210,36 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 
     md3dDevice->CreateShaderResourceView(mResource.Get(), &SRVDesc, createHandle);
 	mResource->SetName(L"renderTargetArray");
+}
+
+void Resource::BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool enableDepth)
+{
+	CD3DX12_RESOURCE_DESC texDesc(
+		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		0,		// alignment
+		width, height, 1,
+		1,		// mip levels
+		format,
+		1, 0,	// sample count/quality
+		D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr, // &clearValue,
+		IID_PPV_ARGS(&mResource)
+	);
+
+	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+	ZeroMemory(&RTVDesc, sizeof(RTVDesc));
+	RTVDesc.Format = format;
+	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	
+	md3dDevice->CreateRenderTargetView(mResource.Get(), &RTVDesc, srvCpu);
 }
 
 Resource::Resource(ID3D12Device* device, unsigned int width, unsigned int height)
@@ -376,6 +395,16 @@ void Resource::BuildTextureResource(std::string fn)
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, srvCpu);
+}
+
+void Resource::AppendUAVTexture(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu)
+{
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(uavDesc));
+	uavDesc.Format = format;
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+	md3dDevice->CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc, uavCpu);
 }
 
 

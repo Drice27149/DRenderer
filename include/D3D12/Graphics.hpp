@@ -16,6 +16,7 @@
 #include "TextureMgr.hpp"
 #include "PBRMgr.hpp"
 #include "GUIMgr.hpp"
+#include "AAMgr.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -88,6 +89,7 @@ public:
     std::unique_ptr<DebugVisMgr> debugVisMgr = nullptr;
     std::unique_ptr<PBRMgr> pbrMgr = nullptr;
     std::unique_ptr<GUIMgr> guiMgr = nullptr;
+    std::shared_ptr<AAMgr> aaMgr = nullptr;
 public:
 };
 
