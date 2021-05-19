@@ -59,7 +59,7 @@ float3 BRDF_Faliment(float3 N, float3 V, float3 L, float3 baseColor, float metal
     // UE4: roughness = pow(roughness, 4)
     roughness = roughness * roughness;
     // UE4: 0.04 -> 0.08
-    float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
+    float3 f0 = lerp(float3(0.08, 0.08, 0.08), baseColor, metallic);
     float3 diffuseColor = (1.0 - metallic)*baseColor;
 
     float D = D_GGX(NoH, roughness);

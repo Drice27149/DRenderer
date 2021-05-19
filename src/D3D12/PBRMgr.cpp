@@ -48,7 +48,7 @@ void PBRMgr::BuildPSO()
 
 void PBRMgr::BuildRootSig()
 {
-    CD3DX12_ROOT_PARAMETER params[20];
+    CD3DX12_ROOT_PARAMETER params[30];
     int top = 0;
     // pass constant, obj constant
     // 0, 1
@@ -75,6 +75,8 @@ void PBRMgr::BuildRootSig()
     CD3DX12_DESCRIPTOR_RANGE srvTable;
     srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, usedSrv++);
     params[top++].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    // 12, scene info for shaindg/shadow, 3
+    params[top++].InitAsConstantBufferView(3);
 
 	auto staticSamplers = GetStaticSamplers();
 
@@ -163,6 +165,7 @@ void PBRMgr::PrePass()
     commandList->SetGraphicsRootShaderResourceView(9, lightCullMgr->GetLightTable());
     commandList->SetGraphicsRootConstantBufferView(10, lightCullMgr->GetClusterInfo());
     commandList->SetGraphicsRootDescriptorTable(11, skyBoxMgr->srvGpu);
+    commandList->SetGraphicsRootConstantBufferView(12, constantMgr->GetSceneInfoConstant());
 
     commandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
     commandList->IASetIndexBuffer(&objMesh->IndexBufferView());

@@ -13,6 +13,13 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
         auto newFrameRes = std::make_unique<FrameResource>(device, passCnt, objCnt);
         frameResources.push_back(std::move(newFrameRes));
     }
+
+    sceneInfo = std::make_shared<SceneInfo>();
+    sceneInfo->envIntensity = 1.0;
+    sceneInfo->lightIntensity = 0.0;
+    sceneInfo->dirX = -1.0;
+    sceneInfo->dirY = 1.0;
+    sceneInfo->dirZ = 1.0;
 }
 
 void ConstantMgr::Update()
@@ -75,15 +82,18 @@ void ConstantMgr::UpdateStaticConstants()
 {
     if(clusterInfo == nullptr)
         clusterInfo = std::make_unique<UploadBuffer<ClusterInfo>>(device, 1, true);
-
     ClusterInfo temp;
     temp.clusterX = 16;
     temp.clusterY = 8;
     temp.clusterZ = 4;
     temp.cNear = 1.0;
     temp.cFar = 20.0;
-
     clusterInfo->CopyData(0, temp);
+
+    if(sceneInfoGpu == nullptr)
+        sceneInfoGpu = std::make_unique<UploadBuffer<SceneInfo>>(device, 1, true);
+    
+    sceneInfoGpu->CopyData(0, *(sceneInfo)); // equal to *(sceneInfo.Get())
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS ConstantMgr::GetPassConstant(unsigned long long offset)

@@ -17,6 +17,10 @@ public:
 
     D3D12_GPU_VIRTUAL_ADDRESS GetShadowPassConstant();
     D3D12_GPU_VIRTUAL_ADDRESS GetCameraPassConstant();
+    D3D12_GPU_VIRTUAL_ADDRESS GetSceneInfoConstant(){ return sceneInfoGpu->Resource()->GetGPUVirtualAddress(); }
+
+    std::shared_ptr<SceneInfo> GetSceneInfo() { return sceneInfo; }
+
 public:
     ID3D12Device* device;
     ID3D12Fence* fence;
@@ -26,6 +30,9 @@ public:
     unsigned int objCnt;
     std::vector<std::unique_ptr<FrameResource>> frameResources;
 public:
+    // tempory, scene info is placed there
+    std::shared_ptr<SceneInfo> sceneInfo = nullptr;
     // static constants buffer
     std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
+    std::unique_ptr<UploadBuffer<SceneInfo>> sceneInfoGpu = nullptr;
 };

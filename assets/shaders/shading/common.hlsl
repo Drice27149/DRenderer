@@ -25,6 +25,18 @@ cbuffer RealObject: register(b1)
     float _roughness;
 };
 
+cbuffer SceneInfo: register(b3)
+{
+    float _MainLightPosX;
+    float _MainLightPosY;
+    float _MainLightPosZ;
+    float _MainLightDirX;
+    float _MainLightDirY;
+    float _MainLightDirZ;
+    float _lightIntensity;
+    float _envIntensity;
+};
+
 struct VertexIn
 {
 	float3 vertex: POSITION;

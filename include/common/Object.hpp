@@ -2,6 +2,7 @@
 
 #include "Global.hpp"
 #include "Mesh.hpp"
+#include "Struct.hpp"
 
 enum DrawType {
     Normal,
@@ -9,12 +10,6 @@ enum DrawType {
     RedLines,
 	SpotLgiht, 	// frustum
 	PointLight	// sphere
-};
-
-struct metaData {
-	std::string name;
-	unsigned long long offset;
-	metaData(std::string name, unsigned long long offset):name(name), offset(offset){}
 };
 
 class Object {

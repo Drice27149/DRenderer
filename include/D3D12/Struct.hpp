@@ -6,6 +6,12 @@
 
 #include "d3dUtil.h"
 
+struct metaData {
+	std::string name;
+	unsigned long long offset;
+	metaData(std::string name, unsigned long long offset):name(name), offset(offset){}
+};
+
 struct ClusterInfo {
     unsigned int clusterX;
     unsigned int clusterY;
@@ -26,6 +32,20 @@ struct LightEntry {
 struct LightInfo {
     unsigned int id;
     glm::vec3 pos;
+};
+
+struct SceneInfo {
+    // main Light
+    float posX;
+    float posY;
+    float posZ;
+    float dirX;
+    float dirY;
+    float dirZ;
+    float lightIntensity;
+    float envIntensity;
+
+    static std::vector<metaData> reflections;
 };
 
 // global functions

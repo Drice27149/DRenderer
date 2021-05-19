@@ -154,12 +154,13 @@ void Graphics::InitPassMgrs()
     guiMgr = std::make_unique<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
     guiMgr->heapMgr = heapMgr;
     guiMgr->mhMainWnd = mhMainWnd;
+    guiMgr->constantMgr = constantMgr;
     guiMgr->Init();
     GUIInit = true;
     // AA
     aaMgr = std::make_shared<AAMgr>(md3dDevice.Get(), mCommandList.Get());
-    aaMgr->sWidth = 4*mClientWidth;
-    aaMgr->sHeight = 4*mClientHeight;
+    aaMgr->sWidth = ssRate*mClientWidth;
+    aaMgr->sHeight = ssRate*mClientHeight;
     aaMgr->width = mClientWidth;
     aaMgr->height = mClientHeight;
     aaMgr->ssRate = ssRate;

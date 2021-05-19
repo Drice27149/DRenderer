@@ -121,7 +121,7 @@ protected:
     D3D12_VIEWPORT sScreenViewport; 
     D3D12_RECT sScissorRect;
 
-    long ssRate = 4;
+    long ssRate = 3;
 
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
@@ -132,7 +132,7 @@ protected:
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
     DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	int mClientWidth = 1334;
-	int mClientHeight = 750;
+	int mClientWidth = 1280;
+	int mClientHeight = 720;
 };
 

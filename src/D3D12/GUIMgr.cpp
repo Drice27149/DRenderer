@@ -35,34 +35,12 @@ void GUIMgr::Update()
     ImGui::NewFrame();
 
     ImGui::Begin("Editor Window");
-
-    // {
-    //     static float f = 0.0f;
-    //     static int counter = 0;
-
-    //     ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-    //     ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-    //     // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-    //     // ImGui::Checkbox("Another Window", &show_another_window);
-
-    //     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-    //     // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-    //     if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-    //         counter++;
-    //     ImGui::SameLine();
-    //     ImGui::Text("counter = %d", counter);
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    //     ImGui::End();
-    // }
-
-    
+    // performance, not accurate but ok
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);    
     // temp input buffer
     static char inBuff[128][128];
     static string recieve = "";
-    int id = 0;
+    int bufferID = 0;
 
     auto callback = [](ImGuiInputTextCallbackData* data)->int{
         std::string s;
@@ -79,23 +57,42 @@ void GUIMgr::Update()
         return 0;
     };
 
-    std::vector<Object*>& objs = DEngine::gobjs;
-    int tired = 0;
-    for(Object* obj: objs){
-        std::string nodeName = Int2String(tired++);
-        if(ImGui::TreeNode(nodeName.c_str())){
-            for(metaData& member: Object::reflection){
-                float* ptr = (float*)((unsigned long long)obj + member.offset);
-                std::string value = Float2String(*ptr, 6);
-                CopyStringToBuffer(value, inBuff[id]);
-                ImGui::InputText(member.name.c_str(), inBuff[id], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
-                id++;
+    if(ImGui::TreeNode("Objects Info")){
+        std::vector<Object*>& objs = DEngine::gobjs;
+        int objID = 0;
+        for(Object* obj: objs){
+            std::string nodeName = Int2String(objID++);
+            if(ImGui::TreeNode(nodeName.c_str())){
+                for(metaData& member: Object::reflection){
+                    float* ptr = (float*)((unsigned long long)obj + member.offset);
+                    std::string value = Float2String(*ptr, 6);
+                    CopyStringToBuffer(value, inBuff[bufferID]);
+                    ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
+                    bufferID++;
+                }
+                ImGui::TreePop();
             }
-            ImGui::TreePop();
         }
+        ImGui::TreePop();
     }
-    ImGui::Button(recieve.c_str());
 
+    if(ImGui::TreeNode("Scene Info")){
+        std::shared_ptr<SceneInfo> sceneInfo = constantMgr->GetSceneInfo();
+        SceneInfo* addr = sceneInfo.get();
+
+        for(metaData& member: SceneInfo::reflections){
+            float* ptr = (float*)((unsigned long long)addr + member.offset);
+            std::string value = Float2String(*ptr, 6);
+            CopyStringToBuffer(value, inBuff[bufferID]);
+            ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
+            bufferID++;
+        }
+
+        ImGui::TreePop();
+    }
+
+    ImGui::Text(recieve.c_str());
+    
     ImGui::End();
 
     ImGui::Render();

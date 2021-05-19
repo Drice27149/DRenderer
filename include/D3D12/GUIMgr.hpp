@@ -1,5 +1,6 @@
 #include "d3dUtil.h"
 #include "HeapMgr.hpp"
+#include "ConstantMgr.hpp"
 
 class GUIMgr {
 public:
@@ -13,4 +14,5 @@ public:
 public:
     HWND mhMainWnd;
     std::shared_ptr<HeapMgr> heapMgr;
+    std::shared_ptr<ConstantMgr> constantMgr;
 };

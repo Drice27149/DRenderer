@@ -124,6 +124,17 @@ float4 pureIBL(VertexOut pin)
 	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
 }
 
+float3 DirectLight(float3 N, float3 V, float3 L, float3 baseColor, float roughness, float metallic)
+{
+	float NoL = saturate(dot(N, L));
+	if(NoL <= 0.0)
+	{
+		return float3(0.0, 0.0, 0.0);
+	}
+	float3 lighting = BRDF_Faliment(N, V, L, baseColor, roughness, metallic) * NoL;
+	return lighting;
+}
+
 float4 PS(VertexOut pin) : SV_Target
 {
 	// float3 color = float3(1.0, 1.0, 1.0);
@@ -135,14 +146,26 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+	if(!(_mask & (1<<6))){
+		normal = pin.N;
+	}
 
-	baseColor = float3(1.0, 1.0, 1.0);
-	roughness = _roughness;
-	metallic = _metallic;
+	float3 N = normalize(normal);
+	float3 V = normalize(_CamPos - pin.worldPos);
+	float3 L = normalize(float3(_MainLightDirX, _MainLightDirY, _MainLightDirZ));
 
-	uint NUM_SAMPLE = 128;
-	float3 fd = diffuseIBL(normalize(normal), (1.0-metallic)*baseColor, NUM_SAMPLE);
-	float3 fr = specularIBL(normalize(normal), normalize(_CamPos - pin.worldPos), baseColor, metallic, roughness, NUM_SAMPLE);
-	return float4((fd + fr) * ao, 1.0);
-	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
+	// baseColor = float3(1.0, 1.0, 1.0);
+	// roughness = _roughness;
+	// metallic = _metallic;
+
+	float3 outColor = float3(0.0, 0.0, 0.0);
+	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
+	outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
+	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr;
+	return float4(outColor, 1.0);
+	// uint NUM_SAMPLE = 64;
+	// float3 fd = diffuseIBL(normalize(normal), (1.0-metallic)*baseColor, NUM_SAMPLE);
+	// float3 fr = specularIBL(normalize(normal), normalize(_CamPos - pin.worldPos), baseColor, metallic, roughness, NUM_SAMPLE);
+	// return float4((fd + fr) * ao, 1.0);
+	// return gCubeMap.Sample(gsamLinear, normalize(pin.N));
 }

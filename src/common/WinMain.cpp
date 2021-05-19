@@ -11,6 +11,18 @@ Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
 std::vector<Object*> DEngine::gobjs;
 
+std::vector<metaData> SceneInfo::reflections = 
+{
+    metaData("LightPosX", offsetof(SceneInfo, posX)),
+    metaData("LightPosY", offsetof(SceneInfo, posY)),
+    metaData("LightPosZ", offsetof(SceneInfo, posZ)),
+    metaData("LightDirX", offsetof(SceneInfo, dirX)),
+    metaData("LightDirY", offsetof(SceneInfo, dirY)),
+    metaData("LightDirZ", offsetof(SceneInfo, dirZ)),
+    metaData("LightInt", offsetof(SceneInfo, lightIntensity)),
+    metaData("EnvInt", offsetof(SceneInfo, envIntensity)),
+};
+
 std::vector<metaData> Object::reflection = 
 {
     metaData("scale", offsetof(Object, scale)),
@@ -64,6 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         hulk->Scale(0.01);
         hulk->pitch = 90;
         hulk->yaw = 180;
+        hulk->mask = 0;
         objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
 
         auto WorkFunc = [](int64_t id)->void{
@@ -87,10 +100,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // cluster.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0,3.0,12.0)));
         // DEngine::gobjs.push_back(&cluster);
 
-        Object grid;
-        grid.meshes.push_back(Grid());
-        grid.drawType = DrawType::WhiteLines;
-        DEngine::gobjs.push_back(&grid);
+        // Object grid;
+        // grid.meshes.push_back(Grid());
+        // grid.drawType = DrawType::WhiteLines;
+        // DEngine::gobjs.push_back(&grid);
 
         // @TODO: fall back texture for no uv or no baseColor
         // Object panel;
@@ -98,23 +111,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // panel.drawType = DrawType::Normal;
         // DEngine::gobjs.push_back(&panel);
 
-        Light pointLight(DrawType::PointLight);
-        pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));
-        pointLight.Scale(3.0);
-        pointLight.id = 0;
-        DEngine::gobjs.push_back(&pointLight);
+        // Light pointLight(DrawType::PointLight);
+        // pointLight.Transform(glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 2.5, 0.0)));
+        // pointLight.Scale(3.0);
+        // pointLight.id = 0;
+        // DEngine::gobjs.push_back(&pointLight);
 
-        Light pointLight0(DrawType::PointLight);
-        pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(5.0, 5.0, 0.0)));
-        pointLight0.id = 1;
-        pointLight0.Scale(2.0);
-        DEngine::gobjs.push_back(&pointLight0);
+        // Light pointLight0(DrawType::PointLight);
+        // pointLight0.Transform(glm::translate(glm::mat4(1.0), glm::vec3(5.0, 5.0, 0.0)));
+        // pointLight0.id = 1;
+        // pointLight0.Scale(2.0);
+        // DEngine::gobjs.push_back(&pointLight0);
 
-        Light pointLight1(DrawType::PointLight);
-        pointLight1.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 7.5, 0.0)));
-        pointLight1.id = 2;
-        pointLight1.Scale(1.0);
-        DEngine::gobjs.push_back(&pointLight1);
+        // Light pointLight1(DrawType::PointLight);
+        // pointLight1.Transform(glm::translate(glm::mat4(1.0), glm::vec3(0.0, 7.5, 0.0)));
+        // pointLight1.id = 2;
+        // pointLight1.Scale(1.0);
+        // DEngine::gobjs.push_back(&pointLight1);
 
         if(!theApp.Initialize())
             return 0;

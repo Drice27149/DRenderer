@@ -3,13 +3,14 @@
 
 void AAMgr::BuildRootSig()
 {
-    CD3DX12_ROOT_PARAMETER slotRootParameter;
+    CD3DX12_ROOT_PARAMETER params[2];
+    params[0].InitAsConstantBufferView(0);
     CD3DX12_DESCRIPTOR_RANGE srvTable;
     srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    slotRootParameter.InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    params[1].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, &slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, params, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -85,6 +86,12 @@ void AAMgr::Init()
 
 void AAMgr::CreateResources()
 {
+    // Init AA Pass info, tempory for ssaa
+    aaPassInfo = std::make_shared<UploadBuffer<AAPassInfo>>(device, 1, true);
+    AAPassInfo passInfo;
+    passInfo.ssRate = ssRate;
+    aaPassInfo->CopyData(0, passInfo);
+
     InRTV = std::make_shared<Resource>(device, commandList);
     CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
     heapMgr->GetNewRTV(rtvCpu, rtvGpu);
@@ -119,7 +126,8 @@ void AAMgr::Pass()
 {
     commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSig.Get());
-    commandList->SetGraphicsRootDescriptorTable(0, inSrvGpu);
+    commandList->SetGraphicsRootConstantBufferView(0, aaPassInfo->Resource()->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootDescriptorTable(1, inSrvGpu);
 
     commandList->DrawInstanced(6, 1, 0, 0);
 }

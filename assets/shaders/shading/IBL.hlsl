@@ -90,3 +90,11 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
 
     return irradiance * (1.0/float(NUM_SAMPLES));
 }
+
+float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
+{
+	uint NUM_SAMPLE = 64;
+	float3 fd = diffuseIBL(N, (1.0-metallic)*baseColor, NUM_SAMPLE);
+	float3 fr = specularIBL(N, V, baseColor, metallic, roughness, NUM_SAMPLE);
+	return fd + fr;
+}

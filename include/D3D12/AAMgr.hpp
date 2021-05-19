@@ -1,6 +1,11 @@
 #include "PassMgr.hpp"
 #include "Resource.hpp"
 #include "HeapMgr.hpp"
+#include "UploadBuffer.h"
+
+struct AAPassInfo {
+    unsigned int ssRate;
+};
 
 class AAMgr: public PassMgr {
 public:
@@ -32,6 +37,7 @@ public:
     CD3DX12_GPU_DESCRIPTOR_HANDLE inSrvGpu;
 public:
     std::shared_ptr<HeapMgr> heapMgr;   
+    std::shared_ptr<UploadBuffer<AAPassInfo>> aaPassInfo;
 private:
     ComPtr<ID3DBlob> cs = nullptr;
 };
