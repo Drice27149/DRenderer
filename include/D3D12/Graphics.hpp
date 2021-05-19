@@ -49,10 +49,8 @@ private:
     void UploadTextures();
     // 加载模型
     void UploadMeshes(); 
-
     // new, for decouple
     void InitPassMgrs();
-
     // New
     void DrawSkyBox();
     void DrawShadowMap();

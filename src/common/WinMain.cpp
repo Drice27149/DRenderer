@@ -59,6 +59,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // }
         // IBL测试1: 导入模型, 基于贴图的metallicRoughness
         std::shared_ptr<Object> hulk = std::make_shared<Object>();
+        hulk->metallic = 0.8;
+        hulk->roughness = 0.1;
         hulk->Scale(0.01);
         hulk->pitch = 90;
         hulk->yaw = 180;

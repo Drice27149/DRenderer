@@ -397,7 +397,7 @@ void Resource::BuildTextureResource(std::string fn)
 	md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, srvCpu);
 }
 
-void Resource::AppendUAVTexture(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu)
+void Resource::AppendTexture2DUAV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu)
 {
 	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 	ZeroMemory(&uavDesc, sizeof(uavDesc));
@@ -405,6 +405,18 @@ void Resource::AppendUAVTexture(unsigned int width, unsigned int height, DXGI_FO
 	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
 	md3dDevice->CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc, uavCpu);
+}
+
+void Resource::AppendTexture2DSRV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu)
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, srvCpu);
 }
 
 

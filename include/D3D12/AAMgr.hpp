@@ -28,6 +28,8 @@ public:
     std::shared_ptr<Resource> OutRTV;   // resolve color
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvCpu;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE inSrvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE inSrvGpu;
 public:
     std::shared_ptr<HeapMgr> heapMgr;   
 private:

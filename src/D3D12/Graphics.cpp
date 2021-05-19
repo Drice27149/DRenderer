@@ -69,6 +69,8 @@ void Graphics::InitPassMgrs()
 {
     // 常量 (uniform) 管理类
     // @TODO: pass count 准确化
+    // @TODO: Mgr 共享context
+    // @TODO: 资源管理放在 Mgr
     ID3D12Device* device = md3dDevice.Get();
     ID3D12Fence* fence = mFence.Get();
     constantMgr = std::make_shared<ConstantMgr>(device, fence, (unsigned int)FrameCount, (unsigned int)5, (unsigned int)DEngine::gobjs.size());
@@ -188,33 +190,46 @@ void Graphics::Draw(const GameTimer& gt)
     ID3D12DescriptorHeap* descriptorHeaps[] = { heapMgr->GetSRVHeap() };
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    DrawShadowMap();
+    // DrawShadowMap();
 
-    PreZPass();
+    // PreZPass();
 
-    PrepareCluster();
+    // PrepareCluster();
 
-    ExecuteComputeShader();
-
+    // ExecuteComputeShader();
+    
+    // // begin of render a scene
     aaMgr->PrePass();
-    // Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    // Specify the buffers we are going to render to.
+    
 	mCommandList->OMSetRenderTargets(1, &(aaMgr->rtvCpu), true, &(aaMgr->dsvCpu));
-    // Clear the back buffer and depth buffer.
     mCommandList->ClearRenderTargetView(aaMgr->rtvCpu, Colors::LightSteelBlue, 0, nullptr);
     mCommandList->ClearDepthStencilView(aaMgr->dsvCpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
     mCommandList->RSSetViewports(1, &sScreenViewport);
     mCommandList->RSSetScissorRects(1, &sScissorRect);
 
-    // real render
-    // DrawObjects(DrawType::Normal);
+    // // real render
+    // // DrawObjects(DrawType::Normal);
     DrawOpaque();
-    // place at last
+    // // place at last
     DrawSkyBox();
-    // debugvis
-    DrawLines();
+    // // debugvis
+    // DrawLines();
+
+    // // end of render a scene
+    aaMgr->PostPass();
+
+    // draw to screen
+    // transition first
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    // change render target
+    mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+    mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    mCommandList->RSSetViewports(1, &mScreenViewport);
+    mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+    aaMgr->Pass();
+    
     // GUI
     DrawGUI();
 

@@ -140,7 +140,7 @@ float4 PS(VertexOut pin) : SV_Target
 	roughness = _roughness;
 	metallic = _metallic;
 
-	uint NUM_SAMPLE = 512;
+	uint NUM_SAMPLE = 128;
 	float3 fd = diffuseIBL(normalize(normal), (1.0-metallic)*baseColor, NUM_SAMPLE);
 	float3 fr = specularIBL(normalize(normal), normalize(_CamPos - pin.worldPos), baseColor, metallic, roughness, NUM_SAMPLE);
 	return float4((fd + fr) * ao, 1.0);
