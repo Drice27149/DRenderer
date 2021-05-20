@@ -17,6 +17,8 @@
 #include "PBRMgr.hpp"
 #include "GUIMgr.hpp"
 #include "AAMgr.hpp"
+#include "TemporalAA.hpp"
+#include "ToneMapping.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -74,20 +76,23 @@ private:
     std::shared_ptr<DMesh> objMesh = nullptr;
 
 public:
-    // 资源管理
-    std::shared_ptr<ConstantMgr> constantMgr = nullptr;
-    std::shared_ptr<HeapMgr> heapMgr = nullptr;
-    std::shared_ptr<TextureMgr> textureMgr = nullptr;
+    static std::shared_ptr<ConstantMgr> constantMgr;
+    static std::shared_ptr<HeapMgr> heapMgr;
+    static std::shared_ptr<TextureMgr> textureMgr;
     // pass 管理
-    std::unique_ptr<PreZMgr> preZMgr = nullptr;
-    std::shared_ptr<ShadowMgr> shadowMgr = nullptr;
-    std::shared_ptr<SkyBoxMgr> skyBoxMgr = nullptr;
-    std::unique_ptr<ClusterMgr> clusterMgr = nullptr;
-    std::shared_ptr<LightCullMgr> lightCullMgr = nullptr;
-    std::unique_ptr<DebugVisMgr> debugVisMgr = nullptr;
-    std::unique_ptr<PBRMgr> pbrMgr = nullptr;
-    std::unique_ptr<GUIMgr> guiMgr = nullptr;
-    std::shared_ptr<AAMgr> aaMgr = nullptr;
+    static std::shared_ptr<PreZMgr> preZMgr;
+    static std::shared_ptr<ShadowMgr> shadowMgr;
+    static std::shared_ptr<SkyBoxMgr> skyBoxMgr;
+    static std::shared_ptr<ClusterMgr> clusterMgr;
+    static std::shared_ptr<LightCullMgr> lightCullMgr;
+    static std::shared_ptr<DebugVisMgr> debugVisMgr;
+    static std::shared_ptr<PBRMgr> pbrMgr;
+    static std::shared_ptr<GUIMgr> guiMgr;
+    static std::shared_ptr<AAMgr> aaMgr;
+    static std::shared_ptr<TemporalAA> temporalAA;
+    static std::shared_ptr<ToneMapping> toneMapping;
 public:
+    static ID3D12Device* GDevice;
+    static ID3D12GraphicsCommandList* GCmdList;
 };
 

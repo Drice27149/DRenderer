@@ -36,6 +36,25 @@ std::vector<metaData> Object::reflection =
     metaData("roughness", offsetof(Object, roughness)),
 };
 
+// temporal, sorry..
+ID3D12Device* Graphics::GDevice = nullptr;
+ID3D12GraphicsCommandList* Graphics::GCmdList = nullptr;
+
+std::shared_ptr<ConstantMgr> Graphics::constantMgr = nullptr;
+std::shared_ptr<HeapMgr> Graphics::heapMgr = nullptr;
+std::shared_ptr<TextureMgr> Graphics::textureMgr = nullptr;
+std::shared_ptr<PreZMgr> Graphics::preZMgr = nullptr;
+std::shared_ptr<ShadowMgr> Graphics::shadowMgr = nullptr;
+std::shared_ptr<SkyBoxMgr> Graphics::skyBoxMgr = nullptr;
+std::shared_ptr<ClusterMgr> Graphics::clusterMgr = nullptr;
+std::shared_ptr<LightCullMgr> Graphics::lightCullMgr = nullptr;
+std::shared_ptr<DebugVisMgr> Graphics::debugVisMgr = nullptr;
+std::shared_ptr<PBRMgr> Graphics::pbrMgr = nullptr;
+std::shared_ptr<GUIMgr> Graphics::guiMgr = nullptr;
+std::shared_ptr<AAMgr> Graphics::aaMgr = nullptr;
+std::shared_ptr<TemporalAA> Graphics::temporalAA = nullptr;
+std::shared_ptr<ToneMapping> Graphics::toneMapping = nullptr;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
 {

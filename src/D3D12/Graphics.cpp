@@ -67,6 +67,8 @@ void Graphics::UploadTextures()
 
 void Graphics::InitPassMgrs()
 {
+    GDevice = md3dDevice.Get();
+    GCmdList = mCommandList.Get();
     // 常量 (uniform) 管理类
     // @TODO: pass count 准确化
     // @TODO: Mgr 共享context
@@ -76,7 +78,7 @@ void Graphics::InitPassMgrs()
     constantMgr = std::make_shared<ConstantMgr>(device, fence, (unsigned int)FrameCount, (unsigned int)5, (unsigned int)DEngine::gobjs.size());
     
     // Pre-Z 管理类
-    preZMgr = std::make_unique<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
+    preZMgr = std::make_shared<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
     CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
     heapMgr->GetNewSRV(srvCpu, srvGpu);
@@ -114,7 +116,7 @@ void Graphics::InitPassMgrs()
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
     CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
     heapMgr->GetNewRTV(rtvCpu, rtvGpu);
-    clusterMgr = std::make_unique<ClusterMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
+    clusterMgr = std::make_shared<ClusterMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
     clusterMgr->srvCpu = srvCpu;
     clusterMgr->srvGpu = srvGpu;
     clusterMgr->rtvCpu = rtvCpu;
@@ -134,7 +136,7 @@ void Graphics::InitPassMgrs()
     lightCullMgr->Init();
 
     // debug, for now cluster line only
-    debugVisMgr = std::make_unique<DebugVisMgr>(md3dDevice.Get(), mCommandList.Get());
+    debugVisMgr = std::make_shared<DebugVisMgr>(md3dDevice.Get(), mCommandList.Get());
     debugVisMgr->offsetTable = lightCullMgr->srvGpu[0];
     debugVisMgr->entryTable = lightCullMgr->srvGpu[1];
     debugVisMgr->clusterDepth = clusterMgr->srvGpu;
@@ -142,7 +144,7 @@ void Graphics::InitPassMgrs()
     debugVisMgr->Init();
 
     // shading
-    pbrMgr = std::make_unique<PBRMgr>(md3dDevice.Get(), mCommandList.Get());
+    pbrMgr = std::make_shared<PBRMgr>(md3dDevice.Get(), mCommandList.Get());
     pbrMgr->constantMgr = constantMgr;
     pbrMgr->textureMgr = textureMgr;
     pbrMgr->lightCullMgr = lightCullMgr;
@@ -151,7 +153,7 @@ void Graphics::InitPassMgrs()
     pbrMgr->skyBoxMgr = skyBoxMgr;
     pbrMgr->Init();
     // gui
-    guiMgr = std::make_unique<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
+    guiMgr = std::make_shared<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
     guiMgr->heapMgr = heapMgr;
     guiMgr->mhMainWnd = mhMainWnd;
     guiMgr->constantMgr = constantMgr;
@@ -166,6 +168,14 @@ void Graphics::InitPassMgrs()
     aaMgr->ssRate = ssRate;
     aaMgr->heapMgr = heapMgr;
     aaMgr->Init();
+    // taa
+    temporalAA = std::make_shared<TemporalAA>();
+    temporalAA->inputs.resize(2);
+    temporalAA->Init();
+    // tone map
+    toneMapping = std::make_shared<ToneMapping>();
+    toneMapping->inputs.resize(1);
+    toneMapping->Init();
 }
 
 void Graphics::OnResize()
@@ -200,11 +210,12 @@ void Graphics::Draw(const GameTimer& gt)
     // ExecuteComputeShader();
     
     // // begin of render a scene
-    aaMgr->PrePass();
     
-	mCommandList->OMSetRenderTargets(1, &(aaMgr->rtvCpu), true, &(aaMgr->dsvCpu));
-    mCommandList->ClearRenderTargetView(aaMgr->rtvCpu, Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(aaMgr->dsvCpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    aaMgr->BeginFrame();
+
+	mCommandList->OMSetRenderTargets(1, &(aaMgr->GetCurRTRTV()), true, &(aaMgr->GetDepthBuffer()));
+    mCommandList->ClearRenderTargetView(aaMgr->GetCurRTRTV(), Colors::LightSteelBlue, 0, nullptr);
+    mCommandList->ClearDepthStencilView(aaMgr->GetDepthBuffer(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     mCommandList->RSSetViewports(1, &sScreenViewport);
     mCommandList->RSSetScissorRects(1, &sScissorRect);
 
@@ -216,8 +227,16 @@ void Graphics::Draw(const GameTimer& gt)
     // // debugvis
     // DrawLines();
 
-    // // end of render a scene
-    aaMgr->PostPass();
+    // rtv -> srv, scroll it 
+    aaMgr->StartTAA();
+    // must connect with the last one
+    mCommandList->OMSetRenderTargets(1, &(aaMgr->GetNextRenderTarget()), true, &(aaMgr->GetDepthBuffer()));
+
+    temporalAA->PrePass();
+    temporalAA->Pass();
+    temporalAA->PostPass();
+
+    aaMgr->EndTAA();
 
     // draw to screen
     // transition first
@@ -229,8 +248,9 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-    aaMgr->Pass();
-    
+    toneMapping->PrePass();
+    toneMapping->Pass();
+    toneMapping->PostPass();
     // GUI
     DrawGUI();
 
@@ -258,7 +278,7 @@ void Graphics::Draw(const GameTimer& gt)
 
 void Graphics::BuildDescriptorHeaps()
 {
-    heapMgr = std::make_unique<HeapMgr>(md3dDevice.Get(), mCommandList.Get(), 50, 50, 50);
+    heapMgr = std::make_unique<HeapMgr>(md3dDevice.Get(), mCommandList.Get(), 100, 100, 100);
 }
 
 void Graphics::OnMouseZoom(WPARAM state)

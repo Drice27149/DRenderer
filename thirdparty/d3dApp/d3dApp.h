@@ -121,7 +121,7 @@ protected:
     D3D12_VIEWPORT sScreenViewport; 
     D3D12_RECT sScissorRect;
 
-    long ssRate = 3;
+    long ssRate = 1;
 
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;

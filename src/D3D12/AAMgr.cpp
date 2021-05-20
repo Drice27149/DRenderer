@@ -101,6 +101,17 @@ void AAMgr::CreateResources()
     heapMgr->GetNewSRV(inSrvCpu, inSrvGpu);
     InRTV->AppendTexture2DSRV(sWidth, sHeight, DXGI_FORMAT_R8G8B8A8_UNORM, inSrvCpu);
 
+    // real rtv
+    for(int i = 0; i < 3; i++){
+        renderTarget[i] = std::make_shared<Resource>(device, commandList);
+        heapMgr->GetNewRTV(rtRtvCpu[i], rtRtvGpu[i]);
+        heapMgr->GetNewSRV(rtSrvCpu[i], rtSrvGpu[i]);
+        // @TODO hdr support
+        renderTarget[i]->BuildRenderTarget(width, height, DXGI_FORMAT_R8G8B8A8_UNORM);
+        renderTarget[i]->AppendTexture2DRTV(DXGI_FORMAT_R8G8B8A8_UNORM, rtRtvCpu[i]);
+        renderTarget[i]->AppendTexture2DSRV(width, height, DXGI_FORMAT_R8G8B8A8_UNORM, rtSrvCpu[i]);
+    }
+
     depthMap = std::make_shared<Resource>(device, sWidth, sHeight);
     CD3DX12_GPU_DESCRIPTOR_HANDLE dsvGpu;
     heapMgr->GetNewDSV(dsvCpu, dsvGpu);
@@ -112,8 +123,20 @@ void AAMgr::CreateResources()
     depthMap->xxxCpu = dsvCpu;
     depthMap->BuildDepthMap(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT);
 
-    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(depthMap->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE,
-     D3D12_RESOURCE_STATE_DEPTH_WRITE));
+    // init render target and depth buffer
+    frame = 0;
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        renderTarget[frame]->GetResource(), 
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+        )
+    );
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        depthMap->GetResource(), 
+        D3D12_RESOURCE_STATE_COPY_SOURCE,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE
+        )
+    );
 }
 
 void AAMgr::Update(unsigned int width, unsigned int height)
@@ -146,6 +169,43 @@ void AAMgr::PostPass()
 {
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
         InRTV->GetResource(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        )
+    );
+}
+
+void AAMgr::BeginFrame()
+{
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        renderTarget[2]->GetResource(), 
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+        )
+    );
+}
+
+void AAMgr::StartTAA()
+{
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        renderTarget[2]->GetResource(), 
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        )
+    );
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        renderTarget[!frame]->GetResource(), 
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+        )
+    );
+    frame = (frame + 1)%2;
+}
+
+void AAMgr::EndTAA()
+{
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        renderTarget[frame]->GetResource(), 
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
         )

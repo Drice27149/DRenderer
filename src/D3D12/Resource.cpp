@@ -212,6 +212,39 @@ void Resource::BuildRenderTargetArray(unsigned int number, DXGI_FORMAT format)
 	mResource->SetName(L"renderTargetArray");
 }
 
+void Resource::BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format)
+{
+	CD3DX12_RESOURCE_DESC texDesc(
+		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		0,		// alignment
+		width, height, 1,
+		1,		// mip levels
+		format,
+		1, 0,	// sample count/quality
+		D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	md3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr, // &clearValue,
+		IID_PPV_ARGS(&mResource)
+	);
+}
+
+void Resource::AppendTexture2DRTV(DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu)
+{
+	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+	ZeroMemory(&RTVDesc, sizeof(RTVDesc));
+	RTVDesc.Format = format;
+	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	
+	md3dDevice->CreateRenderTargetView(mResource.Get(), &RTVDesc, rtvCpu);
+}
+
 void Resource::BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool enableDepth)
 {
 	CD3DX12_RESOURCE_DESC texDesc(

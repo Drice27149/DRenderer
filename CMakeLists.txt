@@ -13,6 +13,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include) # include
 
 include_directories(${CMAKE_SOURCE_DIR}/include/D3D12)
 
+include_directories(${CMAKE_SOURCE_DIR}/include/PostProcess)
+
 include_directories(${CMAKE_SOURCE_DIR}/include/cluster)
 
 include_directories(${CMAKE_SOURCE_DIR}/include/common)

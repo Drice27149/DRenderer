@@ -6,6 +6,7 @@ using Microsoft::WRL::ComPtr;
 
 class PassMgr {
 public:
+    PassMgr(){}
     PassMgr(ID3D12Device* device, ID3D12GraphicsCommandList*  commandList): device(device), commandList(commandList){}
 public:
     virtual void Init() = 0;

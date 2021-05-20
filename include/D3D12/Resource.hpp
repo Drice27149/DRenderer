@@ -87,6 +87,8 @@ public:
 	void BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool enableDepth);
 	void AppendTexture2DUAV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu);
 	void AppendTexture2DSRV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu);
+	void BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format);
+	void AppendTexture2DRTV(DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu);
 };
 
  

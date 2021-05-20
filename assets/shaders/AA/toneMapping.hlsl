@@ -1,10 +1,5 @@
 Texture2D gPixMap: register(t0);
 
-cbuffer AAPassInfo : register(b0)
-{
-	uint _ssRate;
-};
-
 struct VertexIn
 {
 	float3 vertex: POSITION;
@@ -35,17 +30,8 @@ VertexOut VS(VertexIn vin, uint id: SV_VertexID)
 
 float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
 {   
-    return float4(1.0, 1.0, 1.0, 1.0);
-    int x = pos.x*_ssRate;
-    int y = pos.y*_ssRate;
-    float4 sum = float4(0.0, 0.0, 0.0, 0.0);
-    for(int i = 0; i < _ssRate; i++){
-        for(int j = 0; j < _ssRate; j++){
-            sum = sum + gPixMap.Load(int3(x+i,y+j,0));
-        }
-    }
-
-    sum = sum / _ssRate / _ssRate;
-        
-    return sum;
+    int x = pos.x;
+    int y = pos.y;
+    float4 color = gPixMap.Load(int3(x, y, 0));
+    return color;
 }
