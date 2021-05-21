@@ -94,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         std::shared_ptr<Object> hulk = std::make_shared<Object>();
         hulk->metallic = 0.8;
         hulk->roughness = 0.1;
-        hulk->Scale(0.01);
+        hulk->Scale(1.0);
         hulk->pitch = 90;
         hulk->yaw = 180;
         hulk->mask = 0;

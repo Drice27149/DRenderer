@@ -46,6 +46,5 @@ float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
     float4 now = gPixMap.Load(int3(x,y,0));
     float4 history = gHistoryMap.Load(int3(x,y,0));
     // taaAlpha: 当前帧的占比    
-    
-    return history * (1.0 - _taaAlpha) + now * (_taaAlpha);
+    return lerp(history, now, _taaAlpha);
 }

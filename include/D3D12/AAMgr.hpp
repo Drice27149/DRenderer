@@ -59,9 +59,9 @@ public:
     }
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthBuffer(){ return dsvCpu; }
     
-    // 涓浆璇�->鍐�
+    // 涓浆璇??->鍐??
     void BeginFrame();
-    // 涓浆鍐�->璇�, u璇�->鍐�, v鍐�->璇�, 寮€濮嬪悗澶勭悊, frame++
+    // 涓浆鍐??->璇??, u璇??->鍐??, v鍐??->璇??, 寮€濮嬪悗澶勭悊, frame++
     void StartTAA();
     void EndTAA();
 public:
