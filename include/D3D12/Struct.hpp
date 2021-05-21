@@ -6,6 +6,26 @@
 
 #include "d3dUtil.h"
 
+struct PassUniform
+{
+    glm::mat4 view;
+    glm::mat4 proj;
+    glm::mat4 SMView;
+    glm::mat4 SMProj;
+    glm::mat4 JProj;
+    // зЂвт padding
+    glm::vec3 CamPos;
+};
+
+struct ObjectUniform
+{
+    glm::mat4 model;
+    unsigned int id;
+    unsigned int mask;
+    float metallic;
+    float roughness;
+};
+
 struct metaData {
 	std::string name;
 	unsigned long long offset;

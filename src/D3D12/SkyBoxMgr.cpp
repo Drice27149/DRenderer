@@ -102,7 +102,7 @@ void SkyBoxMgr::CreateResources()
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
         device,
         commandList,
-        L"..\\assets\\models\\cubeMap\\cubeMap_tower.dds", 
+        L"..\\assets\\models\\cubeMap\\sunsetcube1024.dds", 
         skyTexture->Resource, 
         skyTexture->UploadHeap
         )

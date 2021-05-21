@@ -1,5 +1,9 @@
 #include "ConstantMgr.hpp"
 
+float halton[] = {
+    1.0/2.0, 1.0/3.0, 1.0/4.0, 2.0/3.0, 3.0/4.0, 1.0/9.0, 1.0/8.0, 4.0/9.0, 5.0/8.0, 7.0/9.0, 3.0/8.0, 2.0/9.0, 7.0/8.0, 5.0/9.0, 1.0/16.0, 8.0/9.0, 9.0/16.0, 1.0/27.0
+};
+
 ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int frameCnt, unsigned int passCnt, unsigned int objCnt):
     device(device),
     fence(fence),
@@ -8,6 +12,8 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     objCnt(objCnt)
 {
     curFrame = 0;
+    jitterID = 0;
+    jitterCnt = 9;
 
     for(int i = 0; i < passCnt; i++){
         auto newFrameRes = std::make_unique<FrameResource>(device, passCnt, objCnt);
@@ -49,12 +55,23 @@ void ConstantMgr::UpdatePassConstants()
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     passCB->CopyData(0, temp);
     // camera pass constant
+    // @TODO: jitter shadow
     temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    temp.JProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    // sample and jitter projection matrix
+    float sampleX = halton[2*jitterID];
+    float sampleY = halton[2*jitterID+1];
+    // temp.JProj[2][0] += (sampleX*2.0f-1.0f)/(float)viewPortWidth;
+    // temp.JProj[2][1] += (sampleY*2.0f-1.0f)/(float)viewPortHeight;
+    temp.JProj[2][0] += 1000.0f*(sampleX - 0.5f)/(float)viewPortWidth;
+    temp.JProj[2][1] += 1000.0f*(sampleY - 0.5f)/(float)viewPortHeight;
+
     temp.SMView = glm::transpose(tempLight);
     temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     temp.CamPos = DEngine::GetCamMgr().GetViewPos();
     passCB->CopyData(1, temp);
+    jitterID = (jitterID + 1) % jitterCnt;
 }
 
 void ConstantMgr::UpdateObjConstants()

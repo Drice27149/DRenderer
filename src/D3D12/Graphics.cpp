@@ -76,7 +76,8 @@ void Graphics::InitPassMgrs()
     ID3D12Device* device = md3dDevice.Get();
     ID3D12Fence* fence = mFence.Get();
     constantMgr = std::make_shared<ConstantMgr>(device, fence, (unsigned int)FrameCount, (unsigned int)5, (unsigned int)DEngine::gobjs.size());
-    
+    constantMgr->viewPortWidth = mClientWidth;
+    constantMgr->viewPortHeight = mClientHeight;
     // Pre-Z 管理类
     preZMgr = std::make_shared<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
@@ -209,7 +210,7 @@ void Graphics::Draw(const GameTimer& gt)
 
     // ExecuteComputeShader();
     
-    // // begin of render a scene
+    // begin of render a scene
     
     aaMgr->BeginFrame();
 

@@ -13,18 +13,14 @@ struct VertexOut
 VertexOut VS(VertexIn vin, uint id: SV_VertexID)
 {
     VertexOut vout;
-	if(id == 0 || id==5){
+	if(id == 0 || id==5)
         vout.pos = float4(-1.0, 1.0, 0.0, 1.0);
-    }
-    else if(id==1){
+    else if(id==1)
         vout.pos = float4(1.0, 1.0, 0.0, 1.0);
-    }
-    else if(id==2 || id==3){
+    else if(id==2 || id==3)
         vout.pos = float4(1.0, -1.0, 0.0, 1.0);
-    }
-    else{
+    else
         vout.pos = float4(-1.0, -1.0, 0.0, 1.0);
-    }
     return vout;
 }
 

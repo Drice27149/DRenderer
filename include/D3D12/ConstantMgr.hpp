@@ -28,6 +28,8 @@ public:
     unsigned int frameCnt;
     unsigned int passCnt;
     unsigned int objCnt;
+    unsigned int jitterID;
+    unsigned int jitterCnt;
     std::vector<std::unique_ptr<FrameResource>> frameResources;
 public:
     // tempory, scene info is placed there
@@ -35,4 +37,6 @@ public:
     // static constants buffer
     std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
     std::unique_ptr<UploadBuffer<SceneInfo>> sceneInfoGpu = nullptr;
+    unsigned int viewPortWidth;
+    unsigned int viewPortHeight;
 };

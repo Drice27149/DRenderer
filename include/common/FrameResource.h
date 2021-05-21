@@ -3,7 +3,7 @@
 #include "d3dUtil.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
-#include "Common.hpp"
+#include "Struct.hpp"
 
 struct FrameResource
 {

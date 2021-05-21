@@ -13,6 +13,7 @@ cbuffer RealPass : register(b0)
 	float4x4 _Proj;
 	float4x4 _SMView;
 	float4x4 _SMProj;
+	float4x4 _JProj;
 	float3 _CamPos;
 };
 

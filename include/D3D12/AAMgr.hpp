@@ -39,6 +39,7 @@ public:
     CD3DX12_GPU_DESCRIPTOR_HANDLE inSrvGpu;
 
     int frame = 0;
+    bool firstFrame = true;
     std::shared_ptr<Resource> renderTarget[3] = {nullptr, nullptr, nullptr};
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtSrvCpu[3];
     CD3DX12_GPU_DESCRIPTOR_HANDLE rtSrvGpu[3];
@@ -49,12 +50,18 @@ public:
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurRTRTV(){ return rtRtvCpu[2]; }
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetNextRenderTarget(){ return rtRtvCpu[frame]; }
     CD3DX12_GPU_DESCRIPTOR_HANDLE GetTAAResult(){ return rtSrvGpu[frame]; }
-    CD3DX12_GPU_DESCRIPTOR_HANDLE GetLastRenderTarget(){ return rtSrvGpu[!frame]; }
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetLastRenderTarget(){ 
+        if(firstFrame){
+            firstFrame = false;
+            return rtSrvGpu[2];
+        }
+        return rtSrvGpu[!frame]; 
+    }
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthBuffer(){ return dsvCpu; }
     
-    // 中转读->写
+    // 中转评1�7->冄1�7
     void BeginFrame();
-    // 中转写->读, u读->写, v写->读, 开始后处理, frame++
+    // 中转冄1�7->评1�7, u评1�7->冄1�7, v冄1�7->评1�7, 弢�始后处理, frame++
     void StartTAA();
     void EndTAA();
 public:
