@@ -43,17 +43,29 @@ void GUIMgr::Update()
     int bufferID = 0;
 
     auto callback = [](ImGuiInputTextCallbackData* data)->int{
-        std::string s;
+        // hack: . for float
+        bool haveDot = false;
+        std::string result;
+        // data->Buf[i] is input string
         for(int i = 0; i < data->BufSize; i++){
+            if(data->Buf[i] == '.') haveDot = true;
             if((data->Buf[i]>='0' && data->Buf[i]<='9') || data->Buf[i]=='.' || data->Buf[i]=='-')
-                s.push_back(data->Buf[i]);
+                result.push_back(data->Buf[i]);
             else 
                 break;
         }
-        recieve = s;
-        float value = String2Float(s);
-        float* desc = (float*)(data->UserData);
-        *desc = value;
+        recieve = result;
+        // @TODO: implement it better
+        if(haveDot){
+            float value = String2Float(result);
+            float* desc = (float*)(data->UserData);
+            *desc = value;
+        }
+        else{
+            int value = String2Int(result);
+            int* desc = (int*)(data->UserData);
+            *desc = value;
+        }
         return 0;
     };
 
@@ -76,16 +88,27 @@ void GUIMgr::Update()
         ImGui::TreePop();
     }
 
+    // @TODO: decouple
+
     if(ImGui::TreeNode("Scene Info")){
         std::shared_ptr<SceneInfo> sceneInfo = constantMgr->GetSceneInfo();
         SceneInfo* addr = sceneInfo.get();
 
         for(metaData& member: SceneInfo::reflections){
-            float* ptr = (float*)((unsigned long long)addr + member.offset);
-            std::string value = Float2String(*ptr, 6);
-            CopyStringToBuffer(value, inBuff[bufferID]);
-            ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
-            bufferID++;
+            if(member.type == 1){
+                float* ptr = (float*)((unsigned long long)addr + member.offset);
+                std::string value = Float2String(*ptr, 6);
+                CopyStringToBuffer(value, inBuff[bufferID]);
+                ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
+                bufferID++;
+            }
+            else{
+                int* ptr = (int*)((unsigned long long)addr + member.offset);
+                std::string value = Int2String(*ptr);
+                CopyStringToBuffer(value, inBuff[bufferID]);
+                ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
+                bufferID++;
+            }
         }
 
         ImGui::TreePop();

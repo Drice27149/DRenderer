@@ -10,4 +10,6 @@ public:
 
     void PrePass() override;
     void PostPass() override;
+public:
+    D3D12_GPU_DESCRIPTOR_HANDLE input;
 };

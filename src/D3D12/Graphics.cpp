@@ -224,7 +224,7 @@ void Graphics::Draw(const GameTimer& gt)
     // // DrawObjects(DrawType::Normal);
     DrawOpaque();
     // // place at last
-    DrawSkyBox();
+    // DrawSkyBox();
     // // debugvis
     // DrawLines();
 
@@ -233,9 +233,11 @@ void Graphics::Draw(const GameTimer& gt)
     // must connect with the last one
     mCommandList->OMSetRenderTargets(1, &(aaMgr->GetNextRenderTarget()), true, &(aaMgr->GetDepthBuffer()));
 
-    temporalAA->PrePass();
-    temporalAA->Pass();
-    temporalAA->PostPass();
+    if(constantMgr->GetSceneInfo()->taa){
+        temporalAA->PrePass();
+        temporalAA->Pass();
+        temporalAA->PostPass();
+    }
 
     aaMgr->EndTAA();
 
@@ -248,6 +250,11 @@ void Graphics::Draw(const GameTimer& gt)
     mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     mCommandList->RSSetViewports(1, &mScreenViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+    if(constantMgr->GetSceneInfo()->taa)
+        toneMapping->input = aaMgr->GetTAAResult();
+    else 
+        toneMapping->input = aaMgr->GetCurRTSRV();
 
     toneMapping->PrePass();
     toneMapping->Pass();

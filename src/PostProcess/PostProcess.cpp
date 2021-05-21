@@ -6,12 +6,13 @@ void PostProcess::BuildRootSig()
     unsigned int paramsCnt = inputs.size();
     CD3DX12_ROOT_PARAMETER params[15];
     CD3DX12_DESCRIPTOR_RANGE srvTable[15];
+    params[0].InitAsConstantBufferView(0);
     for(int i = 0; i < paramsCnt; i++){
         srvTable[i].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, i);
-        params[i].InitAsDescriptorTable(1, &(srvTable[i]), D3D12_SHADER_VISIBILITY_PIXEL);
+        params[i+1].InitAsDescriptorTable(1, &(srvTable[i]), D3D12_SHADER_VISIBILITY_PIXEL);
     }
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(paramsCnt, params, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(paramsCnt+1, params, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;

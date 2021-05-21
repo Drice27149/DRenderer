@@ -13,27 +13,29 @@ std::vector<Object*> DEngine::gobjs;
 
 std::vector<metaData> SceneInfo::reflections = 
 {
-    metaData("LightPosX", offsetof(SceneInfo, posX)),
-    metaData("LightPosY", offsetof(SceneInfo, posY)),
-    metaData("LightPosZ", offsetof(SceneInfo, posZ)),
-    metaData("LightDirX", offsetof(SceneInfo, dirX)),
-    metaData("LightDirY", offsetof(SceneInfo, dirY)),
-    metaData("LightDirZ", offsetof(SceneInfo, dirZ)),
-    metaData("LightInt", offsetof(SceneInfo, lightIntensity)),
-    metaData("EnvInt", offsetof(SceneInfo, envIntensity)),
+    metaData("LightPosX", offsetof(SceneInfo, posX), 1),
+    metaData("LightPosY", offsetof(SceneInfo, posY), 1),
+    metaData("LightPosZ", offsetof(SceneInfo, posZ), 1),
+    metaData("LightDirX", offsetof(SceneInfo, dirX), 1),
+    metaData("LightDirY", offsetof(SceneInfo, dirY), 1),
+    metaData("LightDirZ", offsetof(SceneInfo, dirZ), 1),
+    metaData("LightInt", offsetof(SceneInfo, lightIntensity), 1),
+    metaData("EnvInt", offsetof(SceneInfo, envIntensity), 1),
+    metaData("TAA", offsetof(SceneInfo, taa), 0),
+    metaData("TAA_Alpha", offsetof(SceneInfo, taaAlpha), 1),
 };
 
 std::vector<metaData> Object::reflection = 
 {
-    metaData("scale", offsetof(Object, scale)),
-    metaData("x",offsetof(Object, x)),
-    metaData("y",offsetof(Object, y)),
-    metaData("z",offsetof(Object, z)),
-    metaData("pitch",offsetof(Object, pitch)),
-    metaData("yaw",offsetof(Object, yaw)),
-    metaData("roll",offsetof(Object, roll)),
-    metaData("metallic", offsetof(Object, metallic)),
-    metaData("roughness", offsetof(Object, roughness)),
+    metaData("scale", offsetof(Object, scale), 1),
+    metaData("x",offsetof(Object, x), 1),
+    metaData("y",offsetof(Object, y), 1),
+    metaData("z",offsetof(Object, z), 1),
+    metaData("pitch",offsetof(Object, pitch), 1),
+    metaData("yaw",offsetof(Object, yaw), 1),
+    metaData("roll",offsetof(Object, roll), 1),
+    metaData("metallic", offsetof(Object, metallic), 1),
+    metaData("roughness", offsetof(Object, roughness), 1),
 };
 
 // temporal, sorry..

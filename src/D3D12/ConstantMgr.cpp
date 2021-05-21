@@ -26,6 +26,8 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->dirX = -1.0;
     sceneInfo->dirY = 1.0;
     sceneInfo->dirZ = 1.0;
+    sceneInfo->taa = 0;
+    sceneInfo->taaAlpha = 1.0;
 }
 
 void ConstantMgr::Update()
@@ -58,15 +60,14 @@ void ConstantMgr::UpdatePassConstants()
     // @TODO: jitter shadow
     temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
-    temp.JProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
-    // sample and jitter projection matrix
-    float sampleX = halton[2*jitterID];
-    float sampleY = halton[2*jitterID+1];
-    // temp.JProj[2][0] += (sampleX*2.0f-1.0f)/(float)viewPortWidth;
-    // temp.JProj[2][1] += (sampleY*2.0f-1.0f)/(float)viewPortHeight;
-    temp.JProj[2][0] += 1000.0f*(sampleX - 0.5f)/(float)viewPortWidth;
-    temp.JProj[2][1] += 1000.0f*(sampleY - 0.5f)/(float)viewPortHeight;
-
+    // enable taa, jitter
+    if(sceneInfo->taa){
+        float sampleX = halton[2*jitterID];
+        float sampleY = halton[2*jitterID+1];
+        temp.proj[2][0] += (sampleX - 0.5f)/(float)viewPortWidth;
+        temp.proj[2][1] += (sampleY - 0.5f)/(float)viewPortHeight;
+    }
+    
     temp.SMView = glm::transpose(tempLight);
     temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     temp.CamPos = DEngine::GetCamMgr().GetViewPos();

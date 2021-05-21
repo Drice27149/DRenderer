@@ -25,12 +25,11 @@ void ToneMapping::PrePass()
 {   
     Graphics::GCmdList->SetPipelineState(pso.Get());
     Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
-    auto taaRes = Graphics::aaMgr->GetTAAResult();
-    Graphics::GCmdList->SetGraphicsRootDescriptorTable(0, taaRes);
+    Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, input);
 }
 
 void ToneMapping::PostPass()
 {
-
 }
 

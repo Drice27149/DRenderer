@@ -1,5 +1,19 @@
 Texture2D gPixMap: register(t0);
 
+cbuffer SceneInfo: register(b0)
+{
+    float _MainLightPosX;
+    float _MainLightPosY;
+    float _MainLightPosZ;
+    float _MainLightDirX;
+    float _MainLightDirY;
+    float _MainLightDirZ;
+    float _lightIntensity;
+    float _envIntensity;
+    int _taa;
+    float _taaAlpha;
+};
+
 struct VertexIn
 {
 	float3 vertex: POSITION;

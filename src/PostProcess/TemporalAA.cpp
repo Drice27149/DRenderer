@@ -30,8 +30,9 @@ void TemporalAA::PrePass()
     Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
     auto lastFrame = Graphics::aaMgr->GetLastRenderTarget();
     auto nowFrame = Graphics::aaMgr->GetCurRTSRV();
-    Graphics::GCmdList->SetGraphicsRootDescriptorTable(0, lastFrame);
-    Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, nowFrame);
+    Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, lastFrame);
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(2, nowFrame);
 }
 
 

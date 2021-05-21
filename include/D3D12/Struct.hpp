@@ -29,7 +29,9 @@ struct ObjectUniform
 struct metaData {
 	std::string name;
 	unsigned long long offset;
-	metaData(std::string name, unsigned long long offset):name(name), offset(offset){}
+    // 0 for int, 1 for float
+    unsigned int type;
+	metaData(std::string name, unsigned long long offset, unsigned int type):name(name), offset(offset), type(type){}
 };
 
 struct ClusterInfo {
@@ -64,7 +66,8 @@ struct SceneInfo {
     float dirZ;
     float lightIntensity;
     float envIntensity;
-
+    int taa;
+    float taaAlpha;
     static std::vector<metaData> reflections;
 };
 

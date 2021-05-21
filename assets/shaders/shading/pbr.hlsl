@@ -6,7 +6,7 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	float4x4 mvp = mul(mul(_model, _View), _JProj);
+	float4x4 mvp = mul(mul(_model, _View), _Proj);
 
 	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
 	vout.worldPos = mul(float4(vin.vertex, 1.0f), _model).rgb;
