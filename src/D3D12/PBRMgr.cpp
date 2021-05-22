@@ -1,4 +1,5 @@
 #include "PBRMgr.hpp"
+#include "Graphics.hpp"
 
 PBRMgr::PBRMgr(ID3D12Device* device, ID3D12GraphicsCommandList*  commandList):
 PassMgr(device, commandList)
@@ -123,7 +124,7 @@ void PBRMgr::CreateResources()
 
 void PBRMgr::Pass()
 {
-    auto objectAddr = constantMgr->GetObjectConstant((unsigned long long)0);
+    auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
     int idOffset = 0, vsOffset = 0;
     
     for(Object* obj: DEngine::gobjs){
@@ -133,7 +134,7 @@ void PBRMgr::Pass()
             if(obj->mask & (1<<i)){
                 unsigned int slot = mapping[i];
                 if(slot != -1){
-                    commandList->SetGraphicsRootDescriptorTable(slot, textureMgr->GetGPUHandle(obj->texns[i]));
+                    commandList->SetGraphicsRootDescriptorTable(slot, Graphics::textureMgr->GetGPUHandle(obj->texns[i]));
                 }
             }
         }
@@ -157,15 +158,15 @@ void PBRMgr::PrePass()
     commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSig.Get());
 
-    auto passAddr = constantMgr->GetCameraPassConstant();
+    auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
     commandList->SetGraphicsRootConstantBufferView(0, passAddr);
-    commandList->SetGraphicsRootDescriptorTable(2, shadowMgr->srvGpu);
-    commandList->SetGraphicsRootDescriptorTable(7, lightCullMgr->GetOffsetHandle());
-    commandList->SetGraphicsRootDescriptorTable(8, lightCullMgr->GetEntryHandle());
-    commandList->SetGraphicsRootShaderResourceView(9, lightCullMgr->GetLightTable());
-    commandList->SetGraphicsRootConstantBufferView(10, lightCullMgr->GetClusterInfo());
-    commandList->SetGraphicsRootDescriptorTable(11, skyBoxMgr->srvGpu);
-    commandList->SetGraphicsRootConstantBufferView(12, constantMgr->GetSceneInfoConstant());
+    commandList->SetGraphicsRootDescriptorTable(2, Graphics::shadowMgr->srvGpu);
+    commandList->SetGraphicsRootDescriptorTable(7, Graphics::lightCullMgr->GetOffsetHandle());
+    commandList->SetGraphicsRootDescriptorTable(8, Graphics::lightCullMgr->GetEntryHandle());
+    commandList->SetGraphicsRootShaderResourceView(9, Graphics::lightCullMgr->GetLightTable());
+    commandList->SetGraphicsRootConstantBufferView(10, Graphics::lightCullMgr->GetClusterInfo());
+    commandList->SetGraphicsRootDescriptorTable(11, Graphics::skyBoxMgr->GetCubeMapSrv());
+    commandList->SetGraphicsRootConstantBufferView(12, Graphics::constantMgr->GetSceneInfoConstant());
 
     commandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
     commandList->IASetIndexBuffer(&objMesh->IndexBufferView());

@@ -107,9 +107,7 @@ void Graphics::InitPassMgrs()
     shadowMgr->Init();
 
     // 天空盒管理类
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    skyBoxMgr = std::make_shared<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get(), srvCpu, srvGpu);
-    skyBoxMgr->constantMgr = constantMgr;
+    skyBoxMgr = std::make_shared<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get());
     skyBoxMgr->Init();
 
     // light culling step 0: generate depth
@@ -146,12 +144,7 @@ void Graphics::InitPassMgrs()
 
     // shading
     pbrMgr = std::make_shared<PBRMgr>(md3dDevice.Get(), mCommandList.Get());
-    pbrMgr->constantMgr = constantMgr;
-    pbrMgr->textureMgr = textureMgr;
-    pbrMgr->lightCullMgr = lightCullMgr;
-    pbrMgr->shadowMgr = shadowMgr;
     pbrMgr->objMesh = objMesh;
-    pbrMgr->skyBoxMgr = skyBoxMgr;
     pbrMgr->Init();
     // gui
     guiMgr = std::make_shared<GUIMgr>(md3dDevice.Get(), mCommandList.Get());

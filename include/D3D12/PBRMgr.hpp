@@ -22,11 +22,6 @@ public:
     void PrePass() override;
     void PostPass() override;
 public:
-    std::shared_ptr<ConstantMgr> constantMgr;
-    std::shared_ptr<TextureMgr> textureMgr;
-    std::shared_ptr<ShadowMgr> shadowMgr;
-    std::shared_ptr<LightCullMgr> lightCullMgr;
-    std::shared_ptr<SkyBoxMgr> skyBoxMgr;
     // @TODO: 场景/物体管理
     std::shared_ptr<DMesh> objMesh;
 public:

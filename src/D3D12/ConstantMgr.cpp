@@ -58,17 +58,20 @@ void ConstantMgr::UpdatePassConstants()
     passCB->CopyData(0, temp);
     // camera pass constant
     // @TODO: jitter shadow
-    temp.view = glm::transpose(DEngine::GetCamMgr().GetViewTransform());
-    temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    temp.view = DEngine::GetCamMgr().GetViewTransform();
+    temp.proj = DEngine::GetCamMgr().GetProjectionTransform();
     
     // enable taa, jitter
-    if(sceneInfo->taa){
+    // 注意 glm 的 perspective 矩阵计算结果是列主导的
+    if(true){
         float sampleX = halton[2*jitterID];
         float sampleY = halton[2*jitterID+1];
-        glm::mat4 jitter = glm::mat4(1.0f);
-        jitter[0][3] = 2.0f*(sampleX - 0.5f) / (float)viewPortWidth;
-        jitter[1][3] = 2.0f*(sampleY - 0.5f) / (float)viewPortHeight;
-        temp.proj = glm::transpose(jitter * DEngine::GetCamMgr().GetProjectionTransform());
+        float jitterX = 2.0f * (sampleX - 0.5f) / (float)viewPortWidth;
+        float jitterY = 2.0f * (sampleY - 0.5f) / (float)viewPortHeight;
+        auto proj = DEngine::GetCamMgr().GetProjectionTransform();
+        proj[2][0] += jitterX;
+        proj[2][1] += jitterY;
+        temp.proj = proj;
     }
     
     temp.SMView = glm::transpose(tempLight);

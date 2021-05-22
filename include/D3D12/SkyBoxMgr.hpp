@@ -11,11 +11,7 @@ struct UploadResource {
 
 class SkyBoxMgr: public PassMgr {
 public:
-    SkyBoxMgr(ID3D12Device* device, 
-        ID3D12GraphicsCommandList*  commandList, 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu, 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu
-    );
+    SkyBoxMgr(ID3D12Device* device, ID3D12GraphicsCommandList*  commandList);
 public:
     void Init() override;
     void BuildPSO() override;
@@ -26,14 +22,12 @@ public:
     void Pass() override;
     void PrePass() override;
     void PostPass() override;
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetCubeMapSrv() { return cubemapSrvGpu;  }
 private:
     std::unique_ptr<UploadResource> skyTexture;
     std::unique_ptr<DMesh> skyMesh = nullptr;
 public:
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-
-    // 临时获取常量的接口
-    // @TODO: 放入 DEngine 或者全局 context 中
-    std::shared_ptr<ConstantMgr> constantMgr = nullptr;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cubemapSrvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvGpu;
 };

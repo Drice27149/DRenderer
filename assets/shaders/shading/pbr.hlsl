@@ -6,10 +6,10 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	float4x4 mvp = mul(mul(_model, _View), _Proj);
-
-	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
-	vout.worldPos = mul(float4(vin.vertex, 1.0f), _model).rgb;
+	// float4x4 mvp = mul(mul(_model, _View), _Proj);
+	float4x4 mvp = mul(mul(_Proj, _View), _model);
+	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
+	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;
 
 	float4x4 shadowMvp = mul(mul(_model, _SMView), _SMProj);
 	vout.clipPos = mul(float4(vin.vertex, 1.0f), shadowMvp);

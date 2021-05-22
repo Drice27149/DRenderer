@@ -1,12 +1,9 @@
 #include "SkyBoxMgr.hpp"
+#include "Graphics.hpp"
 
 SkyBoxMgr::SkyBoxMgr(ID3D12Device* device, 
-    ID3D12GraphicsCommandList*  commandList,
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu,
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu):
-    PassMgr(device, commandList),
-    srvCpu(srvCpu),
-    srvGpu(srvGpu)
+    ID3D12GraphicsCommandList*  commandList):
+    PassMgr(device, commandList)
 {
 }
 
@@ -107,9 +104,9 @@ void SkyBoxMgr::CreateResources()
         skyTexture->UploadHeap
         )
     );
-    // create shader resouce view to access it
+    // create shader resource view for ambient env cube map
     auto skyBox = skyTexture->Resource;
-    // assert(skyBox);
+    Graphics::heapMgr->GetNewSRV(cubemapSrvCpu, cubemapSrvGpu);
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Texture2D.MostDetailedMip = 0;
@@ -118,7 +115,7 @@ void SkyBoxMgr::CreateResources()
 	srvDesc.TextureCube.MipLevels = skyBox->GetDesc().MipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = skyBox->GetDesc().Format;
-	device->CreateShaderResourceView(skyBox.Get(), &srvDesc, srvCpu);
+	device->CreateShaderResourceView(skyBox.Get(), &srvDesc, cubemapSrvCpu);
     // load sky box mesh
     SkyBox skybox;
     skyMesh = std::make_unique<DMesh>();
@@ -141,10 +138,10 @@ void SkyBoxMgr::PrePass()
     commandList->IASetIndexBuffer(&skyMesh->IndexBufferView());
     commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    auto passAddr = constantMgr->GetCameraPassConstant();
+    auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
     commandList->SetGraphicsRootConstantBufferView(0, passAddr);
     // for now, no need to do model transform
-    commandList->SetGraphicsRootDescriptorTable(2, srvGpu);
+    commandList->SetGraphicsRootDescriptorTable(2, cubemapSrvGpu);
 }
 
 void SkyBoxMgr::PostPass()
