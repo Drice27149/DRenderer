@@ -28,6 +28,7 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->dirZ = 1.0;
     sceneInfo->taa = 0;
     sceneInfo->taaAlpha = 1.0;
+    sceneInfo->adaptedLum = 0.5;
 }
 
 void ConstantMgr::Update()
@@ -62,15 +63,13 @@ void ConstantMgr::UpdatePassConstants()
     temp.proj = DEngine::GetCamMgr().GetProjectionTransform();
     
     // enable taa, jitter
-    // ×¢Òâ glm µÄ perspective ¾ØÕó¼ÆËã½á¹ûÊÇÁÐÖ÷µ¼µÄ
-    if(true){
+    // ×¢ï¿½ï¿½ glm ï¿½ï¿½ perspective ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    if(sceneInfo->taa){
         float sampleX = halton[2*jitterID];
         float sampleY = halton[2*jitterID+1];
-        float jitterX = 2.0f * (sampleX - 0.5f) / (float)viewPortWidth;
-        float jitterY = 2.0f * (sampleY - 0.5f) / (float)viewPortHeight;
         auto proj = DEngine::GetCamMgr().GetProjectionTransform();
-        proj[2][0] += jitterX;
-        proj[2][1] += jitterY;
+        proj[2][0] += 2.0f * (sampleX - 0.5f) / (float)viewPortWidth;
+        proj[2][1] += 2.0f * (sampleY - 0.5f) / (float)viewPortHeight;
         temp.proj = proj;
     }
     

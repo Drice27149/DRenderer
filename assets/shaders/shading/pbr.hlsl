@@ -163,9 +163,4 @@ float4 PS(VertexOut pin) : SV_Target
 	outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
 	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr;
 	return float4(outColor, 1.0);
-	// uint NUM_SAMPLE = 64;
-	// float3 fd = diffuseIBL(normalize(normal), (1.0-metallic)*baseColor, NUM_SAMPLE);
-	// float3 fr = specularIBL(normalize(normal), normalize(_CamPos - pin.worldPos), baseColor, metallic, roughness, NUM_SAMPLE);
-	// return float4((fd + fr) * ao, 1.0);
-	// return gCubeMap.Sample(gsamLinear, normalize(pin.N));
 }

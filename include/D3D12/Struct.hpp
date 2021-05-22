@@ -13,7 +13,7 @@ struct PassUniform
     glm::mat4 SMView;
     glm::mat4 SMProj;
     glm::mat4 JProj;
-    // ×¢Òâ padding
+    // ×¢ï¿½ï¿½ padding
     glm::vec3 CamPos;
 };
 
@@ -68,6 +68,7 @@ struct SceneInfo {
     float envIntensity;
     int taa;
     float taaAlpha;
+    float adaptedLum;
     static std::vector<metaData> reflections;
 };
 

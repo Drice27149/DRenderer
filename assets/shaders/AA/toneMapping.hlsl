@@ -12,6 +12,7 @@ cbuffer SceneInfo: register(b0)
     float _envIntensity;
     int _taa;
     float _taaAlpha;
+    float _adapted_lum;
 };
 
 struct VertexIn
@@ -38,10 +39,25 @@ VertexOut VS(VertexIn vin, uint id: SV_VertexID)
     return vout;
 }
 
+float3 ACESToneMapping(float3 color, float adapted_lum)
+{
+	const float A = 2.51f;
+	const float B = 0.03f;
+	const float C = 2.43f;
+	const float D = 0.59f;
+	const float E = 0.14f;
+
+	color *= adapted_lum;
+	return (color * (A * color + B)) / (color * (C * color + D) + E);
+}
+
 float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
 {   
     int x = pos.x;
     int y = pos.y;
-    float4 color = gPixMap.Load(int3(x, y, 0));
-    return color;
+    float3 color = gPixMap.Load(int3(x, y, 0)).rgb;
+    color = ACESToneMapping(color, _adapted_lum);
+    float gamma = 2.2;
+    if(_taa) color = pow(color, 1.0/gamma);
+    return float4(color, 1.0);
 }

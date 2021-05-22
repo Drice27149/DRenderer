@@ -23,6 +23,7 @@ std::vector<metaData> SceneInfo::reflections =
     metaData("EnvInt", offsetof(SceneInfo, envIntensity), 1),
     metaData("TAA", offsetof(SceneInfo, taa), 0),
     metaData("TAA_Alpha", offsetof(SceneInfo, taaAlpha), 1),
+    metaData("ADapted_Lum", offsetof(SceneInfo, adaptedLum), 1),
 };
 
 std::vector<metaData> Object::reflection = 

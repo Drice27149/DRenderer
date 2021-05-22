@@ -217,7 +217,7 @@ void Graphics::Draw(const GameTimer& gt)
     // // DrawObjects(DrawType::Normal);
     DrawOpaque();
     // // place at last
-    // DrawSkyBox();
+    DrawSkyBox();
     // // debugvis
     // DrawLines();
 

@@ -31,13 +31,20 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 	
-	// Transform to homogeneous clip space.
-	float4x4 rotation = View;
-	for(int i = 0; i < 3; i++) rotation[3][i] = 0.0;
+	float4x4 temp;
+	for(int i = 0; i < 4; i++){
+		for(int j = 0; j < 4; j++){
+			if(i==3 || j==3) 
+				temp[i][j] = 0.0;
+			else
+				temp[i][j] = View[i][j];
+		}
+	}
+	temp[3][3] = 1.0;
 
-	float4x4 mvp = mul(/*mul(model, */rotation/*)*/, Proj);
+	float4x4 mvp = mul(Proj, temp);
 
-	vout.pos = mul(float4(vin.vertex, 1.0f), mvp);
+	vout.pos = mul(mvp, float4(vin.vertex, 1.0f)).xyww;
     vout.uv = vin.vertex;
     return vout;
 }
