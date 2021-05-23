@@ -2,10 +2,12 @@
 #include "define.hlsl"
 
 // NoH: n dot h, a: alpha (roughness?)
-float D_GGX(float NoH, float a) {
-    float a2 = a * a;
-    float f = (NoH * a2 - NoH) * NoH + 1.0;
-    return a2 / (PI * f * f);
+float D_GGX(float NoH, float roughness) {
+    float oneMinusNoHSquared = 1.0 - NoH * NoH;
+    float a = NoH * roughness;
+    float k = roughness / (oneMinusNoHSquared + a * a);
+    float d = k * k * (1.0 / PI);
+    return d;
 }
 
 vec3 F_Schlick(float u, vec3 f0) {
@@ -59,8 +61,8 @@ float3 BRDF_Faliment(float3 N, float3 V, float3 L, float3 baseColor, float metal
     // UE4: roughness = pow(roughness, 4)
     roughness = roughness * roughness;
     // UE4: 0.04 -> 0.08
-    float3 f0 = lerp(float3(0.08, 0.08, 0.08), baseColor, metallic);
-    float3 diffuseColor = (1.0 - metallic)*baseColor;
+    float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
+    float3 diffuseColor = (1.0 - metallic) * baseColor;
 
     float D = D_GGX(NoH, roughness);
     float3 F = F_Schlick(LoH, f0);
@@ -71,5 +73,5 @@ float3 BRDF_Faliment(float3 N, float3 V, float3 L, float3 baseColor, float metal
     // diffuse BRDF
     vec3 Fd = diffuseColor * Fd_Lambert();
     // apply lighting...
-    return (Fd + Fr);
+    return Fd + Fr;
 }

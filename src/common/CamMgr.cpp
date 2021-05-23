@@ -18,7 +18,7 @@ void CamMgr::MoveCam(float dx, float dy)
 
 void CamMgr::RotateCam(float dx, float dy)
 {
-    camera.rotatePitch(-dy);
+    camera.rotatePitch(dy);
     camera.rotateYaw(dx);
 }
 

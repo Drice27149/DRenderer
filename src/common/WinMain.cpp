@@ -99,7 +99,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         hulk->pitch = 90;
         hulk->yaw = 180;
         hulk->mask = 0;
-        objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", hulk));
+        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
 
         auto WorkFunc = [](int64_t id)->void{
             auto& job = objJobs[id];

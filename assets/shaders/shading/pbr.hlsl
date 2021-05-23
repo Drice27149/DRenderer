@@ -131,7 +131,7 @@ float3 DirectLight(float3 N, float3 V, float3 L, float3 baseColor, float roughne
 	{
 		return float3(0.0, 0.0, 0.0);
 	}
-	float3 lighting = BRDF_Faliment(N, V, L, baseColor, roughness, metallic) * NoL;
+	float3 lighting = BRDF_Faliment(N, V, L, baseColor, metallic, roughness) * NoL;
 	return lighting;
 }
 
@@ -140,6 +140,7 @@ float4 PS(VertexOut pin) : SV_Target
 	// float3 color = float3(1.0, 1.0, 1.0);
 	// color = color * dot(normalize(pin.N),normalize(GetLightDir()));
 	float3 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv).rgb;
+	baseColor = pow(baseColor, 2.2);
 	float ao = gMetallicMap.Sample(gsamLinear, pin.uv).r;
 	float roughness = gMetallicMap.Sample(gsamLinear, pin.uv).g;
 	float metallic = gMetallicMap.Sample(gsamLinear, pin.uv).b;
@@ -154,9 +155,9 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 V = normalize(_CamPos - pin.worldPos);
 	float3 L = normalize(float3(_MainLightDirX, _MainLightDirY, _MainLightDirZ));
 
-	baseColor = float3(1.0, 1.0, 1.0);
-	roughness = _roughness;
-	metallic = _metallic;
+	// baseColor = float3(1.0, 1.0, 1.0);
+	// roughness = _roughness;
+	// metallic = _metallic;
 
 	float3 outColor = float3(0.0, 0.0, 0.0);
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
