@@ -154,9 +154,9 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 V = normalize(_CamPos - pin.worldPos);
 	float3 L = normalize(float3(_MainLightDirX, _MainLightDirY, _MainLightDirZ));
 
-	// baseColor = float3(1.0, 1.0, 1.0);
-	// roughness = _roughness;
-	// metallic = _metallic;
+	baseColor = float3(1.0, 1.0, 1.0);
+	roughness = _roughness;
+	metallic = _metallic;
 
 	float3 outColor = float3(0.0, 0.0, 0.0);
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;

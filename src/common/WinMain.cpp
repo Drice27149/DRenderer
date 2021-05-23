@@ -35,8 +35,8 @@ std::vector<metaData> Object::reflection =
     metaData("pitch",offsetof(Object, pitch), 1),
     metaData("yaw",offsetof(Object, yaw), 1),
     metaData("roll",offsetof(Object, roll), 1),
-    metaData("metallic", offsetof(Object, metallic), 1),
     metaData("roughness", offsetof(Object, roughness), 1),
+    metaData("metallic", offsetof(Object, metallic), 1),
 };
 
 // temporal, sorry..
@@ -99,7 +99,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         hulk->pitch = 90;
         hulk->yaw = 180;
         hulk->mask = 0;
-        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
+        objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", hulk));
 
         auto WorkFunc = [](int64_t id)->void{
             auto& job = objJobs[id];
