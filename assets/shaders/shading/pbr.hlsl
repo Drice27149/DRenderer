@@ -11,13 +11,13 @@ VertexOut VS(VertexIn vin)
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;
 
-	float4x4 shadowMvp = mul(mul(_model, _SMView), _SMProj);
-	vout.clipPos = mul(float4(vin.vertex, 1.0f), shadowMvp);
+	float4x4 shadowMvp = mul(mul(_SMProj, _SMView), _model);
+	vout.clipPos = mul(shadowMvp, float4(vin.vertex, 1.0f));
 	// uv
 	vout.uv = vin.texcoord;
-	// 要转直接在这里转了, worldSpace
-    vout.T = mul(float4(vin.tangent, 0.0), _model).rgb;
-	vout.N = mul(float4(vin.normal, 0.0), _model).rgb;
+	// in worldspace
+    vout.T = mul(_model, float4(vin.tangent, 0.0)).rgb;
+	vout.N = mul(_model, float4(vin.normal, 0.0)).rgb;
 	// vout.T = vin.tangent;
 	// vout.N = vin.normal;
     return vout;
@@ -28,8 +28,8 @@ float3 tangentToWorldNormal(float3 normal, float3 N, float3 T)
 	N = normalize(N);
     T = normalize(T - dot(T, N)*(N));
     float3 B = cross(N, T);
-    float3x3 TBN = float3x3(T, B, N);
-	return normalize(mul(normal, TBN));
+    float3x3 TBN = transpose(float3x3(T, B, N));
+	return normalize(mul(TBN, normal));
 }
 
 float3 GetLightDir()

@@ -27,7 +27,7 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->dirY = 1.0;
     sceneInfo->dirZ = 1.0;
     sceneInfo->taa = 0;
-    sceneInfo->taaAlpha = 1.0;
+    sceneInfo->taaAlpha = 0.05;
     sceneInfo->adaptedLum = 0.5;
 }
 
@@ -89,7 +89,7 @@ void ConstantMgr::UpdateObjConstants()
     int index = 0;
     for(Object* obj: DEngine::gobjs){
         ObjectUniform temp;
-        temp.model = glm::transpose(obj->GetModelTransform());
+        temp.model = obj->GetModelTransform();
         temp.id = obj->id;
         temp.mask = obj->mask;
         temp.metallic = obj->metallic;

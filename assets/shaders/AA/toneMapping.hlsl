@@ -58,6 +58,6 @@ float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
     float3 color = gPixMap.Load(int3(x, y, 0)).rgb;
     color = ACESToneMapping(color, _adapted_lum);
     float gamma = 2.2;
-    if(_taa) color = pow(color, 1.0/gamma);
+    color = pow(color, 1.0/gamma);
     return float4(color, 1.0);
 }

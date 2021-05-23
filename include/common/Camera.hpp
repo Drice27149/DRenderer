@@ -7,7 +7,7 @@
 // TODO: 左键位移, 右键旋转
 class Camera {
 public:
-    Camera(vec3 origin = vec3(0, 100, 400)/*vec3(0, 3, 12)*/, float rSpeed = 0.1f, float mSpeed = 1.0f);
+    Camera(vec3 origin = vec3(450, 450, 500)/*vec3(0, 3, 12)*/, float rSpeed = 0.1f, float mSpeed = 100.0f);
     void moveX(float direciton); 
     void moveY(float direction); 
     void moveZ(float direction); 
@@ -19,7 +19,9 @@ public:
     void SetRSpeed(float speed);
     mat4 getCamTransform();
     vec3 getOrigin();
-private:
+    void zoom(float dir);
+    void updatePosition();
+public:
     vec3 firstGaze;
     vec3 origin;
     vec3 gaze;
@@ -28,4 +30,7 @@ private:
     float pitch;
     float moveSpeed;
     float rotateSpeed;
+    float radius;
+    vec3 position;
+    vec3 offset;
 };

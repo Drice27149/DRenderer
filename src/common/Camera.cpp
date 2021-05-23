@@ -1,36 +1,65 @@
 #include "Camera.hpp"
+#include <cmath>
 
 Camera::Camera(vec3 origin, float rotateSpeed, float moveSpeed):
 origin(origin), rotateSpeed(rotateSpeed), moveSpeed(moveSpeed)
 {
-    yaw = -90.0;
-    pitch = 0.0;
+    yaw = 90.0;
+    pitch = 30.0;
+    radius = sqrt(glm::dot(origin, origin));
+    position = origin;
+    offset = vec3(0.0, 0.0, 0.0);
 }
 
 void Camera::moveX(float direction){
-    updateDirection();
-    vec3 hv = glm::normalize(glm::cross(up, gaze));
-    origin += hv * direction * moveSpeed;
-    
+    offset.x += direction;
 }
 
 void Camera::moveY(float direction){
-    updateDirection();
-    origin += up * direction * moveSpeed;
+    offset.y += direction;
 }
 
 void Camera::moveZ(float direction){
-    updateDirection();
-    origin += gaze * direction * moveSpeed;
+    offset.z += direction;
 }
 
 void Camera::rotate(float dx, float dy){
-
 }
 
 mat4 Camera::getCamTransform(){
-    updateDirection();
-    return glm::lookAt(origin, origin + gaze, up);
+    updatePosition();
+    vec3 z = glm::normalize(position);
+    vec3 y = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
+    vec3 x = glm::normalize(glm::cross(y, z));
+    vec3 realY = glm::normalize(glm::cross(z, x));
+    glm::mat4 res =  glm::lookAt(position, glm::vec3(0.0, 0.0, 0.0), realY);
+    res = glm::translate(res, offset);
+    return res;
+}
+
+void Camera::updateDirection(){
+    gaze.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    gaze.y = sin(glm::radians(pitch));
+    gaze.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    gaze = glm::normalize(gaze);
+    vec3 worldUp = glm::normalize(glm::vec3(0, 1.0f, 0));
+    vec3 right = glm::normalize(glm::cross(gaze, worldUp));
+    up = glm::normalize(glm::cross(right, gaze));
+}
+
+vec3 Camera::getOrigin(){
+    updatePosition();
+    return position;
+}
+
+void Camera::SetMSpeed(float speed)
+{
+    this->moveSpeed = speed;
+}
+
+void Camera::SetRSpeed(float speed)
+{
+    this->rotateSpeed = speed;
 }
 
 void Camera::rotatePitch(float delta){
@@ -45,27 +74,15 @@ void Camera::rotateYaw(float delta){
     yaw += delta * rotateSpeed;
 }
 
-void Camera::updateDirection(){
-    gaze.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    gaze.y = sin(glm::radians(pitch));
-    gaze.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    gaze = glm::normalize(gaze);
-    vec3 worldUp = glm::normalize(glm::vec3(0, 1.0f, 0));
-    vec3 right = glm::normalize(glm::cross(gaze, worldUp));
-    up = glm::normalize(glm::cross(right, gaze));
-}
-
-vec3 Camera::getOrigin(){
-    updateDirection();
-    return origin;
-}
-
-void Camera::SetMSpeed(float speed)
+void Camera::zoom(float dir)
 {
-    this->moveSpeed = speed;
+    radius += dir*moveSpeed;
 }
 
-void Camera::SetRSpeed(float speed)
+void Camera::updatePosition()
 {
-    this->rotateSpeed = speed;
+    position.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    position.y = sin(glm::radians(pitch));
+    position.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    position = glm::normalize(position) * radius;
 }

@@ -114,6 +114,20 @@ void GUIMgr::Update()
         ImGui::TreePop();
     }
 
+    if(ImGui::TreeNode("debug cam")){
+        float x = DEngine::GetCamMgr().GetCamera().position.x;
+        float y = DEngine::GetCamMgr().GetCamera().position.y; 
+        float z = DEngine::GetCamMgr().GetCamera().position.z;
+        float pitch = DEngine::GetCamMgr().GetCamera().pitch;
+        float yaw = DEngine::GetCamMgr().GetCamera().yaw;
+        ImGui::Text(Float2String(x,3).c_str());
+        ImGui::Text(Float2String(y,3).c_str());
+        ImGui::Text(Float2String(z,3).c_str());
+        ImGui::Text(Float2String(pitch,3).c_str());
+        ImGui::Text(Float2String(yaw,3).c_str());
+        ImGui::TreePop();
+    }
+
     ImGui::Text(recieve.c_str());
     
     ImGui::End();
