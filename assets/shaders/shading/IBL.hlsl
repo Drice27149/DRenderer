@@ -38,6 +38,7 @@ float3 diffuseIBL(float3 normal, float3 diffuseColor, uint NUM_SAMPLES)
     {
         float2 rand_value = hammersley2D(i, NUM_SAMPLES);
         float3 sample_dir = mul(hemisphereSample(rand_value[0], rand_value[1]), tangentSpace);
+
         irradiance += gCubeMap.Sample(gsamLinear, normalize(sample_dir)).rgb;
     }
     // 由于是重要性采样, pdf和NoL已经被消掉了, 所以 baseColor 不用除以 pi, 也不用乘上NoL
@@ -69,8 +70,8 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
     for(int i = 0; i < NUM_SAMPLES; i++)
     {
         float2 rand_value = hammersley2D(i, NUM_SAMPLES);
-        float3 H = mul(hemisphereSampleGGX(rand_value[0], rand_value[1], roughness), tangentSpace);
-        float3 L = 2 * dot( V, H ) * H - V;
+        float3 H = normalize(mul(hemisphereSampleGGX(rand_value[0], rand_value[1], roughness), tangentSpace));
+        float3 L = normalize(2 * dot( V, H ) * H - V);
         float NoV = saturate( dot( N, V ) );
         float NoL = saturate( dot( N, L ) );
         float NoH = saturate( dot( N, H ) );
@@ -79,12 +80,12 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
         if( NoL > 0 )
         {
             float3 SampleColor = gCubeMap.Sample(gsamLinear, normalize(L)).rgb;
-            float F = F_Schlick(LoH, f0);
-            float V = V_SmithGGXCorrelated(NoV, NoL, a);
+            float3 F = F_Schlick(LoH, f0);
+            float Vis = V_SmithGGXCorrelated(NoV, NoL, a);
             // Incident light = SampleColor * NoL
             // Microfacet specular = D*F*V
             // pdf = D * NoH / (4 * VoH)
-            irradiance += 4.0 * VoH * SampleColor * NoL * F * V  / NoH;
+            irradiance += 4.0 * VoH * SampleColor * NoL * F * Vis  / NoH;
         }
     }
 
@@ -93,7 +94,7 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
 
 float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
-	uint NUM_SAMPLE = 256;
+	uint NUM_SAMPLE = 512;
 	float3 fd = diffuseIBL(N, (1.0-metallic)*baseColor, NUM_SAMPLE);
 	float3 fr = specularIBL(N, V, baseColor, metallic, roughness, NUM_SAMPLE);
 	return fd + fr;

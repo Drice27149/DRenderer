@@ -21,8 +21,8 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     }
 
     sceneInfo = std::make_shared<SceneInfo>();
-    sceneInfo->envIntensity = 0.0;
-    sceneInfo->lightIntensity = 1.0;
+    sceneInfo->envIntensity = 1.0;
+    sceneInfo->lightIntensity = 0.0;
     sceneInfo->dirX = -1.0;
     sceneInfo->dirY = 1.0;
     sceneInfo->dirZ = 1.0;

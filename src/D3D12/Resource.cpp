@@ -389,7 +389,7 @@ void Resource::BuildUAV(unsigned int elements, unsigned int size, bool haveCount
 	md3dDevice->CreateUnorderedAccessView(mResource.Get(), CntResource?CntResource.Get():nullptr, &uavDesc, srvCpu);
 }
 
-void Resource::BuildTextureResource(std::string fn)
+void Resource::BuildTextureResource(std::string fn, D3D12_SRV_DIMENSION dim)
 {
 	std::wstring wstringFn = std::wstring(fn.begin(), fn.end());
 	const wchar_t* wcharFn = wstringFn.c_str();
@@ -422,7 +422,7 @@ void Resource::BuildTextureResource(std::string fn)
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = mResource->GetDesc().Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.ViewDimension = dim; // D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = mResource->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
@@ -451,6 +451,7 @@ void Resource::AppendTexture2DSRV(unsigned int width, unsigned int height, DXGI_
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(mResource.Get(), &srvDesc, srvCpu);
 }
+
 
 
 
