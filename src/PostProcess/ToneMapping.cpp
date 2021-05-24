@@ -27,6 +27,8 @@ void ToneMapping::PrePass()
     Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
     Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, input);
+    auto bloomBlur = Graphics::bloom->GetBloomSrvGpu();
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(2, bloomBlur);
 }
 
 void ToneMapping::PostPass()

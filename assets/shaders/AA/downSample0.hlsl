@@ -65,8 +65,8 @@ float4 PS(VertexOut pin, float4 pos: SV_POSITION) : SV_TARGET
     uint y = pos.y;
     float3 sum = weight[0] * gPixMap.Load(int3(x, y, 0)).rgb;
     for(int i = 1; i < 5; i++){
-        sum += weight[i] * gPixMap.Load(int3(x, y+i, 0)).rgb;
-        sum += weight[i] * gPixMap.Load(int3(x, y-i, 0)).rgb;
+        sum += weight[i] * gPixMap.Load(int3(x+i, y, 0)).rgb;
+        sum += weight[i] * gPixMap.Load(int3(x-i, y, 0)).rgb;
     }
     return float4(sum, 1.0);
 }

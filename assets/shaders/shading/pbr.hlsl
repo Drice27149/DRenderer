@@ -162,6 +162,6 @@ float4 PS(VertexOut pin) : SV_Target
 	float3 outColor = float3(0.0, 0.0, 0.0);
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
 	outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
-	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr;
+	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 10.0;
 	return float4(outColor, 1.0);
 }

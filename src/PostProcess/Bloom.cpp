@@ -15,7 +15,7 @@ void Bloom::CreateResources()
     // @TODO: resource manager, after post process done and color grading with filament done
     unsigned int width = Graphics::viewPortWidth;
     unsigned int height = Graphics::viewPortHeight;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         Graphics::heapMgr->GetNewRTV(rtvCpu[i], rtvGpu[i]);
         Graphics::heapMgr->GetNewSRV(srvCpu[i], srvGpu[i]);
         downSampleRT[i] = std::make_unique<Resource>(Graphics::GDevice, Graphics::GCmdList);
@@ -27,10 +27,12 @@ void Bloom::CreateResources()
 
 void Bloom::CompileShaders()
 {
-    vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "VS", "vs_5_1");
-    ps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "PS", "ps_5_1");
-    fvs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "VS", "vs_5_1");
-    fps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "PS", "ps_5_1");
+    vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "VS", "vs_5_1");
+    ps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "PS", "ps_5_1");
+    xvs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "VS", "vs_5_1");
+    xps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "PS", "ps_5_1");
+    yvs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample0.hlsl", nullptr, "VS", "vs_5_1");
+    yps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample0.hlsl", nullptr, "PS", "ps_5_1");
 }
 
 void Bloom::PrePass()
@@ -44,19 +46,20 @@ void Bloom::PostPass()
 
 void Bloom::BloomPass()
 {
-    Graphics::GCmdList->SetPipelineState(fpso.Get());
+    Graphics::GCmdList->SetPipelineState(pso.Get());
     Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
     Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, input);
 
     BloomLoop(0);
 
-    Graphics::GCmdList->SetPipelineState(pso.Get());
     Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
     Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, srvGpu[0]);
 
-    for (int i = 1; i < 4; i++) {
+    for (int i = 1; i < 3; i++) {
+        if(i%2) Graphics::GCmdList->SetPipelineState(xpso.Get());
+        else Graphics::GCmdList->SetPipelineState(ypso.Get());
         BloomLoop(i);
     }
 }
@@ -84,7 +87,12 @@ void Bloom::BloomLoop(unsigned int i)
 void Bloom::BuildPSO()
 {
     PostProcess::BuildPSO();
+    BuildBloomPSO(xvs, xps, xpso);
+    BuildBloomPSO(yvs, yps, ypso);
+}
 
+void Bloom::BuildBloomPSO(ComPtr<ID3DBlob>& newVs, ComPtr<ID3DBlob>& newPs, ComPtr<ID3D12PipelineState>& newpso)
+{
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
     ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
     psoDesc.InputLayout = { inputLayout.data(), (unsigned int)inputLayout.size() };
@@ -109,14 +117,14 @@ void Bloom::BuildPSO()
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.VS =
     {
-        reinterpret_cast<BYTE*>(fvs->GetBufferPointer()),
-        fvs->GetBufferSize()
+        reinterpret_cast<BYTE*>(newVs->GetBufferPointer()),
+        newVs->GetBufferSize()
     };
     psoDesc.GS = { nullptr, 0 };
     psoDesc.PS =
     {
-        reinterpret_cast<BYTE*>(fps->GetBufferPointer()),
-        fps->GetBufferSize()
+        reinterpret_cast<BYTE*>(newPs->GetBufferPointer()),
+        newPs->GetBufferSize()
     };
-    ThrowIfFailed(Graphics::GDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&fpso)));
+    ThrowIfFailed(Graphics::GDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&newpso)));
 }

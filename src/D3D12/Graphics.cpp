@@ -167,7 +167,7 @@ void Graphics::InitPassMgrs()
     temporalAA->Init();
     // tone map
     toneMapping = std::make_shared<ToneMapping>();
-    toneMapping->inputs.resize(1);
+    toneMapping->inputs.resize(2);
     toneMapping->Init();
     // bloom
     bloom = std::make_shared<Bloom>();

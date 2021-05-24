@@ -94,16 +94,16 @@ void SkyBoxMgr::CompileShaders()
 
 void SkyBoxMgr::CreateResources()
 {
-     // load cube map first
-     skyTexture = std::make_unique<UploadResource>(); 
-     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
-         device,
-         commandList,
-         L"..\\assets\\models\\cubeMap\\output_skybox.dds", 
-         skyTexture->Resource, 
-         skyTexture->UploadHeap
-         )
-     );
+    // load cube map first
+    skyTexture = std::make_unique<UploadResource>(); 
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
+        device,
+        commandList,
+        L"..\\assets\\envs\\pillars.dds", 
+        skyTexture->Resource, 
+        skyTexture->UploadHeap
+        )
+    );
     // create shader resource view for ambient env cube map
     auto skyBox = skyTexture->Resource;
     Graphics::heapMgr->GetNewSRV(cubemapSrvCpu, cubemapSrvGpu);
@@ -130,7 +130,6 @@ void SkyBoxMgr::Pass()
 
 void SkyBoxMgr::PrePass()
 {
-    
     commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSig.Get());
 

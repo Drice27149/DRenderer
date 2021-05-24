@@ -1,4 +1,5 @@
 Texture2D gPixMap: register(t0);
+Texture2D bloomBlur: register(t1);
 
 cbuffer SceneInfo: register(b0)
 {
@@ -13,6 +14,7 @@ cbuffer SceneInfo: register(b0)
     int _taa;
     float _taaAlpha;
     float _adapted_lum;
+    int _bloom;
 };
 
 struct VertexIn
@@ -56,6 +58,9 @@ float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
     int x = pos.x;
     int y = pos.y;
     float3 color = gPixMap.Load(int3(x, y, 0)).rgb;
+    if(_bloom){
+        color += bloomBlur.Load(int3(x, y, 0)).rgb;
+    }
     color = ACESToneMapping(color, _adapted_lum);
     float gamma = 2.2;
     color = pow(color, 1.0/gamma);

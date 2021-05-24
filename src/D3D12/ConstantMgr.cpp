@@ -29,7 +29,8 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->taa = 0;
     sceneInfo->taaAlpha = 0.05;
     sceneInfo->adaptedLum = 0.5;
-    sceneInfo->threshold = 1000.0;
+    sceneInfo->threshold = 1.0;
+    sceneInfo->bloom = 0;
 }
 
 void ConstantMgr::Update()
