@@ -440,7 +440,7 @@ void Resource::AppendTexture2DUAV(unsigned int width, unsigned int height, DXGI_
 	md3dDevice->CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc, uavCpu);
 }
 
-void Resource::AppendTexture2DSRV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu)
+void Resource::AppendTexture2DSRV(DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu)
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

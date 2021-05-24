@@ -19,6 +19,7 @@
 #include "AAMgr.hpp"
 #include "TemporalAA.hpp"
 #include "ToneMapping.hpp"
+#include "Bloom.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -91,8 +92,11 @@ public:
     static std::shared_ptr<AAMgr> aaMgr;
     static std::shared_ptr<TemporalAA> temporalAA;
     static std::shared_ptr<ToneMapping> toneMapping;
+    static std::shared_ptr<Bloom> bloom;
 public:
     static ID3D12Device* GDevice;
     static ID3D12GraphicsCommandList* GCmdList;
+    static unsigned int viewPortWidth;
+    static unsigned int viewPortHeight;
 };
 

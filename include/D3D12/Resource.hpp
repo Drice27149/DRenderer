@@ -86,7 +86,7 @@ public:
 	void BuildTextureResource(std::string fn, D3D12_SRV_DIMENSION = D3D12_SRV_DIMENSION_TEXTURE2D);
 	void BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool enableDepth);
 	void AppendTexture2DUAV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpu);
-	void AppendTexture2DSRV(unsigned int width, unsigned int height, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu);
+	void AppendTexture2DSRV(DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu);
 	void BuildRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format);
 	void AppendTexture2DRTV(DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu);
 };

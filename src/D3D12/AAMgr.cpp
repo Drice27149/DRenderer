@@ -97,9 +97,9 @@ void AAMgr::CreateResources()
     heapMgr->GetNewRTV(rtvCpu, rtvGpu);
     InRTV->srvCpu = rtvCpu;
     InRTV->srvGpu = rtvGpu;
-    InRTV->BuildRenderTarget(sWidth, sHeight, DXGI_FORMAT_R8G8B8A8_UNORM, false);
+    InRTV->BuildRenderTarget(sWidth, sHeight, DXGI_FORMAT_R32G32B32A32_FLOAT, false);
     heapMgr->GetNewSRV(inSrvCpu, inSrvGpu);
-    InRTV->AppendTexture2DSRV(sWidth, sHeight, DXGI_FORMAT_R8G8B8A8_UNORM, inSrvCpu);
+    InRTV->AppendTexture2DSRV(DXGI_FORMAT_R32G32B32A32_FLOAT, inSrvCpu);
 
     // real rtv
     for(int i = 0; i < 3; i++){
@@ -107,9 +107,9 @@ void AAMgr::CreateResources()
         heapMgr->GetNewRTV(rtRtvCpu[i], rtRtvGpu[i]);
         heapMgr->GetNewSRV(rtSrvCpu[i], rtSrvGpu[i]);
         // @TODO hdr support
-        renderTarget[i]->BuildRenderTarget(width, height, DXGI_FORMAT_R8G8B8A8_UNORM);
-        renderTarget[i]->AppendTexture2DRTV(DXGI_FORMAT_R8G8B8A8_UNORM, rtRtvCpu[i]);
-        renderTarget[i]->AppendTexture2DSRV(width, height, DXGI_FORMAT_R8G8B8A8_UNORM, rtSrvCpu[i]);
+        renderTarget[i]->BuildRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
+        renderTarget[i]->AppendTexture2DRTV(DXGI_FORMAT_R32G32B32A32_FLOAT, rtRtvCpu[i]);
+        renderTarget[i]->AppendTexture2DSRV(DXGI_FORMAT_R32G32B32A32_FLOAT, rtSrvCpu[i]);
     }
 
     depthMap = std::make_shared<Resource>(device, sWidth, sHeight);

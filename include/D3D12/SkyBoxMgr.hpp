@@ -26,7 +26,6 @@ public:
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE GetCubeMapSrv() { return cubemapSrvGpu;  }
 private:
-    std::unique_ptr<Resource> skyResource;
     std::unique_ptr<UploadResource> skyTexture;
     std::unique_ptr<DMesh> skyMesh = nullptr;
 public:

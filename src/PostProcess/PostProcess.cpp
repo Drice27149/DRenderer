@@ -1,5 +1,6 @@
 #include "PostProcess.hpp" 
 #include "Graphics.hpp"
+#include "Struct.hpp"
 
 void PostProcess::BuildRootSig()
 {
@@ -12,12 +13,12 @@ void PostProcess::BuildRootSig()
         params[i+1].InitAsDescriptorTable(1, &(srvTable[i]), D3D12_SHADER_VISIBILITY_PIXEL);
     }
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(paramsCnt+1, params, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    auto staticSamplers = GetStaticSamplers();
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(paramsCnt + 1, params, (UINT)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
 
 	if(errorBlob != nullptr)
 	{
@@ -46,7 +47,7 @@ void PostProcess::BuildPSO()
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
     psoDesc.SampleDesc.Count = 1;
     psoDesc.SampleDesc.Quality = 0;
     psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;

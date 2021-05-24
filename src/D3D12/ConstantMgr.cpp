@@ -29,6 +29,7 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->taa = 0;
     sceneInfo->taaAlpha = 0.05;
     sceneInfo->adaptedLum = 0.5;
+    sceneInfo->threshold = 1000.0;
 }
 
 void ConstantMgr::Update()
@@ -63,7 +64,6 @@ void ConstantMgr::UpdatePassConstants()
     temp.proj = DEngine::GetCamMgr().GetProjectionTransform();
     
     // enable taa, jitter
-    // ע�� glm �� perspective �������������������
     if(sceneInfo->taa){
         float sampleX = halton[2*jitterID];
         float sampleY = halton[2*jitterID+1];

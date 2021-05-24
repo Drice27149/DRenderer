@@ -94,22 +94,18 @@ void SkyBoxMgr::CompileShaders()
 
 void SkyBoxMgr::CreateResources()
 {
-    // load cube map first
-    // skyTexture = std::make_unique<UploadResource>(); 
-    // ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
-    //     device,
-    //     commandList,
-    //     L"..\\assets\\models\\cubeMap\\stdcube.dds", 
-    //     skyTexture->Resource, 
-    //     skyTexture->UploadHeap
-    //     )
-    // );
-    skyResource = std::make_unique<Resource>(Graphics::GDevice, Graphics::GCmdList);
-    skyResource->srvCpu = cubemapSrvCpu;
-    skyResource->srvGpu = cubemapSrvGpu;
-    skyResource->BuildTextureResource("../assets/models/cubeMap/stdcube.dds", D3D12_SRV_DIMENSION_TEXTURECUBE);
+     // load cube map first
+     skyTexture = std::make_unique<UploadResource>(); 
+     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
+         device,
+         commandList,
+         L"..\\assets\\models\\cubeMap\\output_skybox.dds", 
+         skyTexture->Resource, 
+         skyTexture->UploadHeap
+         )
+     );
     // create shader resource view for ambient env cube map
-    auto skyBox = skyResource->mResource;
+    auto skyBox = skyTexture->Resource;
     Graphics::heapMgr->GetNewSRV(cubemapSrvCpu, cubemapSrvGpu);
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

@@ -69,6 +69,7 @@ struct SceneInfo {
     int taa;
     float taaAlpha;
     float adaptedLum;
+    float threshold;
     static std::vector<metaData> reflections;
 };
 

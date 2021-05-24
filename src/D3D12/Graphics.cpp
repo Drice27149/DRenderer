@@ -24,19 +24,20 @@ bool Graphics::Initialize()
 		
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+    GDevice = md3dDevice.Get();
+    GCmdList = mCommandList.Get();
+    viewPortWidth = mClientWidth;
+    viewPortHeight = mClientHeight;
+
     // build it before texture loading
     BuildDescriptorHeaps();
-
     UploadMeshes();
     UploadTextures();
-
     InitPassMgrs();
-
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
     // Wait until initialization is complete.
     FlushCommandQueue();
 
@@ -67,8 +68,6 @@ void Graphics::UploadTextures()
 
 void Graphics::InitPassMgrs()
 {
-    GDevice = md3dDevice.Get();
-    GCmdList = mCommandList.Get();
     // 常量 (uniform) 管理类
     // @TODO: pass count 准确化
     // @TODO: Mgr 共享context
@@ -170,6 +169,10 @@ void Graphics::InitPassMgrs()
     toneMapping = std::make_shared<ToneMapping>();
     toneMapping->inputs.resize(1);
     toneMapping->Init();
+    // bloom
+    bloom = std::make_shared<Bloom>();
+    bloom->inputs.resize(2);
+    bloom->Init();
 }
 
 void Graphics::OnResize()
@@ -233,6 +236,12 @@ void Graphics::Draw(const GameTimer& gt)
     }
 
     aaMgr->EndTAA();
+
+    if (constantMgr->GetSceneInfo()->taa)
+        bloom->input = aaMgr->GetTAAResult();
+    else
+        bloom->input = aaMgr->GetCurRTSRV();
+    bloom->BloomPass();
 
     // draw to screen
     // transition first

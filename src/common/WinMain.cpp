@@ -24,6 +24,7 @@ std::vector<metaData> SceneInfo::reflections =
     metaData("TAA", offsetof(SceneInfo, taa), 0),
     metaData("TAA_Alpha", offsetof(SceneInfo, taaAlpha), 1),
     metaData("ADapted_Lum", offsetof(SceneInfo, adaptedLum), 1),
+    metaData("Threshold", offsetof(SceneInfo, threshold), 1),
 };
 
 std::vector<metaData> Object::reflection = 
@@ -42,6 +43,8 @@ std::vector<metaData> Object::reflection =
 // temporal, sorry..
 ID3D12Device* Graphics::GDevice = nullptr;
 ID3D12GraphicsCommandList* Graphics::GCmdList = nullptr;
+unsigned int Graphics::viewPortWidth;
+unsigned int Graphics::viewPortHeight;
 
 std::shared_ptr<ConstantMgr> Graphics::constantMgr = nullptr;
 std::shared_ptr<HeapMgr> Graphics::heapMgr = nullptr;
@@ -57,6 +60,7 @@ std::shared_ptr<GUIMgr> Graphics::guiMgr = nullptr;
 std::shared_ptr<AAMgr> Graphics::aaMgr = nullptr;
 std::shared_ptr<TemporalAA> Graphics::temporalAA = nullptr;
 std::shared_ptr<ToneMapping> Graphics::toneMapping = nullptr;
+std::shared_ptr<Bloom> Graphics::bloom = nullptr;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
