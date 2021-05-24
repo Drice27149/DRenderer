@@ -58,22 +58,28 @@ float Luminance(float3 c)
     return 0.299*c.r + 0.587*c.g + 0.114*c.b;
 }
 
-float4 PS(VertexOut pin, float4 pos: SV_POSITION): SV_TARGET
-{   
-    uint dx;
-    uint dy;
-    gPixMap.GetDimensions(dx, dy);
-    int x = pos.x*2;
-    int y = pos.y*2;
+float4 PS(VertexOut pin, float4 pos: SV_POSITION) : SV_TARGET
+{
+    float3 orgC = gPixMap.Load(int3(pos.x, pos.y, 0)).rgb;
+    if(Luminance(orgC) >= 1.0) // magic number
+        return float4(orgC, 1.0);
+    uint x = pos.x;
+    uint y = pos.y;
+    uint width;
+    uint height;
+    gPixMap.GetDimensions(width, height);
     float3 sum = float3(0.0, 0.0, 0.0);
-    for(int i = 0; i < 2; i++){
-        for(int j = 0; j < 2; j++){
-            float3 color = gPixMap.Load(int3(x+i, y+j, 0)).rgb;
-            if(Luminance(color) >= _threshold || dx!=860){
-                sum += color;
+    for (int i = -5; i <= 5; i++) {
+        for (int j = -5; j <= 5; j++) {
+            int r = x + i;
+            int c = y + j;
+            if (r > 0 && r < width && c>0 && c < height) {
+                float3 color = gPixMap.Load(int3(r, c, 0)).rgb;
+                // sum += color;
+                float dis = abs(i) + abs(j) + 0.25;
+                sum += color / dis / 40.0;
             }
         }
     }
-    sum = sum / 4.0;
     return float4(sum, 1.0);
 }

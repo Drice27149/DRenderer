@@ -29,13 +29,12 @@ void Bloom::CompileShaders()
 {
     vs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "VS", "vs_5_1");
     ps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\downSample.hlsl", nullptr, "PS", "ps_5_1");
+    fvs = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "VS", "vs_5_1");
+    fps = d3dUtil::CompileShader(L"..\\assets\\shaders\\AA\\filter.hlsl", nullptr, "PS", "ps_5_1");
 }
 
 void Bloom::PrePass()
 {
-    Graphics::GCmdList->SetPipelineState(pso.Get());
-    Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
-    Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
 }
 
 void Bloom::PostPass()
@@ -45,24 +44,79 @@ void Bloom::PostPass()
 
 void Bloom::BloomPass()
 {
-    this->PrePass();
+    Graphics::GCmdList->SetPipelineState(fpso.Get());
+    Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
+    Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, input);
-    for (int i = 0; i < 4; i++) {
-        Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                downSampleRT[i]->mResource.Get(),
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                D3D12_RESOURCE_STATE_RENDER_TARGET
-            )
-        );
-        Graphics::GCmdList->OMSetRenderTargets(1, &(rtvCpu[i]), false, nullptr);
-        Graphics::GCmdList->ClearRenderTargetView(rtvCpu[i], Colors::Black, 0, nullptr);
-        this->Pass();
-        Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                downSampleRT[i]->mResource.Get(),
-                D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-            )
-        );
-        Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, srvGpu[i]);
+
+    BloomLoop(0);
+
+    Graphics::GCmdList->SetPipelineState(pso.Get());
+    Graphics::GCmdList->SetGraphicsRootSignature(rootSig.Get());
+    Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, srvGpu[0]);
+
+    for (int i = 1; i < 4; i++) {
+        BloomLoop(i);
     }
+}
+
+void Bloom::BloomLoop(unsigned int i)
+{
+    Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        downSampleRT[i]->mResource.Get(),
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    )
+    );
+    Graphics::GCmdList->OMSetRenderTargets(1, &(rtvCpu[i]), false, nullptr);
+    Graphics::GCmdList->ClearRenderTargetView(rtvCpu[i], Colors::Black, 0, nullptr);
+    this->Pass();
+    Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        downSampleRT[i]->mResource.Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+    )
+    );
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, srvGpu[i]);
+}
+
+void Bloom::BuildPSO()
+{
+    PostProcess::BuildPSO();
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    psoDesc.InputLayout = { inputLayout.data(), (unsigned int)inputLayout.size() };
+    psoDesc.pRootSignature = rootSig.Get();
+
+    D3D12_DEPTH_STENCIL_DESC depthDesc = {};
+    depthDesc.DepthEnable = false;
+
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.FrontCounterClockwise = true;
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = depthDesc;// CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    psoDesc.SampleDesc.Count = 1;
+    psoDesc.SampleDesc.Quality = 0;
+    psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    // build extra pso for grid
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.VS =
+    {
+        reinterpret_cast<BYTE*>(fvs->GetBufferPointer()),
+        fvs->GetBufferSize()
+    };
+    psoDesc.GS = { nullptr, 0 };
+    psoDesc.PS =
+    {
+        reinterpret_cast<BYTE*>(fps->GetBufferPointer()),
+        fps->GetBufferSize()
+    };
+    ThrowIfFailed(Graphics::GDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&fpso)));
 }
