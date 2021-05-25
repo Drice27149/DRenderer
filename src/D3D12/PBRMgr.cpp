@@ -165,7 +165,7 @@ void PBRMgr::PrePass()
     commandList->SetGraphicsRootDescriptorTable(8, Graphics::lightCullMgr->GetEntryHandle());
     commandList->SetGraphicsRootShaderResourceView(9, Graphics::lightCullMgr->GetLightTable());
     commandList->SetGraphicsRootConstantBufferView(10, Graphics::lightCullMgr->GetClusterInfo());
-    commandList->SetGraphicsRootDescriptorTable(11, Graphics::skyBoxMgr->GetCubeMapSrv());
+    commandList->SetGraphicsRootDescriptorTable(11, Graphics::prefilterIBL->GetDiffuseMap());//Graphics::skyBoxMgr->GetCubeMapSrv());
     commandList->SetGraphicsRootConstantBufferView(12, Graphics::constantMgr->GetSceneInfoConstant());
 
     commandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());

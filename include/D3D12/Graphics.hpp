@@ -22,6 +22,7 @@
 #include "TemporalAA.hpp"
 #include "ToneMapping.hpp"
 #include "Bloom.hpp"
+#include "PrefilterIBL.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -56,7 +57,9 @@ private:
     void UploadMeshes(); 
     // new, for decouple
     void InitPassMgrs();
-    // New
+    // New, for ibl now 
+    void PrecomputeResource();
+
     void DrawSkyBox();
     void DrawShadowMap();
     void DrawObjects(DrawType drawType);
@@ -95,6 +98,11 @@ public:
     static std::shared_ptr<TemporalAA> temporalAA;
     static std::shared_ptr<ToneMapping> toneMapping;
     static std::shared_ptr<Bloom> bloom;
+    // in fact, this is pass too, but only excute once
+    static std::shared_ptr<PrefilterIBL> prefilterIBL;
+
+    bool firstFrame = true;
+
 public:
     static ID3D12Device* GDevice;
     static ID3D12GraphicsCommandList* GCmdList;

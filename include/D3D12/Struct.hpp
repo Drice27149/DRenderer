@@ -76,3 +76,18 @@ struct SceneInfo {
 
 // global functions
 std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
+
+enum RootType {
+	CBV,	// constant buffer view
+	SRV		// shader resource view
+};
+
+struct RootEntry {
+	RootType type;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE handle;
+	D3D12_GPU_VIRTUAL_ADDRESS addr;
+};
+
+struct PassID {
+    unsigned int id;
+};

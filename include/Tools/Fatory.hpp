@@ -1,3 +1,5 @@
+#pragma once
+
 #include <d3d12.h>
 #include <wrl.h>
 #include <vector>
@@ -8,18 +10,8 @@
 
 using namespace Microsoft::WRL;
 
-enum RootType {
-	CBV,	// constant buffer view
-	SRV		// shader resource view
-};
-
-struct RootEntry {
-	RootType type;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE handle;
-	D3D12_GPU_VIRTUAL_ADDRESS addr;
-};
-
 class RootEntryFatory {
+public:
 	static RootEntry CBVEntry(D3D12_GPU_VIRTUAL_ADDRESS addr)
 	{
 		RootEntry res;
@@ -38,6 +30,8 @@ class RootEntryFatory {
 };
 
 class RootSigFatory {
+public:
+	// use dummy cbv to self define something...
 	static void CreateRootSig(ComPtr<ID3D12RootSignature>& rootSig, std::vector<RootEntry>& ens, bool needSampler = false)
 	{
 		std::vector<CD3DX12_ROOT_PARAMETER> params;
@@ -79,14 +73,16 @@ class RootSigFatory {
 			)
 		);
 	}
-
-	static void SetGraphicsRoot(ComPtr<ID3D12RootSignature>& rootSig)
-	{
-
-	}
 };
 
 namespace PSOFatory {
 	void CreatePostProcessPSO(ComPtr<ID3D12PipelineState>& pso, ComPtr<ID3DBlob> vs, ComPtr<ID3DBlob> gs, ComPtr<ID3DBlob> ps, ComPtr<ID3D12RootSignature> rootSig);
 };
 
+namespace ResourceFatory {
+	void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height);
+};
+
+namespace DescriptorFatory {
+	void AppendCubeSRV(ComPtr<ID3D12Resource> resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
+};

@@ -61,6 +61,7 @@ std::shared_ptr<AAMgr> Graphics::aaMgr = nullptr;
 std::shared_ptr<TemporalAA> Graphics::temporalAA = nullptr;
 std::shared_ptr<ToneMapping> Graphics::toneMapping = nullptr;
 std::shared_ptr<Bloom> Graphics::bloom = nullptr;
+std::shared_ptr<PrefilterIBL> Graphics::prefilterIBL = nullptr;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)

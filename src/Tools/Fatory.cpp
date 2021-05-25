@@ -47,11 +47,13 @@ namespace PSOFatory {
             reinterpret_cast<BYTE*>(vs->GetBufferPointer()),
             vs->GetBufferSize()
         };
-        psoDesc.GS = 
-        {
-            reinterpret_cast<BYTE*>(gs->GetBufferPointer()),
-            gs->GetBufferSize()
-        };
+        if(gs != nullptr) {
+            psoDesc.GS = 
+            {
+                reinterpret_cast<BYTE*>(gs->GetBufferPointer()),
+                gs->GetBufferSize()
+            };
+        }
         psoDesc.PS =
         {
             reinterpret_cast<BYTE*>(ps->GetBufferPointer()),
@@ -59,4 +61,49 @@ namespace PSOFatory {
         };
         ThrowIfFailed(Graphics::GDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 	}
+};
+
+namespace ResourceFatory {
+    void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height)
+    {
+        D3D12_RESOURCE_DESC texDesc;
+        ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+    
+        texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        texDesc.Alignment = 0;
+        texDesc.Width = width;
+        texDesc.Height = height;
+        texDesc.DepthOrArraySize = 6;
+        texDesc.MipLevels = 1;
+        texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        texDesc.SampleDesc.Count = 1;
+        texDesc.SampleDesc.Quality = 0;
+        texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    
+        ThrowIfFailed(Graphics::GDevice->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &texDesc,
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            nullptr,
+            IID_PPV_ARGS(&resource)
+            )
+        );
+    }
+};
+
+namespace DescriptorFatory {
+	void AppendCubeSRV(ComPtr<ID3D12Resource> resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        srvDesc.Texture2D.MipLevels = 1;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        Graphics::GDevice->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
+    }
+
 };

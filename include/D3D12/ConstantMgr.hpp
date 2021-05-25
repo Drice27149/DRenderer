@@ -18,6 +18,7 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetShadowPassConstant();
     D3D12_GPU_VIRTUAL_ADDRESS GetCameraPassConstant();
     D3D12_GPU_VIRTUAL_ADDRESS GetSceneInfoConstant(){ return sceneInfoGpu->Resource()->GetGPUVirtualAddress(); }
+    D3D12_GPU_VIRTUAL_ADDRESS GetPassID(unsigned long long offset);
 
     std::shared_ptr<SceneInfo> GetSceneInfo() { return sceneInfo; }
 
@@ -37,6 +38,7 @@ public:
     // static constants buffer
     std::unique_ptr<UploadBuffer<ClusterInfo>> clusterInfo = nullptr;
     std::unique_ptr<UploadBuffer<SceneInfo>> sceneInfoGpu = nullptr;
+    std::unique_ptr<UploadBuffer<PassID>> passInfo = nullptr;
     unsigned int viewPortWidth;
     unsigned int viewPortHeight;
 };

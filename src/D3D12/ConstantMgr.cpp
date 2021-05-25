@@ -31,6 +31,13 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->adaptedLum = 0.5;
     sceneInfo->threshold = 1.0;
     sceneInfo->bloom = 0;
+
+    passInfo = std::make_unique<UploadBuffer<PassID>>(device, 6, true);
+    for(int i = 0; i < 6; i++){
+        PassID cur;
+        cur.id = i;
+        passInfo->CopyData(i, cur);
+    }
 }
 
 void ConstantMgr::Update()
@@ -144,6 +151,13 @@ D3D12_GPU_VIRTUAL_ADDRESS ConstantMgr::GetShadowPassConstant()
 D3D12_GPU_VIRTUAL_ADDRESS ConstantMgr::GetCameraPassConstant()
 {
     return GetPassConstant(1);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS ConstantMgr::GetPassID(unsigned long long offset)
+{
+    auto beginAddr = passInfo->Resource()->GetGPUVirtualAddress();
+    beginAddr += offset * d3dUtil::CalcConstantBufferByteSize(sizeof(passInfo));
+    return beginAddr;
 }
 
     

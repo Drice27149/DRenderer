@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+#include "Fatory.hpp"
 
 const int FrameCount = 3;
 
@@ -197,6 +198,11 @@ void Graphics::Draw(const GameTimer& gt)
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { heapMgr->GetSRVHeap() };
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+    
+    if(firstFrame){
+        PrecomputeResource();
+        firstFrame = false;
+    }
 
     // DrawShadowMap();
 
@@ -291,15 +297,17 @@ void Graphics::BuildDescriptorHeaps()
     heapMgr = std::make_unique<HeapMgr>(md3dDevice.Get(), mCommandList.Get(), 100, 100, 100);
 }
 
-void Graphics::OnMouseZoom(WPARAM state)
+void Graphics::PrecomputeResource()
 {
-    if(DEngine::instance != nullptr){
-        if(GET_WHEEL_DELTA_WPARAM(state) > 0)
-            DEngine::GetInputMgr().OnZoomIn();
-        else 
-            DEngine::GetInputMgr().OnZoomOut();
-    }
+    prefilterIBL = std::make_shared<PrefilterIBL>();
+    prefilterIBL->rootors = {
+        RootEntryFatory::CBVEntry(0),
+        RootEntryFatory::SRVEntry(skyBoxMgr->GetCubeMapSrv())
+    };
+    prefilterIBL->Init();
+    prefilterIBL->PreComputeFilter();
 }
+
 
 void Graphics::DrawShadowMap()
 {
@@ -382,6 +390,15 @@ void Graphics::DrawOpaque()
     pbrMgr->PostPass();
 }
 
+void Graphics::OnMouseZoom(WPARAM state)
+{
+    if(DEngine::instance != nullptr){
+        if(GET_WHEEL_DELTA_WPARAM(state) > 0)
+            DEngine::GetInputMgr().OnZoomIn();
+        else 
+            DEngine::GetInputMgr().OnZoomOut();
+    }
+}
 
 void Graphics::OnLMouseDown(WPARAM btnState, int x, int y)
 {
@@ -417,3 +434,4 @@ void Graphics::DrawGUI()
 {
     guiMgr->Draw();
 }
+
