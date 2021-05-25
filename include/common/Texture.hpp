@@ -9,12 +9,3 @@ public:
 public:
     unsigned int id;
 };
-
-class CubeMap: public Texture
-{
-public:
-    CubeMap();
-public:
-    unsigned int vao;
-};
-

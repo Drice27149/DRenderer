@@ -7,25 +7,27 @@ project ("DRenderer")
 
 file(GLOB_RECURSE MY_CPP ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
-file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/d3dApp/*.cpp ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp ${CMAKE_SOURCE_DIR}/thirdparty/DirectXTex/*.cpp)
+file(GLOB_RECURSE COMMON_CPP ${CMAKE_SOURCE_DIR}/thirdparty/*.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include) # include
 
-include_directories(${CMAKE_SOURCE_DIR}/include/D3D12)
+include_directories(${CMAKE_SOURCE_DIR}/include/D3D12) # render part
 
 include_directories(${CMAKE_SOURCE_DIR}/include/PostProcess)
 
-include_directories(${CMAKE_SOURCE_DIR}/include/cluster)
-
 include_directories(${CMAKE_SOURCE_DIR}/include/common)
 
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include) # include
+include_directories(${CMAKE_SOURCE_DIR}/include/Tools)
 
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/d3dApp) # include
+include_directories(${CMAKE_SOURCE_DIR}/include/Resource)
 
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/imgui) # include
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include) 
 
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/DirectXTex) # include
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/d3dApp) 
+
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/imgui)
+
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/DirectXTex) 
 
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib) # lib
 

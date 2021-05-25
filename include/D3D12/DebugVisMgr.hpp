@@ -1,3 +1,5 @@
+#pragma once
+
 #include "PassMgr.hpp"
 #include "ConstantMgr.hpp"
 

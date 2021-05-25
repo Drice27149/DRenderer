@@ -4,8 +4,3 @@
 Texture::Texture()
 {
 }
-
-CubeMap::CubeMap()
-{
-    
-}
