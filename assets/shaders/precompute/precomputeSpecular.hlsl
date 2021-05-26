@@ -3,6 +3,7 @@
 cbuffer PassID: register(b0)
 {
     uint _id;
+    float _roughness;
 };
 
 struct VertexIn

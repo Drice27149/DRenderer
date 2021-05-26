@@ -80,7 +80,7 @@ namespace PSOFatory {
 };
 
 namespace ResourceFatory {
-	void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height);
+	void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, unsigned int mipLevels = 1);
 };
 
 namespace DescriptorFatory {

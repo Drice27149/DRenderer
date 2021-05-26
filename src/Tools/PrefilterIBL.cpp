@@ -22,11 +22,11 @@ void PrefilterIBL::Init()
         rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; 
         rtvDesc.Texture2DArray.MipSlice = 0; 
         rtvDesc.Texture2DArray.PlaneSlice = 0; 
-        // å°†åœºæ™¯ç»˜åˆ¶åˆ°ç¬¬iä¸ªæˆå‘˜ 
+        // ½«³¡¾°»æÖÆµ½µÚi¸ö³ÉÔ± 
         rtvDesc.Texture2DArray.FirstArraySlice = i; 
         rtvDesc.Texture2DArray.ArraySize = 1; 
         Graphics::heapMgr->GetNewRTV(rtvC[i], rtvG[i]);
-        // ä¸ºcube mapçš„ç¬¬iä¸ªé¢åˆ›å»ºRTV 
+        // Îªcube mapµÄµÚi¸öÃæ´´½¨RTV 
         Graphics::GDevice->CreateRenderTargetView(diffuseMap.Get(), &rtvDesc, rtvC[i]); 
     }
     // viewport setting

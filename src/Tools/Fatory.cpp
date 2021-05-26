@@ -64,7 +64,7 @@ namespace PSOFatory {
 };
 
 namespace ResourceFatory {
-    void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height)
+    void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, unsigned int mipLevels)
     {
         D3D12_RESOURCE_DESC texDesc;
         ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -73,8 +73,8 @@ namespace ResourceFatory {
         texDesc.Alignment = 0;
         texDesc.Width = width;
         texDesc.Height = height;
-        texDesc.DepthOrArraySize = 6;
-        texDesc.MipLevels = 1;
+        texDesc.DepthOrArraySize = 1;
+        texDesc.MipLevels = mipLevels;
         texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
         texDesc.SampleDesc.Count = 1;
         texDesc.SampleDesc.Quality = 0;

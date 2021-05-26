@@ -299,12 +299,14 @@ void Graphics::BuildDescriptorHeaps()
 
 void Graphics::PrecomputeResource()
 {
-    prefilterIBL = std::make_shared<PrefilterIBL>();
-    prefilterIBL->rootors = {
-        RootEntryFatory::CBVEntry(0),
-        RootEntryFatory::SRVEntry(skyBoxMgr->GetCubeMapSrv())
-    };
-    prefilterIBL->Init();
+    if (prefilterIBL == nullptr) {
+        prefilterIBL = std::make_shared<PrefilterIBL>();
+        prefilterIBL->rootors = {
+            RootEntryFatory::CBVEntry(0),
+            RootEntryFatory::SRVEntry(skyBoxMgr->GetCubeMapSrv())
+        };
+        prefilterIBL->Init();
+    }
     prefilterIBL->PreComputeFilter();
 }
 

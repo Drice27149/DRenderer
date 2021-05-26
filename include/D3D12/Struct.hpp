@@ -90,4 +90,5 @@ struct RootEntry {
 
 struct PassID {
     unsigned int id;
+    float roughness;
 };
