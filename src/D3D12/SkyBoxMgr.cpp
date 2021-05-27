@@ -99,7 +99,7 @@ void SkyBoxMgr::CreateResources()
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
         device,
         commandList,
-        L"..\\assets\\envs\\sky.dds", 
+        L"..\\assets\\envs\\pillars.dds", 
         skyTexture->Resource, 
         skyTexture->UploadHeap
         )

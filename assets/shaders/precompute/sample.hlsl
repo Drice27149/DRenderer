@@ -24,28 +24,35 @@ float3x3 computeTangetSpace(float3 normal)
     return transpose(float3x3(right, up, normal));
 }
 
-float3 hemisphereSample(float u1, float u2)
+float3 hemisphereSampleGGX(float u1, float u2, float roughness )
 {
-    float phi = u1 * 2.0 * 3.1415926;
-    float r = sqrt(u2);
-    return float3( r*cos(phi), r*sin(phi), sqrt(1-u2));
+    float phi = 2.0*3.1415926*u1;
+    float cos_theta = sqrt((1.0-u2)/(u2*(roughness*roughness-1)+1));
+    float sin_theta = sqrt(1-cos_theta*cos_theta);
+    // spherical to cartesian conversion
+    float3 dir;
+    dir.x = cos(phi)*sin_theta;
+    dir.y = sin(phi)*sin_theta;
+    dir.z = cos_theta;
+    return dir;
 }
 
-float3 diffuseIBL(float3 normal, uint NUM_SAMPLES)
+float3 PrefilterEnvMap(float Roughness, float3 R, uint NumSamples)
 {
-    float3 irradiance = float3(0.0, 0.0, 0.0);
-    float3x3 tangentSpace = computeTangetSpace(normal);
-    for(int i=0; i < NUM_SAMPLES; ++i)
-    {
-        float2 rand_value = hammersley2D(i, NUM_SAMPLES);
-        float3 sample_dir = mul(tangentSpace, hemisphereSample(rand_value[0], rand_value[1]));
-
-        irradiance += gCubeMap.Sample(gsamLinear, normalize(sample_dir)).rgb;
+    float3 N = R;
+    float3 V = R;
+    float3x3 tangentSpace = computeTangetSpace(N);
+    float3 PrefilteredColor = 0;
+    float3 TotalWeight = 0;
+    for( uint i = 0; i < NumSamples; i++ ){
+        float2 rand_value = hammersley2D(i, NumSamples);
+        float3 H = normalize(mul(tangentSpace, hemisphereSampleGGX(rand_value[0], rand_value[1], Roughness)));
+        float3 L = 2 * dot( V, H ) * H - V;
+        float NoL = saturate( dot( N, L ) );
+        if( NoL > 0 ){
+            PrefilteredColor += gCubeMap.Sample(gsamLinear, normalize(L)).rgb * NoL;
+            TotalWeight += NoL;
+        }
     }
-    return irradiance * (1.0/float(NUM_SAMPLES));
-}
-
-float3 specularIBL(float3 normal, uint NUM_SAMPLES)
-{
-    
+    return PrefilteredColor/TotalWeight;
 }

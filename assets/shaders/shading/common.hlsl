@@ -3,7 +3,8 @@ Texture2D gNormalMap: register(t1);
 Texture2D gDiffuseMap: register(t2);
 Texture2D gMetallicMap: register(t3);
 Texture2D gEmissiveMap: register(t4);
-TextureCube gCubeMap: register(t6);
+TextureCube gEnvMap: register(t6);
+Texture2D gBrdfMap: register(t7);
 
 SamplerState gsamLinear: register(s0);
 

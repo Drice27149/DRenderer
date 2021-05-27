@@ -3,6 +3,7 @@
 #include "d3dx12.h"
 #include "Global.hpp"
 #include "Graphics.hpp"
+#include "WICTextureLoader12.h"
 
 namespace PSOFatory {
 
@@ -73,7 +74,7 @@ namespace ResourceFatory {
         texDesc.Alignment = 0;
         texDesc.Width = width;
         texDesc.Height = height;
-        texDesc.DepthOrArraySize = 1;
+        texDesc.DepthOrArraySize = 6;
         texDesc.MipLevels = mipLevels;
         texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
         texDesc.SampleDesc.Count = 1;
@@ -91,6 +92,37 @@ namespace ResourceFatory {
             )
         );
     }
+
+    void CreateTexture2DResource(ComPtr<ID3D12Resource>& resource, ComPtr<ID3D12Resource>& uploadBuffer, std::string fn)
+    {
+        std::wstring wstringFn = std::wstring(fn.begin(), fn.end());
+        const wchar_t* wcharFn = wstringFn.c_str();
+        std::unique_ptr<uint8_t[]> wicData;
+        D3D12_SUBRESOURCE_DATA textureData;
+        // load resource data from disk
+        ThrowIfFailed(DirectX::LoadWICTextureFromFile(
+            Graphics::GDevice,
+            wcharFn,
+            &resource,
+            wicData, 
+            textureData)
+        );
+        D3D12_RESOURCE_DESC textureDesc = resource->GetDesc();
+        // Create the GPU upload buffer.
+        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(resource.Get(), 0, 1);	
+        ThrowIfFailed(Graphics::GDevice->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&uploadBuffer)
+            )
+        );
+        // upload the texture data to GPU
+        UpdateSubresources(Graphics::GCmdList, resource.Get(), uploadBuffer.Get(), 0, 0, 1, &textureData);
+        Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+    }
 };
 
 namespace DescriptorFatory {
@@ -100,10 +132,21 @@ namespace DescriptorFatory {
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Format = format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        srvDesc.Texture2D.MipLevels = 1;
+        srvDesc.Texture2D.MipLevels = 5;
         srvDesc.Texture2D.MostDetailedMip = 0;
         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
         Graphics::GDevice->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
     }
 
+    void AppendTexture2DSRV(ComPtr<ID3D12Resource> resource, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = resource->GetDesc().Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        Graphics::GDevice->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
+    }
 };

@@ -81,8 +81,10 @@ namespace PSOFatory {
 
 namespace ResourceFatory {
 	void CreateCubeMapResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, unsigned int mipLevels = 1);
+	void CreateTexture2DResource(ComPtr<ID3D12Resource>& resource, ComPtr<ID3D12Resource>& uploadBuffer, std::string fn);
 };
 
 namespace DescriptorFatory {
 	void AppendCubeSRV(ComPtr<ID3D12Resource> resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
+	void AppendTexture2DSRV(ComPtr<ID3D12Resource> resource, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
 };

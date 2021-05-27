@@ -3,6 +3,7 @@
 cbuffer PassID: register(b0)
 {
     uint _id;
+    float _roughness;
 };
 
 struct VertexIn
@@ -38,10 +39,8 @@ VertexOut VS(VertexIn vin, uint id: SV_VertexID)
     return vout;
 }
 
-// SV_POSITION: screen space coordinate
-float4 PS(VertexOut pin) : SV_TARGET
+float3 GetDirByID(uint _id, float2 uv)
 {
-    float2 uv = pin.uv;
     float3 dir;
     // left
     if(_id==0)
@@ -61,7 +60,14 @@ float4 PS(VertexOut pin) : SV_TARGET
     // back
     else
         dir = float3(-uv.x, uv.y, -1.0);
-    // @TODO: prefilter mip-map to speed up convergence
-    float3 color = diffuseIBL(normalize(dir), 4096);
+    return dir;
+}
+
+// SV_POSITION: screen space coordinate
+float4 PS(VertexOut pin) : SV_TARGET
+{
+    float3 dir = GetDirByID(_id, pin.uv);
+    dir = normalize(dir);
+    float3 color = PrefilterEnvMap(_roughness, dir, 4096);
     return float4(color, 1.0);
 }

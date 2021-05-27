@@ -121,7 +121,7 @@ float4 pureIBL(VertexOut pin)
 	float3 fd = diffuseIBL(normalize(pin.N), (1.0-_metallic)*baseColor, 128);
 	float3 fr = specularIBL(normalize(pin.N), normalize(_CamPos - pin.worldPos), baseColor, _metallic, _roughness, 128);
 	return float4(fd + fr, 1.0);
-	return gCubeMap.Sample(gsamLinear, normalize(pin.N));
+	return gEnvMap.Sample(gsamLinear, normalize(pin.N));
 }
 
 float3 DirectLight(float3 N, float3 V, float3 L, float3 baseColor, float roughness, float metallic)
@@ -161,7 +161,8 @@ float4 PS(VertexOut pin) : SV_Target
 
 	float3 outColor = float3(0.0, 0.0, 0.0);
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
-	outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
-	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 5.0;
+	// outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
+	outColor = outColor + ApproximateIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
+	//outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 5.0;
 	return float4(outColor, 1.0);
 }

@@ -63,6 +63,6 @@ float4 PS(VertexOut pin) : SV_TARGET
     else
         dir = float3(-uv.x, uv.y, -1.0);
     // @TODO: prefilter mip-map to speed up convergence
-    float3 color = diffuseIBL(normalize(dir), 4096);
+    float3 color = diffuseIBL(normalize(dir), 128);
     return float4(color, 1.0);
 }

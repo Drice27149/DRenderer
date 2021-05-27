@@ -25,6 +25,7 @@ std::vector<metaData> SceneInfo::reflections =
     metaData("TAA_Alpha", offsetof(SceneInfo, taaAlpha), 1),
     metaData("ADapted_Lum", offsetof(SceneInfo, adaptedLum), 1),
     metaData("Threshold", offsetof(SceneInfo, threshold), 1),
+    metaData("Bloom", offsetof(SceneInfo, bloom), 0),
 };
 
 std::vector<metaData> Object::reflection = 

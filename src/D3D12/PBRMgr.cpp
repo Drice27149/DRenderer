@@ -72,11 +72,15 @@ void PBRMgr::BuildRootSig()
     params[top++].InitAsDescriptorTable(1, &uavTable1);
 	params[top++].InitAsShaderResourceView(usedSrv++, D3D12_SHADER_VISIBILITY_PIXEL);
     params[top++].InitAsConstantBufferView(2);
-    // 11, skybox texture, for environment mapping
+    // 11, diffuse env 
     CD3DX12_DESCRIPTOR_RANGE srvTable;
     srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, usedSrv++);
     params[top++].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
-    // 12, scene info for shaindg/shadow, 3
+    // 12 specualr env
+    CD3DX12_DESCRIPTOR_RANGE srvTable0;
+    srvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, usedSrv++);
+    params[top++].InitAsDescriptorTable(1, &srvTable0, D3D12_SHADER_VISIBILITY_PIXEL);
+    // 13, scene info for shaindg/shadow, 3
     params[top++].InitAsConstantBufferView(3);
 
 	auto staticSamplers = GetStaticSamplers();
@@ -165,8 +169,9 @@ void PBRMgr::PrePass()
     commandList->SetGraphicsRootDescriptorTable(8, Graphics::lightCullMgr->GetEntryHandle());
     commandList->SetGraphicsRootShaderResourceView(9, Graphics::lightCullMgr->GetLightTable());
     commandList->SetGraphicsRootConstantBufferView(10, Graphics::lightCullMgr->GetClusterInfo());
-    commandList->SetGraphicsRootDescriptorTable(11, Graphics::prefilterIBL->GetDiffuseMap());//Graphics::skyBoxMgr->GetCubeMapSrv());
-    commandList->SetGraphicsRootConstantBufferView(12, Graphics::constantMgr->GetSceneInfoConstant());
+    commandList->SetGraphicsRootDescriptorTable(11, Graphics::prefilterIBL->GetPrefilterEnvMap());//Graphics::skyBoxMgr->GetCubeMapSrv());
+    commandList->SetGraphicsRootDescriptorTable(12, Graphics::prefilterIBL->GetEnvBRDFMap());
+    commandList->SetGraphicsRootConstantBufferView(13, Graphics::constantMgr->GetSceneInfoConstant());
 
     commandList->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
     commandList->IASetIndexBuffer(&objMesh->IndexBufferView());

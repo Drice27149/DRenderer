@@ -34,13 +34,13 @@ float3 diffuseIBL(float3 normal, float3 diffuseColor, uint NUM_SAMPLES)
 {
     float3 irradiance = float3(0.0, 0.0, 0.0);
     float3x3 tangentSpace = computeTangetSpace(normal);
-    for(int i=0; i < NUM_SAMPLES; ++i)
-    {
-        float2 rand_value = hammersley2D(i, NUM_SAMPLES);
-        float3 sample_dir = mul(hemisphereSample(rand_value[0], rand_value[1]), tangentSpace);
+    // for(int i=0; i < NUM_SAMPLES; ++i)
+    // {
+    //     float2 rand_value = hammersley2D(i, NUM_SAMPLES);
+    //     float3 sample_dir = mul(hemisphereSample(rand_value[0], rand_value[1]), tangentSpace);
 
-        irradiance += gCubeMap.Sample(gsamLinear, normalize(sample_dir)).rgb;
-    }
+    //     irradiance += gCubeMap.Sample(gsamLinear, normalize(sample_dir)).rgb;
+    // }
     // 由于是重要性采样, pdf和NoL已经被消掉了, 所以 baseColor 不用除以 pi, 也不用乘上NoL
     float3 color = diffuseColor * irradiance * (1.0/float(NUM_SAMPLES));
     return color;
@@ -79,7 +79,7 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
         float LoH = saturate( dot( L, H ) );
         if( NoL > 0 )
         {
-            float3 SampleColor = gCubeMap.Sample(gsamLinear, normalize(L)).rgb;
+            float3 SampleColor = gEnvMap.SampleLevel(gsamLinear, normalize(L), 0.0).rgb;
             float3 F = F_Schlick(LoH, f0);
             float Vis = V_SmithGGXCorrelated(NoV, NoL, a);
             // Incident light = SampleColor * NoL
@@ -92,10 +92,39 @@ float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float r
     return irradiance * (1.0/float(NUM_SAMPLES));
 }
 
+float3 ApproximateDiffuseIBL(float3 N, float3 diffuseColor)
+{
+    float mipLevels = 4;
+    // hack
+    return diffuseColor * gEnvMap.SampleLevel(gsamLinear, normalize(N), mipLevels*0.5).rgb;
+}
+
+float3 ApproximateSpecularIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
+{
+    return specularIBL(N, V, baseColor, metallic, roughness, 1024);
+    // this is shit
+    float mipLevels = 4;
+    float NoV = dot(N, V);
+    if(NoV <= 0.0)
+        return 0.0;
+    float2 brdf = gBrdfMap.Sample(gsamLinear, float2(roughness, NoV)).rg;
+    float3 color = gEnvMap.SampleLevel(gsamLinear, normalize(N), 1.0).rgb;
+    float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
+    return color * (f0 * brdf.x + brdf.y);
+}
+
 float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
-	uint NUM_SAMPLE = 512;
-	float3 fd = diffuseIBL(N, (1.0-metallic)*baseColor, NUM_SAMPLE);
-	float3 fr = specularIBL(N, V, baseColor, metallic, roughness, NUM_SAMPLE);
-	return fd + fr;
+	// uint NUM_SAMPLE = 512;
+	// // float3 fd = diffuseIBL(N, (1.0-metallic)*baseColor, NUM_SAMPLE);
+    // float3 fd = PreComputeDiffuse(N, (1.0-metallic)*baseColor);
+	// float3 fr = specularIBL(N, V, baseColor, metallic, roughness, NUM_SAMPLE);
+	// return fd + fr;
+    return float3(0.0, 0.0, 0.0);
 }
+
+float3 ApproximateIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
+{
+    return ApproximateDiffuseIBL(N, (1.0-metallic)*baseColor) + ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
+}
+
