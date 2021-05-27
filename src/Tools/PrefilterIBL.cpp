@@ -1,6 +1,8 @@
+#include <cmath>
 #include "PrefilterIBL.hpp"
 #include "DxUtil.hpp"
 #include "Fatory.hpp"
+
 
 void PrefilterIBL::Init()
 {
@@ -68,7 +70,7 @@ void PrefilterIBL::Init()
         for(int j = 0; j < mipLevels; j++){
             PassID cur;
             cur.id = i;
-            cur.roughness = (float)j/(float)(mipLevels-1);
+            cur.roughness = (float)j / (float)(mipLevels-1);
             passConstant->CopyData(i*mipLevels+j, cur);
         }
     }

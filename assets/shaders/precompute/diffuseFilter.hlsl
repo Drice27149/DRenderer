@@ -68,6 +68,7 @@ float4 PS(VertexOut pin) : SV_TARGET
 {
     float3 dir = GetDirByID(_id, pin.uv);
     dir = normalize(dir);
-    float3 color = PrefilterEnvMap(_roughness, dir, 4096);
+    // not good here
+    float3 color = PrefilterEnvMap(_roughness, dir);
     return float4(color, 1.0);
 }

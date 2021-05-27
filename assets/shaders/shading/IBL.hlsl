@@ -30,6 +30,19 @@ float3 hemisphereSample(float u1, float u2)
     return float3( r*cos(phi), r*sin(phi), sqrt(1-u2));
 }
 
+float3 hemisphereSampleGGX(float u1, float u2, float roughness)
+{
+    float phi = 2.0 * 3.1415926 * u1;
+    float cos_theta = sqrt((1.0 - u2) / (u2 * (roughness * roughness - 1) + 1));
+    float sin_theta = sqrt(1 - cos_theta * cos_theta);
+    // spherical to cartesian conversion
+    vec3 dir;
+    dir.x = cos(phi) * sin_theta;
+    dir.y = sin(phi) * sin_theta;
+    dir.z = cos_theta;
+    return dir;
+}
+
 float3 diffuseIBL(float3 normal, float3 diffuseColor, uint NUM_SAMPLES)
 {
     float3 irradiance = float3(0.0, 0.0, 0.0);
@@ -44,19 +57,6 @@ float3 diffuseIBL(float3 normal, float3 diffuseColor, uint NUM_SAMPLES)
     // 由于是重要性采样, pdf和NoL已经被消掉了, 所以 baseColor 不用除以 pi, 也不用乘上NoL
     float3 color = diffuseColor * irradiance * (1.0/float(NUM_SAMPLES));
     return color;
-}
-
-float3 hemisphereSampleGGX(float u1, float u2, float roughness )
-{
-    float phi = 2.0*3.1415926*u1;
-    float cos_theta = sqrt((1.0-u2)/(u2*(roughness*roughness-1)+1));
-    float sin_theta = sqrt(1-cos_theta*cos_theta);
-    // spherical to cartesian conversion
-    vec3 dir;
-    dir.x = cos(phi)*sin_theta;
-    dir.y = sin(phi)*sin_theta;
-    dir.z = cos_theta;
-    return dir;
 }
 
 float3 specularIBL(float3 N, float3 V, float3 baseColor, float metallic, float roughness, uint NUM_SAMPLES)
@@ -127,7 +127,7 @@ vec3 importanceSampleGGX(vec2 Xi, float roughness, vec3 N)
     float a = roughness * roughness;
     // Sample in spherical coordinates
     float Phi = 2.0 * PI * Xi.x;
-    float CosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
+    float CosTheta = sqrt((1.0 - Xi.y) / (1.0 + (/*a * a*/ a - 1.0) * Xi.y));
     float SinTheta = sqrt(1.0 - CosTheta * CosTheta);
     // Construct tangent space vector
     vec3 H;
@@ -202,16 +202,21 @@ vec2 integrateBRDF(float roughness, float NoV)
     return 4.0 * vec2(A, B) / float(numSamples);
 }
 
+float DecodeLOD(float roughness)
+{
+    float mipLevels = 4.0;
+    return mipLevels * roughness;
+}
+
 float3 ApproximateSpecularIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
-    roughness = 0.2;
     // return specularIBL(N, V, baseColor, metallic, roughness, 1024);
     float NoV = saturate(dot(N, V));
-    float3 R = 2 * dot(V, N) * N - V; // ??? what is this
-    float2 brdf = integrateBRDF(roughness, NoV); // gBrdfMap.Sample(gsamLinear, float2(roughness, NoV)).rg;
-    // float mipLevels = 4;
-    // float3 color = gEnvMap.SampleLevel(gsamLinear, normalize(N), 1.0).rgb;
-    float3 radiance = PrefilterEnvMap(roughness, normalize(R));
+    float3 R = 2 * dot(V, N) * N - V; // reflection
+    float2 brdf = gBrdfMap.Sample(gsamLinear, float2(roughness, 1.0 - NoV)).rg;
+    float lod = DecodeLOD(roughness);
+    float3 radiance = gEnvMap.SampleLevel(gsamLinear, normalize(R), lod).rgb;
+    // float3 radiance = PrefilterEnvMap(roughness, normalize(R));
     float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
     return radiance * (f0 * brdf.x + brdf.y);
 }
