@@ -143,7 +143,9 @@ float4 PS(VertexOut pin) : SV_Target
 	baseColor = pow(baseColor, 2.2);
 	float ao = gMetallicMap.Sample(gsamLinear, pin.uv).r;
 	float roughness = gMetallicMap.Sample(gsamLinear, pin.uv).g;
+	roughness = pow(roughness, 2.2);
 	float metallic = gMetallicMap.Sample(gsamLinear, pin.uv).b;
+	// metallic = pow(metallic, 2.2);
 	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
@@ -163,6 +165,6 @@ float4 PS(VertexOut pin) : SV_Target
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
 	// outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
 	outColor = outColor + ApproximateIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
-	//outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 5.0;
+	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 5.0;
 	return float4(outColor, 1.0);
 }

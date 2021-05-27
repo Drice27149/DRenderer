@@ -127,7 +127,7 @@ vec3 importanceSampleGGX(vec2 Xi, float roughness, vec3 N)
     float a = roughness * roughness;
     // Sample in spherical coordinates
     float Phi = 2.0 * PI * Xi.x;
-    float CosTheta = sqrt((1.0 - Xi.y) / (1.0 + (/*a * a*/ a - 1.0) * Xi.y));
+    float CosTheta = sqrt((1.0 - Xi.y) / (1.0 + (/*a * */a - 1.0) * Xi.y));
     float SinTheta = sqrt(1.0 - CosTheta * CosTheta);
     // Construct tangent space vector
     vec3 H;
@@ -205,18 +205,18 @@ vec2 integrateBRDF(float roughness, float NoV)
 float DecodeLOD(float roughness)
 {
     float mipLevels = 4.0;
-    return mipLevels * roughness;
+    return sqrt(roughness)*mipLevels;
 }
 
 float3 ApproximateSpecularIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
-    // return specularIBL(N, V, baseColor, metallic, roughness, 1024);
+    // return specularIBL(N, V, baseColor, metallic, roughness*roughness, 1024);
+    // roughness = pow(roughness, 2.2);
     float NoV = saturate(dot(N, V));
     float3 R = 2 * dot(V, N) * N - V; // reflection
     float2 brdf = gBrdfMap.Sample(gsamLinear, float2(roughness, 1.0 - NoV)).rg;
     float lod = DecodeLOD(roughness);
     float3 radiance = gEnvMap.SampleLevel(gsamLinear, normalize(R), lod).rgb;
-    // float3 radiance = PrefilterEnvMap(roughness, normalize(R));
     float3 f0 = lerp(float3(0.04, 0.04, 0.04), baseColor, metallic);
     return radiance * (f0 * brdf.x + brdf.y);
 }
@@ -233,7 +233,6 @@ float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float m
 
 float3 ApproximateIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
-    // return ApproximateDiffuseIBL(N, (1.0-metallic)*baseColor) + ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
-    return ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
+    return ApproximateDiffuseIBL(N, (1.0-metallic)*baseColor) + ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
 }
 

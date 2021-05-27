@@ -67,10 +67,12 @@ void PrefilterIBL::Init()
     passConstant = std::make_unique<UploadBuffer<PassID>>(Graphics::GDevice, 6*mipLevels+6, true);
     // [0, 6*5] specular ibl
     for(int i = 0; i < 6; i++){
-        for(int j = 0; j < mipLevels; j++){
+        float curRough = 1.0;
+        for(int j = mipLevels-1; j >= 0; j--){
             PassID cur;
             cur.id = i;
-            cur.roughness = (float)j / (float)(mipLevels-1);
+            float rough = (float)j / (float)(mipLevels-1);
+            cur.roughness = rough*rough;// 
             passConstant->CopyData(i*mipLevels+j, cur);
         }
     }
