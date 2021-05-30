@@ -46,7 +46,7 @@ void PrefilterIBL::Init()
         brdfMap->SetName(L"brdfMap");
         // build shader resource view
         Graphics::heapMgr->GetNewSRV(brdfC, brdfG);
-        DescriptorFatory::AppendTexture2DSRV(brdfMap, brdfC);
+        DescriptorFatory::AppendTexture2DSRV(brdfMap, DXGI_FORMAT_R8G8B8A8_UNORM, brdfC);
     }
     // viewport setting
     long curWidth = width;

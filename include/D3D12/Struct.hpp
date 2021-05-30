@@ -13,7 +13,8 @@ struct PassUniform
     glm::mat4 SMView;
     glm::mat4 SMProj;
     glm::mat4 JProj;
-    // ע�� padding
+    glm::mat4 lastView;
+    glm::mat4 lastProj;
     glm::vec3 CamPos;
 };
 

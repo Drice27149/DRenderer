@@ -123,6 +123,29 @@ namespace ResourceFatory {
         UpdateSubresources(Graphics::GCmdList, resource.Get(), uploadBuffer.Get(), 0, 0, 1, &textureData);
         Graphics::GCmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
     }
+
+    void CreateRenderTarget2DResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, DXGI_FORMAT format)
+    {
+        CD3DX12_RESOURCE_DESC texDesc(
+            D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+            0,		// alignment
+            width, height, 1,
+            1,		// mip levels
+            format,
+            1, 0,	// sample count/quality
+            D3D12_TEXTURE_LAYOUT_UNKNOWN,
+            D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+        );
+
+        Graphics::GDevice->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+            D3D12_HEAP_FLAG_NONE,
+            &texDesc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            nullptr, // &clearValue,
+            IID_PPV_ARGS(&resource)
+        );
+    }
 };
 
 namespace DescriptorFatory {
@@ -138,15 +161,25 @@ namespace DescriptorFatory {
         Graphics::GDevice->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
     }
 
-    void AppendTexture2DSRV(ComPtr<ID3D12Resource> resource, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    void AppendTexture2DSRV(ComPtr<ID3D12Resource> resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.Format = resource->GetDesc().Format;
+        srvDesc.Format = format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MostDetailedMip = 0;
         srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
         Graphics::GDevice->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
+    }
+
+    void AppendRTV(ComPtr<ID3D12Resource> resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    {
+        D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+        ZeroMemory(&RTVDesc, sizeof(RTVDesc));
+        RTVDesc.Format = resource->GetDesc().Format;
+        RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        
+        Graphics::GDevice->CreateRenderTargetView(resource.Get(), &RTVDesc, handle);
     }
 };

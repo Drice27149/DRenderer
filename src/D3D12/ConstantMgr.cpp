@@ -26,7 +26,7 @@ ConstantMgr::ConstantMgr(ID3D12Device* device, ID3D12Fence* fence, unsigned int 
     sceneInfo->dirX = -1.0;
     sceneInfo->dirY = 1.0;
     sceneInfo->dirZ = 1.0;
-    sceneInfo->taa = 0;
+    sceneInfo->taa = 1;
     sceneInfo->taaAlpha = 0.05;
     sceneInfo->adaptedLum = 0.5;
     sceneInfo->threshold = 1.0;
@@ -78,12 +78,26 @@ void ConstantMgr::UpdatePassConstants()
         auto proj = DEngine::GetCamMgr().GetProjectionTransform();
         proj[2][0] += 2.0f * (sampleX - 0.5f) / (float)viewPortWidth;
         proj[2][1] += 2.0f * (sampleY - 0.5f) / (float)viewPortHeight;
-        temp.proj = proj;
+        temp.JProj = proj;
     }
+    else
+        temp.JProj = temp.proj;
     
     temp.SMView = glm::transpose(tempLight);
     temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     temp.CamPos = DEngine::GetCamMgr().GetViewPos();
+
+    if(firstFrame){
+        firstFrame = false;
+        lastView = temp.view;
+        lastProj = temp.proj;
+    }
+    temp.lastView = lastView;
+    temp.lastProj = lastProj;
+    lastView = temp.view;
+    lastProj = temp.proj;
+    
+
     passCB->CopyData(1, temp);
     jitterID = (jitterID + 1) % jitterCnt;
 }

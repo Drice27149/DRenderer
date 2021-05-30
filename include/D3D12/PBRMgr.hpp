@@ -21,6 +21,10 @@ public:
     void Pass() override;
     void PrePass() override;
     void PostPass() override;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE GetVelocityRTV(){ return velRtvCpu; }
+    CD3DX12_GPU_DESCRIPTOR_HANDLE GetVelocitySRV(){ return velSrvGpu; }
+    ID3D12Resource* GetVelocityResource(){ return velocity.Get(); }
 public:
     // @TODO: 场景/物体管理
     std::shared_ptr<DMesh> objMesh;
@@ -30,6 +34,13 @@ public:
     unsigned int baseColor;
     unsigned int metallicRoughness;
     unsigned int emissive;
+    unsigned int width;
+    unsigned int height;
 public:
     unsigned mapping[aiTextureType_UNKNOWN + 1];
+    ComPtr<ID3D12Resource> velocity;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE velRtvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE velRtvGpu;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE velSrvCpu;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE velSrvGpu;
 };

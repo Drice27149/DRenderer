@@ -1,4 +1,5 @@
 #include "AAMgr.hpp"
+#include "Graphics.hpp"
 
 
 void AAMgr::BuildRootSig()
@@ -45,7 +46,7 @@ void AAMgr::BuildPSO()
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
     psoDesc.SampleDesc.Count = 1;
     psoDesc.SampleDesc.Quality = 0;
     psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -110,6 +111,8 @@ void AAMgr::CreateResources()
         renderTarget[i]->BuildRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
         renderTarget[i]->AppendTexture2DRTV(DXGI_FORMAT_R32G32B32A32_FLOAT, rtRtvCpu[i]);
         renderTarget[i]->AppendTexture2DSRV(DXGI_FORMAT_R32G32B32A32_FLOAT, rtSrvCpu[i]);
+        if(i == 2)
+            renderTarget[i]->mResource->SetName(L"NormalRenderTarget");
     }
 
     depthMap = std::make_shared<Resource>(device, sWidth, sHeight);
@@ -199,6 +202,12 @@ void AAMgr::StartTAA()
         D3D12_RESOURCE_STATE_RENDER_TARGET
         )
     );
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        Graphics::pbrMgr->GetVelocityResource(), 
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        )
+    );
     frame = (frame + 1)%2;
 }
 
@@ -208,6 +217,12 @@ void AAMgr::EndTAA()
         renderTarget[frame]->GetResource(), 
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        )
+    );
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        Graphics::pbrMgr->GetVelocityResource(), 
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
         )
     );
 }

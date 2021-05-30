@@ -41,4 +41,8 @@ public:
     std::unique_ptr<UploadBuffer<PassID>> passInfo = nullptr;
     unsigned int viewPortWidth;
     unsigned int viewPortHeight;
+public:
+    glm::mat4 lastView;
+    glm::mat4 lastProj;
+    bool firstFrame = true;
 };

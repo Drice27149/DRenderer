@@ -33,9 +33,8 @@ void TemporalAA::PrePass()
     Graphics::GCmdList->SetGraphicsRootConstantBufferView(0, Graphics::constantMgr->GetSceneInfoConstant());
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(1, lastFrame);
     Graphics::GCmdList->SetGraphicsRootDescriptorTable(2, nowFrame);
+    Graphics::GCmdList->SetGraphicsRootDescriptorTable(3, Graphics::pbrMgr->GetVelocitySRV());
 }
-
-
 
 void TemporalAA::PostPass()
 {

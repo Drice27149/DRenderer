@@ -15,6 +15,8 @@ cbuffer RealPass : register(b0)
 	float4x4 _SMView;
 	float4x4 _SMProj;
 	float4x4 _JProj;
+	float4x4 _lastView;
+	float4x4 _lastProj;
 	float3 _CamPos;
 };
 
@@ -56,4 +58,11 @@ struct VertexOut
 	float3 N: TEXCOORD2;
 	float4 clipPos: TEXCOORD3;
 	float3 worldPos: TEXCOORD4;
+	float4 lastClipPos: TEXCOORD5;
+};
+
+struct PixelOut 
+{
+	float4 color: SV_TARGET0;
+	float2 velocity: SV_TARGET1;
 };

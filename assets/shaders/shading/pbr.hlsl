@@ -7,12 +7,18 @@ VertexOut VS(VertexIn vin)
 	
 	// Transform to homogeneous clip space.
 	// float4x4 mvp = mul(mul(_model, _View), _Proj);
-	float4x4 mvp = mul(mul(_Proj, _View), _model);
+	float4x4 mvp = mul(mul(_JProj, _View), _model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;
 
+	float4x4 lastMvp = mul(mul(_lastProj, _lastView), _model);
+	vout.lastClipPos = mul(lastMvp, float4(vin.vertex, 1.0f));
+
+	mvp = mul(mul(_Proj, _View), _model);
+	vout.clipPos = mul(mvp, float4(vin.vertex, 1.0f));
+
 	float4x4 shadowMvp = mul(mul(_SMProj, _SMView), _model);
-	vout.clipPos = mul(shadowMvp, float4(vin.vertex, 1.0f));
+	// vout.clipPos = mul(shadowMvp, float4(vin.vertex, 1.0f));
 	// uv
 	vout.uv = vin.texcoord;
 	// in worldspace
@@ -135,18 +141,19 @@ float3 DirectLight(float3 N, float3 V, float3 L, float3 baseColor, float roughne
 	return lighting;
 }
 
-float4 PS(VertexOut pin) : SV_Target
+float4 PixelColor(VertexOut pin)
 {
-	// float3 color = float3(1.0, 1.0, 1.0);
-	// color = color * dot(normalize(pin.N),normalize(GetLightDir()));
-	float3 baseColor = gDiffuseMap.Sample(gsamLinear, pin.uv).rgb;
+	float2 uv = pin.uv;
+	// uv.x = 1.0 - uv.x;
+	// uv.y = 1.0 - uv.y;
+	float3 baseColor = gDiffuseMap.Sample(gsamLinear, uv).rgb;
 	baseColor = pow(baseColor, 2.2);
-	float ao = gMetallicMap.Sample(gsamLinear, pin.uv).r;
-	float roughness = gMetallicMap.Sample(gsamLinear, pin.uv).g;
+	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
+	float roughness = gMetallicMap.Sample(gsamLinear, uv).g;
 	roughness = pow(roughness, 2.2);
-	float metallic = gMetallicMap.Sample(gsamLinear, pin.uv).b;
+	float metallic = gMetallicMap.Sample(gsamLinear, uv).b;
 	// metallic = pow(metallic, 2.2);
-	float3 normal = gNormalMap.Sample(gsamLinear, pin.uv).rgb;
+	float3 normal = gNormalMap.Sample(gsamLinear, uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
 	if(!(_mask & (1<<6))){
@@ -165,6 +172,31 @@ float4 PS(VertexOut pin) : SV_Target
 	outColor = outColor + DirectLight(N, V, L, baseColor, roughness, metallic) * _lightIntensity;
 	// outColor = outColor + AmbientIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
 	outColor = outColor + ApproximateIBL(N, V, baseColor, roughness, metallic) * _envIntensity;
-	outColor = outColor + gEmissiveMap.Sample(gsamLinear, pin.uv).rrr * 5.0;
+	outColor = outColor + gEmissiveMap.Sample(gsamLinear, uv).rrr * 5.0;
+
 	return float4(outColor, 1.0);
+}
+
+// int mClientWidth = 860;
+// int mClientHeight = 720;
+float2 PixelMotionVector(VertexOut pin)
+{
+	float width = 860;
+	float height = 720;
+	float4 clipPos = pin.clipPos;
+	clipPos = clipPos / clipPos.w;
+	float2 now = float2((clipPos.x*0.5+0.5)*width, (1.0 - (clipPos.y*0.5+0.5))*height);
+	float4 lastClip = pin.lastClipPos;
+	lastClip = lastClip / lastClip.w;
+	float2 last = float2((lastClip.x*0.5+0.5)*width, (1.0 - (lastClip.y*0.5+0.5))*height);
+	float2 offset = last - now;
+	return offset;
+}
+
+PixelOut PS(VertexOut pin)
+{
+	PixelOut pixOut;
+	pixOut.color = PixelColor(pin);
+	pixOut.velocity = PixelMotionVector(pin);
+	return pixOut;
 }

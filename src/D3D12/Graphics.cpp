@@ -7,7 +7,7 @@
 #include "imgui_impl_dx12.h"
 #include "Fatory.hpp"
 
-const int FrameCount = 3;
+const int FrameCount = 2;
 
 Graphics::Graphics(HINSTANCE hInstance)
 : D3DApp(hInstance) 
@@ -145,6 +145,8 @@ void Graphics::InitPassMgrs()
     // shading
     pbrMgr = std::make_shared<PBRMgr>(md3dDevice.Get(), mCommandList.Get());
     pbrMgr->objMesh = objMesh;
+    pbrMgr->width = mClientWidth;
+    pbrMgr->height = mClientHeight;
     pbrMgr->Init();
     // gui
     guiMgr = std::make_shared<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
@@ -164,7 +166,7 @@ void Graphics::InitPassMgrs()
     aaMgr->Init();
     // taa
     temporalAA = std::make_shared<TemporalAA>();
-    temporalAA->inputs.resize(2);
+    temporalAA->inputs.resize(3);
     temporalAA->Init();
     // tone map
     toneMapping = std::make_shared<ToneMapping>();
@@ -212,23 +214,28 @@ void Graphics::Draw(const GameTimer& gt)
 
     // ExecuteComputeShader();
     
-    // begin of render a scene
+    // begin of rendering a scene
     
     aaMgr->BeginFrame();
 
-	mCommandList->OMSetRenderTargets(1, &(aaMgr->GetCurRTRTV()), true, &(aaMgr->GetDepthBuffer()));
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2] = {aaMgr->GetCurRTRTV(), pbrMgr->GetVelocityRTV()};
+
+	mCommandList->OMSetRenderTargets(2, rtvs, false, &(aaMgr->GetDepthBuffer()));
     mCommandList->ClearRenderTargetView(aaMgr->GetCurRTRTV(), Colors::LightSteelBlue, 0, nullptr);
+    float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+    mCommandList->ClearRenderTargetView(pbrMgr->GetVelocityRTV(), clearColor, 0, nullptr);
     mCommandList->ClearDepthStencilView(aaMgr->GetDepthBuffer(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     mCommandList->RSSetViewports(1, &sScreenViewport);
     mCommandList->RSSetScissorRects(1, &sScissorRect);
 
-    // // real render
     // // DrawObjects(DrawType::Normal);
     DrawOpaque();
     // // place at last
     DrawSkyBox();
     // // debugvis
     // DrawLines();
+
+    // end of rendering a scene
 
     // rtv -> srv, scroll it 
     aaMgr->StartTAA();
