@@ -29,6 +29,10 @@ include_directories(${CMAKE_SOURCE_DIR}/thirdparty/imgui)
 
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/DirectXTex) 
 
+include_directories(${CMAKE_SOURCE_DIR}/src/Render)
+
+include_directories(${CMAKE_SOURCE_DIR}/src/Resource)
+
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib) # lib
 
 add_executable (DRenderer WIN32 ${COMMON_CPP} ${MY_CPP} ${CMAKE_SOURCE_DIR}/thirdparty/glad.c)
