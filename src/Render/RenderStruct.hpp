@@ -8,37 +8,36 @@
 
 using namespace Microsoft::WRL;
 
-// data to build root signature
-struct RStData {
-
-    ComPtr<ID3D12RootSignature> rst = nullptr;
-};
-
 // data to compile shader
 struct ShaderData {
     std::string name;
-    ShaderType type;
-    // for self defined shader
-    ComPtr<ID3DBlob> shader = nullptr;
+    ShaderEnum::Type type;
 };
 
 // data to build Pipeline state object
 struct PSOData {
-    //for self defined pso
-    ComPtr<ID3D12PipelineState> pso = nullptr;
+    // for init pso
+    bool enableDepth = true;
 };
 
 // data to ref resource
 struct ResourceData {
     std::string name;
-    ResourceState state;
-    ViewType view;
+    ResourceEnum::State state;
+    ResourceEnum::Usage usage;
+    ResourceEnum::Type type;
+    ResourceEnum::Format format;
+};
+
+struct ResourceView {
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpu[ResourceEnum::View::UKnownView];
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpu[ResourceEnum::View::UKnownView];
+    unsigned int mask = 0;
 };
 
 struct PassData {
     std::vector<ResourceData> inputs;
     std::vector<ResourceData> outputs;
     std::vector<ShaderData> shaders;
-    RStData rtsData;
     PSOData psoData;
 };

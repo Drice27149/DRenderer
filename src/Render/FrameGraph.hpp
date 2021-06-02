@@ -3,8 +3,9 @@
 
 #include <iostream>
 #include <vector>
+#include "RenderPass.hpp"
 
-class RenderPass;
+class Device;
 struct PassData;
 struct PSOData;
 struct RStData;
@@ -14,11 +15,6 @@ public:
     template<typename Setup, typename Execute>
     void AddPass(std::string name, Setup setup, Execute execute);
 private:
+    Device* device;
     std::vector<RenderPass> passes;
 };
-
-// some helper function
-void BuildPass(RenderPass& pass, PassData& data);
-void BuildPSO(RenderPass& pass, PSOData& data);
-void BuildRootSignature(RenderPass& pass, RStData& data);
-// ComPtr<ID3DBlob> GetShader(ShaderData data)

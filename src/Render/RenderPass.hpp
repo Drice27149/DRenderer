@@ -11,6 +11,6 @@ public:
     PassData& GetPassData();
 public:
     PassData data;
-    ComPtr<ID3D12PipelineState> pso;
-    ComPtr<ID3D12RootSignature> rts;
+    ID3D12PipelineState* pso;
+    ID3D12RootSignature* rst;
 };

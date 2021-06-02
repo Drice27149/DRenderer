@@ -6,6 +6,8 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
 #include "Fatory.hpp"
+#include "Device.hpp"
+#include "Context.hpp"
 
 const int FrameCount = 2;
 
@@ -27,6 +29,9 @@ bool Graphics::Initialize()
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
     GDevice = md3dDevice.Get();
     GCmdList = mCommandList.Get();
+
+    Device::SetDevice(md3dDevice);
+    Context::SetContext(mCommandList);
     viewPortWidth = mClientWidth;
     viewPortHeight = mClientHeight;
 

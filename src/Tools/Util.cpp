@@ -1,4 +1,10 @@
-#include <iostream>
+#include "Util.hpp"
+
+const wchar_t* GetWString(std::string& s){
+    std::wstring wstringFn = std::wstring(s.begin(), s.end());
+	const wchar_t* wcharFn = wstringFn.c_str();
+    return wcharFn;
+}
 
 std::string Int2String(int u)
 {

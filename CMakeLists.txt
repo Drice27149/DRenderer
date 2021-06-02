@@ -33,6 +33,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/Render)
 
 include_directories(${CMAKE_SOURCE_DIR}/src/Resource)
 
+include_directories(${CMAKE_SOURCE_DIR}/src/Tools)
+
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib) # lib
 
 add_executable (DRenderer WIN32 ${COMMON_CPP} ${MY_CPP} ${CMAKE_SOURCE_DIR}/thirdparty/glad.c)

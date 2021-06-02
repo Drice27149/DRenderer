@@ -23,6 +23,7 @@
 #include "ToneMapping.hpp"
 #include "Bloom.hpp"
 #include "PrefilterIBL.hpp"
+#include "FrameGraph.hpp"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -102,6 +103,8 @@ public:
     static std::shared_ptr<PrefilterIBL> prefilterIBL;
 
     bool firstFrame = true;
+
+    FrameGraph fg;
 
 public:
     static ID3D12Device* GDevice;
