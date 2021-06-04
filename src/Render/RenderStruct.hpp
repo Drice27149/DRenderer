@@ -14,25 +14,33 @@ struct ShaderData {
     ShaderEnum::Type type;
 };
 
-// data to build Pipeline state object
-struct PSOData {
-    // for init pso
-    bool enableDepth = true;
-};
-
 // data to ref resource
 struct ResourceData {
     std::string name;
-    ResourceEnum::State state;
-    ResourceEnum::Usage usage;
-    ResourceEnum::Type type;
-    ResourceEnum::Format format;
+    ResourceEnum::State state;      // read / write / create
+    ResourceEnum::Type type;        // constant, buffer, texture2D, textureCube
+    ResourceEnum::Format format;    // R32G32B32A32_FLOAT
+    //ResourceEnum::Usage usage;      // not using
 };
 
 struct ResourceView {
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpu[ResourceEnum::View::UKnownView];
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpu[ResourceEnum::View::UKnownView];
     unsigned int mask = 0;
+};
+
+struct ResourceDesc {
+    unsigned int width;
+    unsigned int height;
+    ResourceEnum::Format format;
+    ResourceEnum::Type type;
+};
+
+// data to build Pipeline state object
+struct PSOData {
+    // for init pso
+    bool enableDepth = true;
+    ResourceData depthStencil;
 };
 
 struct PassData {

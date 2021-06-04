@@ -8,6 +8,7 @@
 #include "Fatory.hpp"
 #include "Device.hpp"
 #include "Context.hpp"
+#include "Renderer.hpp"
 
 const int FrameCount = 2;
 
@@ -24,6 +25,8 @@ bool Graphics::Initialize()
 {
     if(!D3DApp::Initialize())
 		return false;
+    renderer = new Renderer();
+    renderer->InitRenderer();
 		
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
@@ -208,7 +211,6 @@ void Graphics::Draw(const GameTimer& gt)
     
     if(firstFrame){
         PrecomputeResource();
-        firstFrame = false;
     }
 
     // DrawShadowMap();
@@ -276,9 +278,50 @@ void Graphics::Draw(const GameTimer& gt)
     else 
         toneMapping->input = aaMgr->GetCurRTSRV();
 
-    toneMapping->PrePass();
-    toneMapping->Pass();
-    toneMapping->PostPass();
+    Renderer::ResManager->RegisterHandle(std::string("testTarget"), CD3DX12_CPU_DESCRIPTOR_HANDLE(CurrentBackBufferView()), ResourceEnum::View::RTView);
+    Renderer::ResManager->RegisterHandle(std::string("testSRV"), aaMgr->GetTAAResult(), ResourceEnum::View::SRView);
+
+    if(firstFrame){
+        Renderer::ResManager->CreateRenderTarget(
+            std::string("testCreate"),
+            ResourceDesc {
+                (unsigned int)mClientWidth,
+                (unsigned int)mClientHeight,
+                ResourceEnum::Format::R32G32B32A32_FLOAT,
+                ResourceEnum::Type::Texture2D,
+            },
+            1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+        );
+        firstFrame = false;
+    }
+    
+
+    Renderer::FG->AddPass(std::string("TestPass"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
+            ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
+        };
+        data.outputs = {
+            ResourceData{"testCreate"},
+        };
+        data.psoData.enableDepth = false;
+        // data.psoData.depthStencil = ...
+        data.shaders = {
+            ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
+            ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
+        };
+        float color = 0.5;
+        Renderer::GDevice->SetShaderConstant("testInfo", &color);
+    },
+    [=](){
+        Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
+    });
+    // Renderer::FG->AddPass(name, name, name);
+
+    // toneMapping->PrePass();
+    // toneMapping->Pass();
+    // toneMapping->PostPass();
     // GUI
     DrawGUI();
 

@@ -29,6 +29,8 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+class Renderer;
+
 class Graphics : public D3DApp
 {
 public:
@@ -104,7 +106,7 @@ public:
 
     bool firstFrame = true;
 
-    FrameGraph fg;
+    Renderer* renderer = nullptr;
 
 public:
     static ID3D12Device* GDevice;

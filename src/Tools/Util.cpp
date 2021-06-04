@@ -6,6 +6,12 @@ const wchar_t* GetWString(std::string& s){
     return wcharFn;
 }
 
+std::wstring WString(std::string& s)
+{
+    std::wstring wstringFn = std::wstring(s.begin(), s.end());
+    return wstringFn;
+}
+
 std::string Int2String(int u)
 {
     if(u == 0) return "0";

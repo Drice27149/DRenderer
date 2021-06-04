@@ -5,6 +5,7 @@
 #include "CamMgr.hpp"
 #include "SceneMgr.hpp"
 #include "Object.hpp"
+#include "Renderer.hpp"
 
 class DEngine{
 public:
@@ -24,4 +25,5 @@ public:
     CamMgr camMgr;
     InputMgr inputMgr;
     SceneMgr sceneMgr;
+    Renderer renderer;
 };

@@ -31,7 +31,7 @@ enum View {
 };
 
 enum Usage {
-
+    
 };
 
 }

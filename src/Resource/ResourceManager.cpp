@@ -1,8 +1,12 @@
 #include "ResourceManager.hpp"
 #include "RenderStruct.hpp"
 #include "Device.hpp"
+#include "ResourceFatory.hpp"
+#include "ViewFatory.hpp"
+#include "Util.hpp"
+#include "Graphics.hpp"
 
-void ResourceManager::RegisterResource(std::string name, ComPtr<ID3D12Resource>res)
+void ResourceManager::RegisterResource(std::string name, ComPtr<ID3D12Resource>&res)
 {
     resources[name] = res;
 }
@@ -46,17 +50,57 @@ CD3DX12_GPU_DESCRIPTOR_HANDLE ResourceManager::GetGPU(std::string name, Resource
     return views[name].gpu[view];
 }
 
-template<typename T>
-void ResourceManager::CommitConstantBuffer(std::string name, T* data)
-{
-    std::shared_ptr<CommonUpload> newItem = std::make_shared<CommonUpload>(Device::GetDevice(), d3dUtil::CalcConstantBufferByteSize(sizeof(T)));
-    newItem->CopyData(data, sizeof(T));
-    ResourceManager::RegisterResource(name, newItem->Resource());
-}
-
 void ResourceManager::ForwardFrame()
 {
     frame++;
-    while(bufferItems.size()!=0 && bufferItems.front()->frameID<frame)
+    while(bufferItems.size()!=0 && bufferItems.front().frameID<frame)
         bufferItems.pop();
+}
+
+void ResourceManager::CreateRenderTarget(std::string name, ResourceDesc desc, unsigned int usage)
+{
+    // create and register resource
+    ComPtr<ID3D12Resource> res;
+    DXGI_FORMAT dxFormat;
+    if(desc.format == ResourceEnum::Format::R32G32B32A32_FLOAT)
+        dxFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    else if(desc.format == ResourceEnum::Format::R8G8B8A8_UNORM)
+        dxFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    else if(desc.format == ResourceEnum::Format::R16G16_FLOAT)
+        dxFormat = DXGI_FORMAT_R16G16_FLOAT;
+    ResFatory::CreateRenderTarget2DResource(res, desc.width, desc.height, dxFormat);
+    res->SetName(WString(name).c_str());
+    RegisterResource(name, res);
+
+    // append views
+    for(int i = 0; i < ResourceEnum::View::UKnownView; i++){
+        if(usage&(1<<i)){
+            CD3DX12_CPU_DESCRIPTOR_HANDLE cpu;
+            CD3DX12_GPU_DESCRIPTOR_HANDLE gpu;
+            if(i == ResourceEnum::View::SRView){
+                Graphics::heapMgr->GetNewSRV(cpu, gpu);
+                ViewFatory::AppendTexture2DSRV(res, dxFormat, cpu);
+                RegisterHandle(name, cpu, gpu, ResourceEnum::View::SRView);
+            }
+            if(i == ResourceEnum::View::RTView){
+                Graphics::heapMgr->GetNewRTV(cpu, gpu);
+                ViewFatory::AppendRTV(res, dxFormat, cpu);
+                RegisterHandle(name, cpu, gpu, ResourceEnum::View::RTView);
+            }
+        }
+    }
+}
+
+void ResourceManager::CreateViews(ComPtr<ID3D12Resource>& res, std::string name, unsigned int usage)
+{
+    for(int i = 0; i < ResourceEnum::View::UKnownView; i++){
+        if(usage&(1<<i)){
+            if(usage == ResourceEnum::View::SRView){
+
+            }
+            if(usage == ResourceEnum::View::RTView){
+
+            }
+        }
+    }
 }

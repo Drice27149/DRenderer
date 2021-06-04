@@ -8,6 +8,8 @@
 
 const wchar_t* GetWString(std::string& s);
 
+std::wstring WString(std::string& s);
+
 std::string Int2String(int u);
 
 std::string Int2String(int u, unsigned int digit);

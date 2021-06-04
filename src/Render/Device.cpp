@@ -5,6 +5,7 @@
 #include "RenderPass.hpp"
 #include "Context.hpp"
 #include "ResourceManager.hpp"
+#include "Renderer.hpp"
 
 ComPtr<ID3D12Device> Device::GDevice = nullptr;
 
@@ -18,18 +19,35 @@ ID3D12Device* Device::GetDevice()
     return GDevice.Get();
 }
 
+std::map<std::string, ComPtr<ID3DBlob>>& Device::GetShaderMap(ShaderEnum::Type type)
+{
+    if(type == ShaderEnum::Type::CS)
+        return css;
+    else if(type == ShaderEnum::Type::VS)
+        return vss;
+    else if(type == ShaderEnum::Type::GS)
+        return gss;
+    else if(type == ShaderEnum::Type::PS)
+        return pss;
+    else if(type == ShaderEnum::Type::CS)
+        return css;
+    return css;
+}
+
 ID3DBlob* Device::GetShader(ShaderData data)
 {
+    auto& shaders = GetShaderMap(data.type);
+    if(data.type == ShaderEnum::Type::CS)
     if(shaders.count(data.name))
         return shaders[data.name].Get();
     if(data.type == ShaderEnum::Type::CS)
-        shaders[data.name] = d3dUtil::CompileShader(GetWString(data.name), nullptr, "CS", "cs_5_1");
+        shaders[data.name] = d3dUtil::CompileShader(WString(data.name).c_str(), nullptr, "CS", "cs_5_1");
     else if(data.type == ShaderEnum::Type::GS)
-        shaders[data.name] = d3dUtil::CompileShader(GetWString(data.name), nullptr, "GS", "gs_5_1");
+        shaders[data.name] = d3dUtil::CompileShader(WString(data.name).c_str(), nullptr, "GS", "gs_5_1");
     else if(data.type == ShaderEnum::Type::PS)
-        shaders[data.name] = d3dUtil::CompileShader(GetWString(data.name), nullptr, "PS", "ps_5_1");
+        shaders[data.name] = d3dUtil::CompileShader(WString(data.name).c_str(), nullptr, "PS", "ps_5_1");
     else
-        shaders[data.name] = d3dUtil::CompileShader(GetWString(data.name), nullptr, "VS", "vs_5_1");
+        shaders[data.name] = d3dUtil::CompileShader(WString(data.name).c_str(), nullptr, "VS", "vs_5_1");
     return shaders[data.name].Get();
 }
 
@@ -172,17 +190,14 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
     // @TODO: set render resolution
     if(data.outputs.size()!=0){
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rts;
-        // depth buffer cpu handle
-        CD3DX12_CPU_DESCRIPTOR_HANDLE dsv;
         for(const auto& out: data.outputs){
-            CD3DX12_CPU_DESCRIPTOR_HANDLE view = resMgr->GetCPU(out.name, ResourceEnum::View::RTView);
-            if(out.type != ResourceEnum::View::DSView)
-                rts.push_back(view);
-            else 
-                dsv = view;
+            CD3DX12_CPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetCPU(out.name, ResourceEnum::View::RTView);
+            rts.push_back(view);
         }
-        if(data.psoData.enableDepth)
+        if(data.psoData.enableDepth){
+            CD3DX12_CPU_DESCRIPTOR_HANDLE dsv = Renderer::ResManager->GetCPU(data.psoData.depthStencil.name, ResourceEnum::View::DSView);
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, &dsv);
+        }
         else
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
     }
@@ -192,11 +207,11 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         const auto& in = data.inputs[i];
         // @TODO: set graphics root params
         if(in.type == ResourceEnum::Type::Constant){
-            ID3D12Resource* res = resMgr->GetResource(in.name);
+            ID3D12Resource* res = Renderer::ResManager->GetResource(in.name);
             Context::GetContext()->SetGraphicsRootConstantBufferView(i, res->GetGPUVirtualAddress());
         }
         else if(in.type == ResourceEnum::Type::Texture2D || in.type == ResourceEnum::Type::TextureCube){
-            CD3DX12_GPU_DESCRIPTOR_HANDLE view = resMgr->GetGPU(in.name, ResourceEnum::View::SRView);
+            CD3DX12_GPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
             Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
         }
         // @TODO: buffer bounding
@@ -204,12 +219,6 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
             
         }
     }
-}
-
-template<typename T>
-void Device::SetShaderConstant(std::string name, T* data)
-{
-    resMgr->CommitConstantBuffer(name, data);
 }
 
 
