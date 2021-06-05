@@ -12,6 +12,11 @@ cbuffer RealPass : register(b0)
 {
 	float4x4 _View;
 	float4x4 _Proj;
+	float4x4 _SMView;
+	float4x4 _SMProj;
+	float4x4 _JProj;
+	float4x4 _lastView;
+	float4x4 _lastProj;
 	float3 _CamPos;
 };
 
@@ -22,18 +27,6 @@ cbuffer RealObject: register(b1)
     uint _mask;
     float _metallic;
     float _roughness;
-};
-
-cbuffer SceneInfo: register(b3)
-{
-    float _MainLightPosX;
-    float _MainLightPosY;
-    float _MainLightPosZ;
-    float _MainLightDirX;
-    float _MainLightDirY;
-    float _MainLightDirZ;
-    float _lightIntensity;
-    float _envIntensity;
 };
 
 struct VertexIn
@@ -120,6 +113,22 @@ float GetShadowBlur(float4 clipPos)
 
 PixelOut PS(VertexOut pin)
 {
-	PixelOut pixOut;
+	float2 uv = pin.uv;
+	float3 baseColor = gDiffuseMap.Sample(gsamLinear, uv).rgb;
+	baseColor = pow(baseColor, 2.2);
+	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
+	float roughness = gMetallicMap.Sample(gsamLinear, uv).g;
+	roughness = pow(roughness, 2.2);
+	float metallic = gMetallicMap.Sample(gsamLinear, uv).b;
+	float3 normal = gNormalMap.Sample(gsamLinear, uv).rgb;
+	normal = normal*2.0 - 1.0;
+	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+
+    PixelOut pixOut;
+    pixOut.diffuseMetallic = float4(baseColor, metallic);
+    pixOut.normalRoughness = float4(normal, roughness);
+    pixOut.worldPosAO = float4(float3(0.0, 0.0, 0.0), ao);
+    pixOut.velocity = float2(0.0, 0.0);
+
 	return pixOut;
 }

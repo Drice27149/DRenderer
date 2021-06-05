@@ -315,8 +315,8 @@ void Graphics::AddGBufferMainPass()
                 ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // emissive
             };
             data.outputs = {
-                ResourceData{"DiffuseMetallic", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT},
-                ResourceData{"NormalRoughness", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+                ResourceData{"DiffuseMetallic", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM},
+                ResourceData{"NormalRoughness", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM},
                 ResourceData{"WorldPosAO", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
                 ResourceData{"Velocity", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
             };
@@ -332,7 +332,51 @@ void Graphics::AddGBufferMainPass()
             };
         },
         [=](){
+            // @TODO: clear RT and depth here
+            // @TODO: constant commit and done
+            Context::GetContext()->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
+            Context::GetContext()->IASetIndexBuffer(&objMesh->IndexBufferView());
+            Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+            int mapping[30];
+            for(int i = 0; i < 25; i++)
+                mapping[i] = -1;
+            mapping[aiTextureType_NORMALS] = 2;
+            mapping[aiTextureType_DIFFUSE] = 3;
+            // @TODO: metallic roughness = 5
+            mapping[aiTextureType_LIGHTMAP] = 4;
+            mapping[aiTextureType_EMISSIVE] = 5;
+
+            auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
+            int idOffset = 0, vsOffset = 0;
             
+            auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
+            Context::GetContext()->SetGraphicsRootConstantBufferView(0, passAddr);
+
+            for(Object* obj: DEngine::gobjs){
+                Context::GetContext()->SetGraphicsRootConstantBufferView(1, objectAddr);
+                // set per object image texture for shading
+                for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
+                    if(obj->mask & (1<<i)){
+                        unsigned int slot = mapping[i];
+                        if(slot != -1){
+                            auto& handle = Renderer::ResManager->GetGPU(obj->texns[i], ResourceEnum::View::SRView);
+                            Context::GetContext()->SetGraphicsRootDescriptorTable(slot, handle);
+                        }
+                    }
+                }
+                // rendering
+                for(Mesh& mesh: obj->meshes){
+                    int idSize = mesh.ids.size();
+
+                    if(obj->drawType == DrawType::Normal) 
+                        Context::GetContext()->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+
+                    idOffset += mesh.ids.size();
+                    vsOffset += mesh.vs.size();
+                }
+                objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+            }
         }
     );
 }

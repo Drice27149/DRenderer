@@ -208,6 +208,7 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         if(data.psoData.enableDepth){
             CD3DX12_CPU_DESCRIPTOR_HANDLE dsv = Renderer::ResManager->GetCPU(data.psoData.depthStencil.name, ResourceEnum::View::DSView);
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, &dsv);
+            Context::GetContext()->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
         }
         else
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
@@ -248,6 +249,8 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
             
         }
     }
+
+    
 }
 
 
