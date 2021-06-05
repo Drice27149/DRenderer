@@ -42,6 +42,7 @@ bool Graphics::Initialize()
     BuildDescriptorHeaps();
     UploadMeshes();
     UploadTextures();
+    CreatePersistentResource();
     InitPassMgrs();
     // Execute the initialization commands.
     ThrowIfFailed(mCommandList->Close());
@@ -73,6 +74,79 @@ void Graphics::UploadTextures()
     textureMgr = std::make_shared<TextureMgr>(md3dDevice.Get(), mCommandList.Get());
     textureMgr->heapMgr = heapMgr;
     textureMgr->Init();
+    Renderer::ResManager->LoadObjectTextures();
+}
+
+void Graphics::CreatePersistentResource()
+{
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("DiffuseMetallic"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R8G8B8A8_UNORM,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("NormalRoughness"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R8G8B8A8_UNORM,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("WorldPosAO"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R32G32B32A32_FLOAT,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("Velocity"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R16G16_FLOAT,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("dummyTexture"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R32G32B32A32_FLOAT,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    Renderer::ResManager->CreateDepthStencil(
+        std::string("GBufferDepth"),
+        ResourceDesc{
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R8G8B8A8_UNORM, // will be ignored
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::DSView
+    );
+
+    int dummyConstant = -1;
+    Renderer::GDevice->SetShaderConstant(std::string("dummyConstant"), &dummyConstant);
 }
 
 void Graphics::InitPassMgrs()
@@ -86,6 +160,16 @@ void Graphics::InitPassMgrs()
     constantMgr = std::make_shared<ConstantMgr>(device, fence, (unsigned int)FrameCount, (unsigned int)5, (unsigned int)DEngine::gobjs.size());
     constantMgr->viewPortWidth = mClientWidth;
     constantMgr->viewPortHeight = mClientHeight;
+
+    // gui
+    guiMgr = std::make_shared<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
+    guiMgr->heapMgr = heapMgr;
+    guiMgr->mhMainWnd = mhMainWnd;
+    guiMgr->constantMgr = constantMgr;
+    guiMgr->Init();
+    GUIInit = true;
+
+    return ;
     // Pre-Z 管理类
     preZMgr = std::make_shared<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
@@ -156,13 +240,7 @@ void Graphics::InitPassMgrs()
     pbrMgr->width = mClientWidth;
     pbrMgr->height = mClientHeight;
     pbrMgr->Init();
-    // gui
-    guiMgr = std::make_shared<GUIMgr>(md3dDevice.Get(), mCommandList.Get());
-    guiMgr->heapMgr = heapMgr;
-    guiMgr->mhMainWnd = mhMainWnd;
-    guiMgr->constantMgr = constantMgr;
-    guiMgr->Init();
-    GUIInit = true;
+
     // AA
     aaMgr = std::make_shared<AAMgr>(md3dDevice.Get(), mCommandList.Get());
     aaMgr->sWidth = ssRate*mClientWidth;
@@ -193,8 +271,70 @@ void Graphics::OnResize()
 
 void Graphics::Update(const GameTimer& gt)
 {
+    UpdateAndAsync();
+}
+
+void Graphics::UpdateAndAsync()
+{
     constantMgr->Update();
     guiMgr->Update();
+}
+
+void Graphics::AddGBufferMainPass()
+{
+    // post processing code sample
+    // Renderer::FG->AddPass(std::string("TestPass"),
+    // [&](PassData& data){
+    //     data.inputs = {
+    //         ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
+    //         ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
+    //     };
+    //     data.outputs = {
+    //         // ResourceData{"testCreate"},
+    //     };
+    //     data.psoData.enableDepth = false;
+    //     // data.psoData.depthStencil = ...
+    //     data.shaders = {
+    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
+    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
+    //     };
+    //     float color = 0.5;
+    //     Renderer::GDevice->SetShaderConstant("testInfo", &color);
+    // },
+    // [=](){
+    //     Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
+    // });
+    Renderer::FG->AddPass("GBufferMainPass",
+        [&](PassData& data){
+            data.inputs = {
+                ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
+                ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
+                ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // normal
+                ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // baseColor
+                ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // metallicRoughness
+                ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // emissive
+            };
+            data.outputs = {
+                ResourceData{"DiffuseMetallic", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT},
+                ResourceData{"NormalRoughness", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+                ResourceData{"WorldPosAO", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+                ResourceData{"Velocity", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
+            };
+            data.psoData = PSOData{  
+                true,   // enable depth 
+                ResourceData{ "GBufferDepth", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D}, // depth stencil data
+                (int)mClientWidth,
+                (int)mClientHeight,
+            };
+            data.shaders = { 
+                ShaderData{std::string("../assets/shaders/DeferredShading/GBufferMainPass.hlsl"), ShaderEnum::VS},
+                ShaderData{std::string("../assets/shaders/DeferredShading/GBufferMainPass.hlsl"), ShaderEnum::PS},
+            };
+        },
+        [=](){
+            
+        }
+    );
 }
 
 void Graphics::Draw(const GameTimer& gt)
@@ -209,123 +349,117 @@ void Graphics::Draw(const GameTimer& gt)
     ID3D12DescriptorHeap* descriptorHeaps[] = { heapMgr->GetSRVHeap() };
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     
-    if(firstFrame){
-        PrecomputeResource();
-    }
+    AddGBufferMainPass();
 
-    // DrawShadowMap();
+    // if(firstFrame){
+    //     PrecomputeResource();
+    // }
 
-    // PreZPass();
+    // // DrawShadowMap();
 
-    // PrepareCluster();
+    // // PreZPass();
 
-    // ExecuteComputeShader();
+    // // PrepareCluster();
+
+    // // ExecuteComputeShader();
     
-    // begin of rendering a scene
+    // // begin of rendering a scene
     
-    aaMgr->BeginFrame();
+    // aaMgr->BeginFrame();
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2] = {aaMgr->GetCurRTRTV(), pbrMgr->GetVelocityRTV()};
+    // CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2] = {aaMgr->GetCurRTRTV(), pbrMgr->GetVelocityRTV()};
 
-	mCommandList->OMSetRenderTargets(2, rtvs, false, &(aaMgr->GetDepthBuffer()));
-    mCommandList->ClearRenderTargetView(aaMgr->GetCurRTRTV(), Colors::LightSteelBlue, 0, nullptr);
-    float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
-    mCommandList->ClearRenderTargetView(pbrMgr->GetVelocityRTV(), clearColor, 0, nullptr);
-    mCommandList->ClearDepthStencilView(aaMgr->GetDepthBuffer(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    mCommandList->RSSetViewports(1, &sScreenViewport);
-    mCommandList->RSSetScissorRects(1, &sScissorRect);
+	// mCommandList->OMSetRenderTargets(2, rtvs, false, &(aaMgr->GetDepthBuffer()));
+    // mCommandList->ClearRenderTargetView(aaMgr->GetCurRTRTV(), Colors::LightSteelBlue, 0, nullptr);
+    // float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+    // mCommandList->ClearRenderTargetView(pbrMgr->GetVelocityRTV(), clearColor, 0, nullptr);
+    // mCommandList->ClearDepthStencilView(aaMgr->GetDepthBuffer(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    // mCommandList->RSSetViewports(1, &sScreenViewport);
+    // mCommandList->RSSetScissorRects(1, &sScissorRect);
 
-    // // DrawObjects(DrawType::Normal);
-    DrawOpaque();
-    // // place at last
-    DrawSkyBox();
-    // // debugvis
-    // DrawLines();
+    // // // DrawObjects(DrawType::Normal);
+    // DrawOpaque();
+    // // // place at last
+    // DrawSkyBox();
+    // // // debugvis
+    // // DrawLines();
 
-    // end of rendering a scene
+    // // end of rendering a scene
 
-    // rtv -> srv, scroll it 
-    aaMgr->StartTAA();
-    // must connect with the last one
-    mCommandList->OMSetRenderTargets(1, &(aaMgr->GetNextRenderTarget()), true, &(aaMgr->GetDepthBuffer()));
+    // // rtv -> srv, scroll it 
+    // aaMgr->StartTAA();
+    // // must connect with the last one
+    // mCommandList->OMSetRenderTargets(1, &(aaMgr->GetNextRenderTarget()), true, &(aaMgr->GetDepthBuffer()));
 
-    if(constantMgr->GetSceneInfo()->taa){
-        temporalAA->PrePass();
-        temporalAA->Pass();
-        temporalAA->PostPass();
-    }
+    // if(constantMgr->GetSceneInfo()->taa){
+    //     temporalAA->PrePass();
+    //     temporalAA->Pass();
+    //     temporalAA->PostPass();
+    // }
 
-    aaMgr->EndTAA();
+    // aaMgr->EndTAA();
 
-    if (constantMgr->GetSceneInfo()->taa)
-        bloom->input = aaMgr->GetTAAResult();
-    else
-        bloom->input = aaMgr->GetCurRTSRV();
-    bloom->BloomPass();
+    // if (constantMgr->GetSceneInfo()->taa)
+    //     bloom->input = aaMgr->GetTAAResult();
+    // else
+    //     bloom->input = aaMgr->GetCurRTSRV();
+    // bloom->BloomPass();
 
-    // draw to screen
-    // transition first
+    // // draw to screen
+    // // transition first
+    // mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    // // change render target
+    // mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+    // mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+    // mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    // mCommandList->RSSetViewports(1, &mScreenViewport);
+    // mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+    // if(constantMgr->GetSceneInfo()->taa)
+    //     toneMapping->input = aaMgr->GetTAAResult();
+    // else 
+    //     toneMapping->input = aaMgr->GetCurRTSRV();
+
+    // Renderer::ResManager->RegisterHandle(std::string("testTarget"), CD3DX12_CPU_DESCRIPTOR_HANDLE(CurrentBackBufferView()), ResourceEnum::View::RTView);
+    // Renderer::ResManager->RegisterHandle(std::string("testSRV"), aaMgr->GetTAAResult(), ResourceEnum::View::SRView);
+
+    // if(firstFrame){
+        
+    //     firstFrame = false;
+    // }
+    
+
+    // Renderer::FG->AddPass(std::string("TestPass"),
+    // [&](PassData& data){
+    //     data.inputs = {
+    //         ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
+    //         ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
+    //     };
+    //     data.outputs = {
+    //         // ResourceData{"testCreate"},
+    //     };
+    //     data.psoData.enableDepth = false;
+    //     // data.psoData.depthStencil = ...
+    //     data.shaders = {
+    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
+    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
+    //     };
+    //     float color = 0.5;
+    //     Renderer::GDevice->SetShaderConstant("testInfo", &color);
+    // },
+    // [=](){
+    //     Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
+    // });
+    // // Renderer::FG->AddPass(name, name, name);
+
+    // // toneMapping->PrePass();
+    // // toneMapping->Pass();
+    // // toneMapping->PostPass();
+    // // GUI
+    // DrawGUI();
+
+    // only hard code work here
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    // change render target
-    mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    mCommandList->RSSetViewports(1, &mScreenViewport);
-    mCommandList->RSSetScissorRects(1, &mScissorRect);
-
-    if(constantMgr->GetSceneInfo()->taa)
-        toneMapping->input = aaMgr->GetTAAResult();
-    else 
-        toneMapping->input = aaMgr->GetCurRTSRV();
-
-    Renderer::ResManager->RegisterHandle(std::string("testTarget"), CD3DX12_CPU_DESCRIPTOR_HANDLE(CurrentBackBufferView()), ResourceEnum::View::RTView);
-    Renderer::ResManager->RegisterHandle(std::string("testSRV"), aaMgr->GetTAAResult(), ResourceEnum::View::SRView);
-
-    if(firstFrame){
-        Renderer::ResManager->CreateRenderTarget(
-            std::string("testCreate"),
-            ResourceDesc {
-                (unsigned int)mClientWidth,
-                (unsigned int)mClientHeight,
-                ResourceEnum::Format::R32G32B32A32_FLOAT,
-                ResourceEnum::Type::Texture2D,
-            },
-            1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
-        );
-        firstFrame = false;
-    }
-    
-
-    Renderer::FG->AddPass(std::string("TestPass"),
-    [&](PassData& data){
-        data.inputs = {
-            ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
-            ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
-        };
-        data.outputs = {
-            ResourceData{"testCreate"},
-        };
-        data.psoData.enableDepth = false;
-        // data.psoData.depthStencil = ...
-        data.shaders = {
-            ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
-            ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
-        };
-        float color = 0.5;
-        Renderer::GDevice->SetShaderConstant("testInfo", &color);
-    },
-    [=](){
-        Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
-    });
-    // Renderer::FG->AddPass(name, name, name);
-
-    // toneMapping->PrePass();
-    // toneMapping->Pass();
-    // toneMapping->PostPass();
-    // GUI
-    DrawGUI();
-
-    // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
     // Done recording commands.

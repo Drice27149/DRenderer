@@ -35,4 +35,14 @@ namespace ViewFatory {
         
         Device::GetDevice()->CreateRenderTargetView(resource.Get(), &RTVDesc, handle);
     }
+
+    void AppendDSV(ComPtr<ID3D12Resource>& resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    {
+        D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc; 
+        dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        dsvDesc.Format = format;
+        dsvDesc.Texture2D.MipSlice = 0;
+        Device::GetDevice()->CreateDepthStencilView(resource.Get(), &dsvDesc, handle);
+    }
 };

@@ -73,6 +73,12 @@ private:
     void PreZPass();
     void PrepareCluster();
     void ExecuteComputeShader();
+
+    void UpdateAndAsync();
+
+    void CreatePersistentResource();
+
+    void AddGBufferMainPass();
     
 private:
     int CurrentFrame = 0;

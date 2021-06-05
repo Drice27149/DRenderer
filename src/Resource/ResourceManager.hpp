@@ -20,18 +20,25 @@ struct BufferItem {
 
 class ResourceManager {
 public:
-    // usage mask
     void CreateRenderTarget(std::string name, ResourceDesc desc, unsigned int usage);
+    void CreateImageTexture(std::string name, unsigned int usage);
+    void CreateDepthStencil(std::string name, ResourceDesc desc, unsigned int usage);
+    // internal function 
     void CreateViews(ComPtr<ID3D12Resource>&, std::string name, unsigned int usage);
 
-    void RegisterResource(std::string name, ComPtr<ID3D12Resource>& res);
+    void RegisterResource(std::string name, ComPtr<ID3D12Resource>& res, ResourceEnum::State state = ResourceEnum::State::Read);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_GPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE chandle, CD3DX12_GPU_DESCRIPTOR_HANDLE ghandle, ResourceEnum::View view);
 
+    ResourceEnum::State GetResourceState(std::string name);
+    void ResourceBarrier(std::string name, ResourceEnum::State dest);
+
+    void LoadObjectTextures();
+
     void ForwardFrame();
 
-    // commit cpu constant and get gpu constant address
+    // commit cpu constant to gpu
     template<typename T>
     void CommitConstantBuffer(std::string name, T* data);
 
@@ -44,7 +51,10 @@ public:
 public:
     std::map<std::string, ComPtr<ID3D12Resource>> resources;
     std::map<std::string, ResourceView> views;
+    std::map<std::string, ResourceEnum::State> stateTrack;
 private:
+    // just keep ref
+    std::vector<ComPtr<ID3D12Resource>> resPools;
     unsigned frame = 0;
 };
 

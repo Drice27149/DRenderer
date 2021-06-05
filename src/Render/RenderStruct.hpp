@@ -34,6 +34,7 @@ struct ResourceDesc {
     unsigned int height;
     ResourceEnum::Format format;
     ResourceEnum::Type type;
+    ResourceEnum::State state;
 };
 
 // data to build Pipeline state object
@@ -41,6 +42,8 @@ struct PSOData {
     // for init pso
     bool enableDepth = true;
     ResourceData depthStencil;
+    int width = -1;
+    int height = -1;
 };
 
 struct PassData {

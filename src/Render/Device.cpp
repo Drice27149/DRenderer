@@ -58,6 +58,8 @@ ID3D12RootSignature* Device::CreateRSt(const PassData& data)
     std::vector<CD3DX12_ROOT_PARAMETER> rootParams;
     unsigned cbv = 0;
     unsigned srv = 0;
+    CD3DX12_DESCRIPTOR_RANGE desc[32];
+    int cdesc = -1;
     for(const auto& input: data.inputs){
         if(input.state == ResourceEnum::State::Read) {
             if(input.type==ResourceEnum::Type::Constant){
@@ -66,10 +68,9 @@ ID3D12RootSignature* Device::CreateRSt(const PassData& data)
                 rootParams.push_back(param);
             }
             else if(input.type==ResourceEnum::Type::Texture2D || input.type==ResourceEnum::Type::TextureCube){
-                CD3DX12_DESCRIPTOR_RANGE desc;
-                desc.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, srv++);
+                desc[++cdesc].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, srv++);
                 CD3DX12_ROOT_PARAMETER param;
-                param.InitAsDescriptorTable(1, &desc , D3D12_SHADER_VISIBILITY_PIXEL);
+                param.InitAsDescriptorTable(1, &(desc[cdesc]) , D3D12_SHADER_VISIBILITY_PIXEL);
                 rootParams.push_back(param);
             }
             // @TODO: else
@@ -186,8 +187,17 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
     Context::GetContext()->SetPipelineState(renderPass.pso);
     Context::GetContext()->SetGraphicsRootSignature(renderPass.rst);
 
+    // resource state transition
+    for(const auto& res: data.inputs){
+        if(res.type != ResourceEnum::Type::Constant)
+            Renderer::ResManager->ResourceBarrier(res.name, res.state);
+    }
+
+    for(const auto& res: data.outputs){
+        Renderer::ResManager->ResourceBarrier(res.name, res.state);
+    }
+
     // output, render targets and depth stencil
-    // @TODO: set render resolution
     if(data.outputs.size()!=0){
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rts;
         for(const auto& out: data.outputs){
@@ -200,6 +210,23 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         }
         else
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
+        if(data.psoData.width > 0 && data.psoData.height > 0){
+            D3D12_VIEWPORT screenViewport; 
+            D3D12_RECT scissorRect;
+
+            screenViewport.TopLeftX = 0;
+            screenViewport.TopLeftY = 0;
+            screenViewport.Width    = (float)(data.psoData.width);
+            screenViewport.Height   = (float)(data.psoData.height);
+            screenViewport.MinDepth = 0.0f;
+            screenViewport.MaxDepth = 1.0f;
+            scissorRect = { 0, 0, (long)data.psoData.width, (long)data.psoData.height };
+
+            // viewport information for viewport transform/culling
+            Context::GetContext()->RSSetViewports(1, &screenViewport);
+            // scissor test: self define culling
+            Context::GetContext()->RSSetScissorRects(1, &scissorRect);
+        }
     }
 
     // input, graphics root params
@@ -212,9 +239,10 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         }
         else if(in.type == ResourceEnum::Type::Texture2D || in.type == ResourceEnum::Type::TextureCube){
             CD3DX12_GPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
-            Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+            if(view.ptr)
+                Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
         }
-        // @TODO: buffer bounding
+        // @TODO: structure buffer bounding
         else if(in.type == ResourceEnum::Type::Buffer){
             
         }
