@@ -37,7 +37,7 @@ std::map<std::string, ComPtr<ID3DBlob>>& Device::GetShaderMap(ShaderEnum::Type t
 ID3DBlob* Device::GetShader(ShaderData data)
 {
     auto& shaders = GetShaderMap(data.type);
-    if(data.type == ShaderEnum::Type::CS)
+    
     if(shaders.count(data.name))
         return shaders[data.name].Get();
     if(data.type == ShaderEnum::Type::CS)
@@ -123,6 +123,7 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data)
     // compile shaders
     for(const auto& shader: data.shaders){
         ID3DBlob* sh = Device::GetShader(shader);
+        
         if(shader.type==ShaderEnum::VS){
             psoDesc.VS = {
                 reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
@@ -177,7 +178,7 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data)
 
     renderPass.pso = pso.Get();
 
-    // keep ref
+    // keep ref, may be very slow
     psos.push_back(pso);
 }
 
