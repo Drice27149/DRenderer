@@ -79,9 +79,12 @@ private:
     void CreatePersistentResource();
 
     void AddGBufferMainPass();
+    void AddLightPass();
+    void AddPostProcessPass();
     
 private:
     int CurrentFrame = 0;
+    int acFrame = 0;
     int PassCount = 2;
     int ClusterX = 16;
     int ClusterY = 8;

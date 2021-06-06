@@ -46,3 +46,11 @@ enum Type {
 };
 
 }
+
+namespace PSOEnum {
+
+enum BlendState {
+    Default,
+};
+
+};

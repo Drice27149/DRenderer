@@ -1,10 +1,8 @@
-Texture2D gShadowMap: register(t0);
-Texture2D gNormalMap: register(t1);
-Texture2D gDiffuseMap: register(t2);
-Texture2D gMetallicMap: register(t3);
-Texture2D gEmissiveMap: register(t4);
-// TextureCube gEnvMap: register(t6);
-// Texture2D gBrdfMap: register(t7);
+Texture2D gNormalMap: register(t0);
+Texture2D gDiffuseMap: register(t1);
+Texture2D gMetallicMap: register(t2);
+Texture2D gEmissiveMap: register(t3);
+Texture2D gShadowMap: register(t4);
 
 SamplerState gsamLinear: register(s0);
 
@@ -41,18 +39,19 @@ struct VertexIn
 struct VertexOut
 {
 	float4 pos: SV_POSITION;
-	float2 uv: TEXCOORD;
+	float2 uv: TEXCOORD0;
 	float3 T: TEXCOORD1;
 	float3 N: TEXCOORD2;
 	float3 worldPos: TEXCOORD4;
+    float3 viewPos: TEXCOORD5;
 };
 
 struct PixelOut 
 {
     float4 diffuseMetallic: SV_TARGET0;
     float4 normalRoughness: SV_TARGET1;
-    float4 worldPosAO: SV_TARGET2;
-    float2 velocity: SV_TARGET3;
+    float4 worldPosX: SV_TARGET2;
+    float4 viewPosY: SV_TARGET3;
 };
 
 VertexOut VS(VertexIn vin)
@@ -62,6 +61,8 @@ VertexOut VS(VertexIn vin)
 	float4x4 mvp = mul(mul(_Proj, _View), _model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;
+    float4x4 vp = mul(_View, _model);
+    vout.viewPos = mul(vp, float4(vin.vertex, 1.0f)).rgb;
 
 	vout.uv = vin.texcoord;
 	// in worldspace
@@ -127,8 +128,8 @@ PixelOut PS(VertexOut pin)
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);
     pixOut.normalRoughness = float4(normal, roughness);
-    pixOut.worldPosAO = float4(float3(0.0, 0.0, 0.0), ao);
-    pixOut.velocity = float2(0.0, 0.0);
+    pixOut.worldPosX = float4(pin.worldPos, 1.0);
+    pixOut.viewPosY = float4(pin.viewPos, 1.0);
 
 	return pixOut;
 }

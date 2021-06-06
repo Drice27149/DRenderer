@@ -81,20 +81,27 @@ ID3D12Resource* ResourceManager::GetResource(std::string name)
 
 CD3DX12_CPU_DESCRIPTOR_HANDLE ResourceManager::GetCPU(std::string name, ResourceEnum::View view)
 {
-    // assert(views.count(name));
+    assert(views.count(name));
     return views[name].cpu[view];
 }
 
 CD3DX12_GPU_DESCRIPTOR_HANDLE ResourceManager::GetGPU(std::string name, ResourceEnum::View view)
 {
-    // assert(views.count(name));
+    assert(views.count(name));
     return views[name].gpu[view];
 }
 
 void ResourceManager::ForwardFrame()
 {
     frame++;
-    while(bufferItems.size()!=0 && bufferItems.front().frameID<frame)
+}
+
+void ResourceManager::ForwardResource()
+{
+    if(bufferItems.size()==0)
+        return ;
+    int head = bufferItems.front().frameID;
+    while(bufferItems.size()!=0 && bufferItems.front().frameID == head)
         bufferItems.pop();
 }
 

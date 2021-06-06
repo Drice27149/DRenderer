@@ -37,6 +37,8 @@ public:
     void LoadObjectTextures();
 
     void ForwardFrame();
+    // delete outdated resource
+    void ResourceManager::ForwardResource();
 
     // commit cpu constant to gpu
     template<typename T>

@@ -33,7 +33,7 @@ void FrameGraph::AddPass(std::string name, Setup setup, Execute exe){
     setup(newPass.GetPassData());
 
     // backend setup, create root signature and pso
-    Renderer::GDevice->SetUpRenderPass(newPass, newPass.GetPassData());
+    Renderer::GDevice->SetUpRenderPass(newPass, newPass.GetPassData(), name);
     passes.emplace_back(newPass);
 
 /**delay execution**/

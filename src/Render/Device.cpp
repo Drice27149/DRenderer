@@ -51,8 +51,11 @@ ID3DBlob* Device::GetShader(ShaderData data)
     return shaders[data.name].Get();
 }
 
-ID3D12RootSignature* Device::CreateRSt(const PassData& data)
+ID3D12RootSignature* Device::CreateRSt(const PassData& data, const std::string& name)
 {
+    if(rstCache.count(name))
+        return rstCache[name];
+
     ComPtr<ID3D12RootSignature> rst;
 
     std::vector<CD3DX12_ROOT_PARAMETER> rootParams;
@@ -102,14 +105,17 @@ ID3D12RootSignature* Device::CreateRSt(const PassData& data)
     // keep ref
     rsts.push_back(rst);
 
-    return rst.Get();
+    return rstCache[name] = rst.Get();
 }
 
-void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data)
+void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const std::string& name)
 {
     // create root signature
-    renderPass.rst = Device::CreateRSt(data);
+    renderPass.rst = Device::CreateRSt(data, name);
 
+    if(psoCache.count(name))
+        renderPass.pso = psoCache[name];
+    
     // create pipeline state object
     ComPtr<ID3D12PipelineState> pso;
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
@@ -165,10 +171,18 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data)
         psoDesc.DepthStencilState.StencilEnable = FALSE;
     }
 
+    // set up blend state
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    if(data.psoData.enableAdd){
+        psoDesc.BlendState.RenderTarget[0].BlendEnable = true;
+        psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+        psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+    }
+
+
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = true;
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.SampleDesc.Count = 1;
@@ -176,7 +190,7 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data)
     
     ThrowIfFailed(Device::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 
-    renderPass.pso = pso.Get();
+    renderPass.pso = psoCache[name] = pso.Get();
 
     // keep ref, may be very slow
     psos.push_back(pso);
@@ -208,7 +222,6 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         if(data.psoData.enableDepth){
             CD3DX12_CPU_DESCRIPTOR_HANDLE dsv = Renderer::ResManager->GetCPU(data.psoData.depthStencil.name, ResourceEnum::View::DSView);
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, &dsv);
-            Context::GetContext()->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
         }
         else
             Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
@@ -249,8 +262,6 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
             
         }
     }
-
-    
 }
 
 

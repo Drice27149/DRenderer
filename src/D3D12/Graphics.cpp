@@ -79,6 +79,22 @@ void Graphics::UploadTextures()
 
 void Graphics::CreatePersistentResource()
 {
+    // dummy constant and dummy texture
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("dummyTexture"),
+        ResourceDesc {
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R32G32B32A32_FLOAT,
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
+    );
+
+    int dummyConstant = -1;
+    Renderer::GDevice->SetShaderConstant(std::string("dummyConstant"), &dummyConstant);
+
+    // GBuffer
     Renderer::ResManager->CreateRenderTarget(
         std::string("DiffuseMetallic"),
         ResourceDesc {
@@ -102,7 +118,7 @@ void Graphics::CreatePersistentResource()
     );
 
     Renderer::ResManager->CreateRenderTarget(
-        std::string("WorldPosAO"),
+        std::string("WorldPosX"),
         ResourceDesc {
             (unsigned int)mClientWidth,
             (unsigned int)mClientHeight,
@@ -113,18 +129,18 @@ void Graphics::CreatePersistentResource()
     );
 
     Renderer::ResManager->CreateRenderTarget(
-        std::string("Velocity"),
+        std::string("ViewPosY"),
         ResourceDesc {
             (unsigned int)mClientWidth,
             (unsigned int)mClientHeight,
-            ResourceEnum::Format::R16G16_FLOAT,
+            ResourceEnum::Format::R32G32B32A32_FLOAT,
             ResourceEnum::Type::Texture2D,
         },
         1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
     );
 
     Renderer::ResManager->CreateRenderTarget(
-        std::string("dummyTexture"),
+        std::string("ColorBuffer"),
         ResourceDesc {
             (unsigned int)mClientWidth,
             (unsigned int)mClientHeight,
@@ -144,9 +160,6 @@ void Graphics::CreatePersistentResource()
         },
         1<<ResourceEnum::DSView
     );
-
-    int dummyConstant = -1;
-    Renderer::GDevice->SetShaderConstant(std::string("dummyConstant"), &dummyConstant);
 }
 
 void Graphics::InitPassMgrs()
@@ -276,34 +289,16 @@ void Graphics::Update(const GameTimer& gt)
 
 void Graphics::UpdateAndAsync()
 {
+    acFrame++;
+    Renderer::ResManager->ForwardFrame();
+    if(acFrame>=2)
+        Renderer::ResManager->ForwardResource();
     constantMgr->Update();
     guiMgr->Update();
 }
 
 void Graphics::AddGBufferMainPass()
 {
-    // post processing code sample
-    // Renderer::FG->AddPass(std::string("TestPass"),
-    // [&](PassData& data){
-    //     data.inputs = {
-    //         ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
-    //         ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
-    //     };
-    //     data.outputs = {
-    //         // ResourceData{"testCreate"},
-    //     };
-    //     data.psoData.enableDepth = false;
-    //     // data.psoData.depthStencil = ...
-    //     data.shaders = {
-    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
-    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
-    //     };
-    //     float color = 0.5;
-    //     Renderer::GDevice->SetShaderConstant("testInfo", &color);
-    // },
-    // [=](){
-    //     Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
-    // });
     Renderer::FG->AddPass("GBufferMainPass",
         [&](PassData& data){
             data.inputs = {
@@ -317,11 +312,12 @@ void Graphics::AddGBufferMainPass()
             data.outputs = {
                 ResourceData{"DiffuseMetallic", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM},
                 ResourceData{"NormalRoughness", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM},
-                ResourceData{"WorldPosAO", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
-                ResourceData{"Velocity", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
+                ResourceData{"WorldPosX", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+                ResourceData{"ViewPosY", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
             };
             data.psoData = PSOData{  
                 true,   // enable depth 
+                false,
                 ResourceData{ "GBufferDepth", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D}, // depth stencil data
                 (int)mClientWidth,
                 (int)mClientHeight,
@@ -338,12 +334,21 @@ void Graphics::AddGBufferMainPass()
             Context::GetContext()->IASetIndexBuffer(&objMesh->IndexBufferView());
             Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+            // clear gbuffer and depth stencil
+            float clearC[4] = {0.0, 0.0, 0.0, 0.0};
+            vector<std::string> clearTargets = {"DiffuseMetallic", "NormalRoughness", "WorldPosX", "ViewPosY"};
+            for(auto& target: clearTargets){
+                auto rtHandle = Renderer::ResManager->GetCPU(target, ResourceEnum::View::RTView);
+                Context::GetContext()->ClearRenderTargetView(rtHandle, clearC, 0, nullptr);
+            }
+            auto dsvHandle = Renderer::ResManager->GetCPU("GBufferDepth", ResourceEnum::View::DSView);
+            Context::GetContext()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
             int mapping[30];
             for(int i = 0; i < 25; i++)
                 mapping[i] = -1;
             mapping[aiTextureType_NORMALS] = 2;
             mapping[aiTextureType_DIFFUSE] = 3;
-            // @TODO: metallic roughness = 5
             mapping[aiTextureType_LIGHTMAP] = 4;
             mapping[aiTextureType_EMISSIVE] = 5;
 
@@ -381,6 +386,91 @@ void Graphics::AddGBufferMainPass()
     );
 }
 
+void Graphics::AddLightPass()
+{
+    // post processing code sample
+    Renderer::FG->AddPass(std::string("MainLightPass"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{ "dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant },
+            ResourceData{ "DiffuseMetallic", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM },
+            ResourceData{ "NormalRoughness", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM },
+            ResourceData{ "WorldPosX", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+            ResourceData{ "ViewPosY", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+        };
+        data.outputs = {
+            ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
+        };
+        data.psoData = PSOData {
+            false,   // enable depth 
+            true,
+            ResourceData{},
+            (int)mClientWidth,
+            (int)mClientHeight,
+        };
+        data.shaders = {
+            ShaderData{ std::string("../assets/shaders/DeferredShading/lightPass.hlsl"), ShaderEnum::PS },
+            ShaderData{ std::string("../assets/shaders/DeferredShading/lightPass.hlsl"), ShaderEnum::VS },
+        };
+    },
+    [=](){
+        float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+        auto colorBufferHandle = Renderer::ResManager->GetCPU("ColorBuffer", ResourceEnum::View::RTView);
+        Context::GetContext()->ClearRenderTargetView(colorBufferHandle, clearColor, 0, nullptr);
+
+        struct LightDesc {
+            float f[4]; // directional light: dx, dy, dz, intensity
+        };
+        LightDesc l0[3];
+        l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0};
+        Renderer::GDevice->SetShaderConstant("LightSource0", &l0);
+        l0[1] = LightDesc {-1.0, 1.0, 1.0, 1.0};
+        Renderer::GDevice->SetShaderConstant("LightSource1", &l0);
+        l0[2] = LightDesc {0.0, 1.0, 1.0, 1.0};
+        Renderer::GDevice->SetShaderConstant("LightSource2", &l0);
+
+        for(int i = 0; i < 3; i++){
+            std::string resName = "LightSource";
+            resName.push_back('0'+i);
+            auto lightRes = Renderer::ResManager->GetResource(resName);
+            Renderer::GContext->GetContext()->SetGraphicsRootConstantBufferView(0, lightRes->GetGPUVirtualAddress());
+            Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
+        }
+    });
+}
+
+void Graphics::AddPostProcessPass()
+{
+    // post processing code sample
+    Renderer::FG->AddPass(std::string("PresentToScreen"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{"ColorBuffer", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
+        };
+        data.outputs = {
+            ResourceData{"dummyTexture", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D } // will use CurrentBackBuffer()
+        };
+        data.psoData = PSOData{  
+            false,   // enable depth 
+            false,
+            ResourceData{},
+            (int)mClientWidth,
+            (int)mClientHeight,
+        };
+        data.shaders = {
+            ShaderData{std::string("../assets/shaders/DeferredShading/TemporalAA.hlsl"), ShaderEnum::PS},
+            ShaderData{std::string("../assets/shaders/DeferredShading/TemporalAA.hlsl"), ShaderEnum::VS},
+        };
+    },
+    [=](){
+        Context::GetContext()->OMSetRenderTargets(1, &CurrentBackBufferView(), false, nullptr);
+        float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+        Context::GetContext()->ClearRenderTargetView(CurrentBackBufferView(), clearColor, 0, nullptr);
+
+        Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
+    });
+}
+
 void Graphics::Draw(const GameTimer& gt)
 {
     // Reuse the memory associated with command recording.
@@ -393,7 +483,19 @@ void Graphics::Draw(const GameTimer& gt)
     ID3D12DescriptorHeap* descriptorHeaps[] = { heapMgr->GetSRVHeap() };
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	
     AddGBufferMainPass();
+
+    AddLightPass();
+
+    AddPostProcessPass();
+
+    // @TODO: shadow pass
+    // @TODO: point light pass
+
+
+    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
     // if(firstFrame){
     //     PrecomputeResource();
@@ -503,8 +605,6 @@ void Graphics::Draw(const GameTimer& gt)
     // DrawGUI();
 
     // only hard code work here
-    mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
     // Done recording commands.
 	ThrowIfFailed(mCommandList->Close());

@@ -23,7 +23,7 @@ public:
 public:
     template<typename T>
     void SetShaderConstant(std::string name, T* data);
-    void SetUpRenderPass(RenderPass& renderPass, const PassData& data);
+    void SetUpRenderPass(RenderPass& renderPass, const PassData& data, const std::string& name);
     void ExecuteRenderPass(RenderPass& renderPass, const PassData& data);
 
 // internal function for convinient implementation
@@ -31,7 +31,7 @@ private:
     // compile/get shader
     ID3DBlob* GetShader(ShaderData data);
     // set up stage
-    ID3D12RootSignature* CreateRSt(const PassData& data);
+    ID3D12RootSignature* CreateRSt(const PassData& data, const std::string& name);
     std::map<std::string, ComPtr<ID3DBlob>>& GetShaderMap(ShaderEnum::Type type);
 
 private:
@@ -43,6 +43,8 @@ private:
     std::map<std::string, ComPtr<ID3DBlob>> gss;
     std::map<std::string, ComPtr<ID3DBlob>> pss;
     std::map<std::string, ComPtr<ID3DBlob>> css;
+    std::map<std::string, ID3D12RootSignature*> rstCache;
+    std::map<std::string, ID3D12PipelineState*> psoCache;
     std::vector<ComPtr<ID3D12RootSignature>> rsts;
     std::vector<ComPtr<ID3D12PipelineState>> psos;
 };
