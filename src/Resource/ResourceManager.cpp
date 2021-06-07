@@ -12,6 +12,12 @@
 
 void ResourceManager::RegisterResource(std::string name, ComPtr<ID3D12Resource>&res, ResourceEnum::State state)
 {
+    resources[name] = res.Get();
+    stateTrack[name] = state;
+}
+
+void ResourceManager::RegisterResource(std::string name, ID3D12Resource* res, ResourceEnum::State state)
+{
     resources[name] = res;
     stateTrack[name] = state;
 }
@@ -76,7 +82,7 @@ void ResourceManager::RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HA
 ID3D12Resource* ResourceManager::GetResource(std::string name)
 {
     assert(resources.count(name));
-    return resources[name].Get();
+    return resources[name];
 }
 
 CD3DX12_CPU_DESCRIPTOR_HANDLE ResourceManager::GetCPU(std::string name, ResourceEnum::View view)
@@ -101,8 +107,10 @@ void ResourceManager::ForwardResource()
     if(bufferItems.size()==0)
         return ;
     int head = bufferItems.front().frameID;
-    while(bufferItems.size()!=0 && bufferItems.front().frameID == head)
+    while(bufferItems.size()!=0 && bufferItems.front().frameID == head){
+        delete bufferItems.front().buffer;
         bufferItems.pop();
+    }
 }
 
 void ResourceManager::CreateRenderTarget(std::string name, ResourceDesc desc, unsigned int usage)

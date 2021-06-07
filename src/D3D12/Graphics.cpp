@@ -92,7 +92,7 @@ void Graphics::CreatePersistentResource()
     );
 
     int dummyConstant = -1;
-    Renderer::GDevice->SetShaderConstant(std::string("dummyConstant"), &dummyConstant);
+    Renderer::GDevice->SetShaderConstant(std::string("dummyConstant"), &dummyConstant, true);
 
     // GBuffer
     Renderer::ResManager->CreateRenderTarget(
@@ -291,7 +291,7 @@ void Graphics::UpdateAndAsync()
 {
     acFrame++;
     Renderer::ResManager->ForwardFrame();
-    if(acFrame>=2)
+    if(acFrame>=4)
         Renderer::ResManager->ForwardResource();
     constantMgr->Update();
     guiMgr->Update();
@@ -423,11 +423,11 @@ void Graphics::AddLightPass()
         };
         LightDesc l0[3];
         l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0};
-        Renderer::GDevice->SetShaderConstant("LightSource0", &l0);
+        Renderer::GDevice->SetShaderConstant("LightSource0", &(l0[0]));
         l0[1] = LightDesc {-1.0, 1.0, 1.0, 1.0};
-        Renderer::GDevice->SetShaderConstant("LightSource1", &l0);
-        l0[2] = LightDesc {0.0, 1.0, 1.0, 1.0};
-        Renderer::GDevice->SetShaderConstant("LightSource2", &l0);
+        Renderer::GDevice->SetShaderConstant("LightSource1", &(l0[1]));
+        l0[2] = LightDesc {1.0, 1.0, -1.0, 1.0};
+        Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[2]));
 
         for(int i = 0; i < 3; i++){
             std::string resName = "LightSource";

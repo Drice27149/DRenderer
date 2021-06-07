@@ -128,7 +128,7 @@ PixelOut PS(VertexOut pin)
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);
     pixOut.normalRoughness = float4(normal, roughness);
-    pixOut.worldPosX = float4(pin.worldPos, 1.0);
+    pixOut.worldPosX = float4(pin.worldPos, ao);
     pixOut.viewPosY = float4(pin.viewPos, 1.0);
 
 	return pixOut;

@@ -32,6 +32,5 @@ VertexOut VS(VertexIn vin, uint id: SV_VertexID)
 
 float4 PS(VertexOut pin): SV_TARGET
 {   
-    
     return _colorBuffer.Load(int3(pin.pos.x, pin.pos.y, 0));
 }

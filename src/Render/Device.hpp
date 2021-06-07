@@ -22,7 +22,7 @@ public:
 
 public:
     template<typename T>
-    void SetShaderConstant(std::string name, T* data);
+    void SetShaderConstant(std::string name, T* data, bool persistent = false);
     void SetUpRenderPass(RenderPass& renderPass, const PassData& data, const std::string& name);
     void ExecuteRenderPass(RenderPass& renderPass, const PassData& data);
 
@@ -50,7 +50,7 @@ private:
 };
 
 template<typename T>
-void Device::SetShaderConstant(std::string name, T* data)
+void Device::SetShaderConstant(std::string name, T* data, bool persistent)
 {
-    Renderer::ResManager->CommitConstantBuffer(name, data);
+    Renderer::ResManager->CommitConstantBuffer(name, data, persistent);
 }

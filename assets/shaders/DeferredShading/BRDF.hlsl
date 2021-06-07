@@ -45,6 +45,8 @@ float3 BRDF_Faliment(float3 N, float3 V, float3 L, float3 baseColor, float metal
     float3 Fr = (D * Vis) * F;
     // diffuse BRDF
     float3 Fd = diffuseColor * Fd_Lambert();
+
+    return Fd;
     // apply lighting...
     return Fd + Fr;
 }

@@ -15,7 +15,7 @@ struct ResourceDesc;
 
 struct BufferItem {
     unsigned int frameID;
-    std::shared_ptr<CommonUpload> buffer = nullptr;
+    CommonUpload* buffer = nullptr;
 };
 
 class ResourceManager {
@@ -26,6 +26,7 @@ public:
     // internal function 
     void CreateViews(ComPtr<ID3D12Resource>&, std::string name, unsigned int usage);
 
+    void RegisterResource(std::string name, ID3D12Resource* res, ResourceEnum::State state = ResourceEnum::State::Read);
     void RegisterResource(std::string name, ComPtr<ID3D12Resource>& res, ResourceEnum::State state = ResourceEnum::State::Read);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_GPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
@@ -42,7 +43,7 @@ public:
 
     // commit cpu constant to gpu
     template<typename T>
-    void CommitConstantBuffer(std::string name, T* data);
+    void CommitConstantBuffer(std::string name, T* data, bool persistent = false);
 
     ID3D12Resource* GetResource(std::string name);
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetCPU(std::string name, ResourceEnum::View view);
@@ -50,8 +51,9 @@ public:
 
     // manage constant buffer's destroy and create
     std::queue<BufferItem> bufferItems;
+    std::vector<BufferItem> persistentBuffer;
 public:
-    std::map<std::string, ComPtr<ID3D12Resource>> resources;
+    std::map<std::string, ID3D12Resource*> resources;
     std::map<std::string, ResourceView> views;
     std::map<std::string, ResourceEnum::State> stateTrack;
 private:
@@ -61,13 +63,17 @@ private:
 };
 
 template<typename T>
-void ResourceManager::CommitConstantBuffer(std::string name, T* data)
+void ResourceManager::CommitConstantBuffer(std::string name, T* data, bool persistent)
 {
     BufferItem newItem;
     newItem.frameID = frame;
-    newItem.buffer = std::make_shared<CommonUpload>(Device::GetDevice(), d3dUtil::CalcConstantBufferByteSize(sizeof(T)));
+    newItem.buffer = new CommonUpload(Device::GetDevice(), d3dUtil::CalcConstantBufferByteSize(sizeof(T)));
     (newItem.buffer)->CopyData(data, sizeof(T));
     ResourceManager::RegisterResource(name, (newItem.buffer)->Resource());
     // keep ref
-    bufferItems.emplace(newItem);
+    if(persistent){
+        persistentBuffer.push_back(newItem);
+        return ;
+    }
+    bufferItems.push(newItem);
 }

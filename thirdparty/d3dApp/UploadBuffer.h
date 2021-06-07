@@ -111,15 +111,15 @@ public:
     CommonUpload& operator=(const CommonUpload& rhs) = delete;
     ~CommonUpload()
     {
-        if(mCommonUpload != nullptr)
-            mCommonUpload->Unmap(0, nullptr);
+        // if(mCommonUpload != nullptr)
+        //    mCommonUpload->Unmap(0, nullptr);
 
         mMappedData = nullptr;
     }
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> Resource()const
+    ID3D12Resource* Resource()
     {
-        return mCommonUpload;
+        return mCommonUpload.Get();
     }
 
     void CopyData(const void* data, unsigned int sizeOfElement)
