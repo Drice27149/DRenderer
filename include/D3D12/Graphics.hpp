@@ -80,7 +80,9 @@ private:
 
     void AddGBufferMainPass();
     void AddLightPass();
+    void AddTAAPass();
     void AddPostProcessPass();
+    void AddCopyPass(std::string from, std::string to);
     
 private:
     int CurrentFrame = 0;

@@ -51,14 +51,20 @@ float4 PS(VertexOut pin): SV_TARGET
     float metallic = sample0.a;
     float3 normal = normalize(sample1.rgb);
     float roughness = sample1.a;
-    float3 viewDir = normalize(float3(0.0, 1.0, 1.0));// normalize((sample3.rgb));
+    float3 viewDir = sample3.rgb;
+    float ao = sample2.a;
+    float emissive = sample3.a;
     float3 L = normalize(_lightDir);
     float inten = 2.0; // _lightIten;
 
     if(baseColor.r==0.0 && baseColor.g==0.0 && baseColor.b==0.0)
         return float4(0.0, 0.0, 0.0, 1.0);
 
-    float3 color = BRDF_Faliment(normal, viewDir, L, baseColor, metallic, roughness) * inten * dot(normal, L);
+    float3 testColor = baseColor * saturate(dot(normal, L));
+    // return float4(testColor, 1.0);
+
+    float3 color = BRDF_Faliment(normal, viewDir, L, baseColor, metallic, roughness) * inten * ao * saturate(dot(normal, L));
+    color = color + emissive;
 
     return float4(color, 1.0);
 }

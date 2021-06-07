@@ -1,6 +1,6 @@
+#pragma once
+
 #include "d3dUtil.h"
-#include "HeapMgr.hpp"
-#include "ConstantMgr.hpp"
 
 class GUIMgr {
 public:
@@ -13,6 +13,4 @@ public:
     ID3D12GraphicsCommandList*  commandList;
 public:
     HWND mhMainWnd;
-    std::shared_ptr<HeapMgr> heapMgr;
-    std::shared_ptr<ConstantMgr> constantMgr;
 };

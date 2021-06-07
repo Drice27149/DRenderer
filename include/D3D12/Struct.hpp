@@ -25,6 +25,9 @@ struct ObjectUniform
     unsigned int mask;
     float metallic;
     float roughness;
+    float cx;
+    float cy;
+    float cz;
 };
 
 struct metaData {

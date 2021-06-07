@@ -116,6 +116,9 @@ void ConstantMgr::UpdateObjConstants()
         temp.mask = obj->mask;
         temp.metallic = obj->metallic;
         temp.roughness = obj->roughness;
+        temp.cx = obj->x;
+        temp.cy = obj->y;
+        temp.cz = obj->z;
         objCB->CopyData(index, temp);
         index++;
 

@@ -25,6 +25,9 @@ cbuffer RealObject: register(b1)
     uint _mask;
     float _metallic;
     float _roughness;
+	float _cx;
+	float _cy;
+	float _cz;
 };
 
 struct VertexIn
@@ -44,6 +47,8 @@ struct VertexOut
 	float3 N: TEXCOORD2;
 	float3 worldPos: TEXCOORD4;
     float3 viewPos: TEXCOORD5;
+	float4 clipPos: TEXCOORD6;
+	float4 lastClipPos: TEXCOORD7;
 };
 
 struct PixelOut 
@@ -52,17 +57,24 @@ struct PixelOut
     float4 normalRoughness: SV_TARGET1;
     float4 worldPosX: SV_TARGET2;
     float4 viewPosY: SV_TARGET3;
+	float2 velocity: SV_TARGET4;
 };
 
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 	
-	float4x4 mvp = mul(mul(_Proj, _View), _model);
+	float4x4 mvp = mul(mul(_JProj, _View), _model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
+
 	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;
     float4x4 vp = mul(_View, _model);
     vout.viewPos = mul(vp, float4(vin.vertex, 1.0f)).rgb;
+
+	mvp = mul(mul(_Proj, _View), _model); // no jitter
+	vout.clipPos = mul(mvp, float4(vin.vertex, 1.0f));
+	float4x4 lastMvp = mul(mul(_lastProj, _lastView), _model);
+	vout.lastClipPos = mul(lastMvp, float4(vin.vertex, 1.0f));
 
 	vout.uv = vin.texcoord;
 	// in worldspace
@@ -112,6 +124,20 @@ float GetShadowBlur(float4 clipPos)
 		return 0.0;
 }
 
+float2 PixelMotionVector(VertexOut pin)
+{
+	float width = 860;
+	float height = 720;
+	float4 clipPos = pin.clipPos;
+	clipPos = clipPos / clipPos.w;
+	float2 now = float2((clipPos.x*0.5+0.5)*width, (1.0 - (clipPos.y*0.5+0.5))*height);
+	float4 lastClip = pin.lastClipPos;
+	lastClip = lastClip / lastClip.w;
+	float2 last = float2((lastClip.x*0.5+0.5)*width, (1.0 - (lastClip.y*0.5+0.5))*height);
+	float2 offset = last - now;
+	return offset;
+}
+
 PixelOut PS(VertexOut pin)
 {
 	float2 uv = pin.uv;
@@ -119,17 +145,24 @@ PixelOut PS(VertexOut pin)
 	baseColor = pow(baseColor, 2.2);
 	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
 	float roughness = gMetallicMap.Sample(gsamLinear, uv).g;
-	roughness = pow(roughness, 2.2);
+	float emissive = gEmissiveMap.Sample(gsamLinear, uv).r;
 	float metallic = gMetallicMap.Sample(gsamLinear, uv).b;
 	float3 normal = gNormalMap.Sample(gsamLinear, uv).rgb;
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
+	if(!(_mask & (1<<6))){
+		baseColor = float3(_cx, _cy, _cz);
+		roughness = _roughness;
+		metallic = _metallic;
+		normal = pin.N;
+	}
 
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);
     pixOut.normalRoughness = float4(normal, roughness);
     pixOut.worldPosX = float4(pin.worldPos, ao);
-    pixOut.viewPosY = float4(pin.viewPos, 1.0);
+    pixOut.viewPosY = float4(normalize(_CamPos-pin.worldPos), emissive);
+	pixOut.velocity = PixelMotionVector(pin);
 
 	return pixOut;
 }

@@ -4,6 +4,7 @@
 #include "imgui_impl_dx12.h"
 #include "DEngine.hpp"
 #include "Util.hpp"
+#include "Graphics.hpp"
 
 void GUIMgr::Init()
 {
@@ -21,10 +22,10 @@ void GUIMgr::Init()
     // Setup Platform/Renderer backends
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
     CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
+    Graphics::heapMgr->GetNewSRV(srvCpu, srvGpu);
 
     ImGui_ImplWin32_Init(mhMainWnd);
-    ImGui_ImplDX12_Init(device, 3, DXGI_FORMAT_R8G8B8A8_UNORM, heapMgr->GetSRVHeap(), srvCpu, srvGpu);
+    ImGui_ImplDX12_Init(device, 3, DXGI_FORMAT_R8G8B8A8_UNORM, Graphics::heapMgr->GetSRVHeap(), srvCpu, srvGpu);
 }
 
 void GUIMgr::Update()
@@ -91,7 +92,7 @@ void GUIMgr::Update()
     // @TODO: decouple
 
     if(ImGui::TreeNode("Scene Info")){
-        std::shared_ptr<SceneInfo> sceneInfo = constantMgr->GetSceneInfo();
+        std::shared_ptr<SceneInfo> sceneInfo = Graphics::constantMgr->GetSceneInfo();
         SceneInfo* addr = sceneInfo.get();
 
         for(metaData& member: SceneInfo::reflections){

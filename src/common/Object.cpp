@@ -8,7 +8,7 @@ Object::Object()
 	drawType = DrawType::Normal;
 
 	scale = 1.0;
-	x = y = z = 0.0;
+	x = y = z = 1.0;
 	pitch = roll = yaw = 0.0;
 	metallic = 0.0;
 	roughness = 1.0;
