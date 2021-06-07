@@ -383,6 +383,9 @@ void Graphics::AddGBufferMainPass()
             mapping[aiTextureType_DIFFUSE] = 3;
             mapping[aiTextureType_LIGHTMAP] = 4;
             mapping[aiTextureType_EMISSIVE] = 5;
+            mapping[aiTextureType_METALNESS] = 4;
+            mapping[aiTextureType_DIFFUSE_ROUGHNESS] = 4;
+            mapping[aiTextureType_UNKNOWN] = 4;
 
             auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
             int idOffset = 0, vsOffset = 0;

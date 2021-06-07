@@ -1,0 +1,11 @@
+Model Information:
+* title:	ChessBoard
+* source:	https://sketchfab.com/3d-models/chessboard-6c1f2af4d4cc4b1fbdfafc32de79bfa2
+* author:	Rivalseeker (https://sketchfab.com/Rivalseeker)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "ChessBoard" (https://sketchfab.com/3d-models/chessboard-6c1f2af4d4cc4b1fbdfafc32de79bfa2) by Rivalseeker (https://sketchfab.com/Rivalseeker) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
