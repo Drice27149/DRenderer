@@ -28,11 +28,13 @@ public:
 
     void RegisterResource(std::string name, ID3D12Resource* res, ResourceEnum::State state = ResourceEnum::State::Read);
     void RegisterResource(std::string name, ComPtr<ID3D12Resource>& res, ResourceEnum::State state = ResourceEnum::State::Read);
+    void RegisterResourceInfo(std::string name, ResourceEnum::Type type);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_GPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE chandle, CD3DX12_GPU_DESCRIPTOR_HANDLE ghandle, ResourceEnum::View view);
 
     ResourceEnum::State GetResourceState(std::string name);
+    ResourceEnum::Type GetResourceType(std::string name);
     void ResourceBarrier(std::string name, ResourceEnum::State dest);
 
     void LoadObjectTextures();
@@ -56,6 +58,7 @@ public:
     std::map<std::string, ID3D12Resource*> resources;
     std::map<std::string, ResourceView> views;
     std::map<std::string, ResourceEnum::State> stateTrack;
+    std::map<std::string, ResourceEnum::Type> typeTrack;
 private:
     // just keep ref
     std::vector<ComPtr<ID3D12Resource>> resPools;

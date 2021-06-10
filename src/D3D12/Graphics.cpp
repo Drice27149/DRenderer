@@ -193,6 +193,17 @@ void Graphics::CreatePersistentResource()
         },
         1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
     );
+
+    Renderer::ResManager->CreateDepthStencil(
+        std::string("ShadowMap"),
+        ResourceDesc{
+            (unsigned int)mClientWidth,
+            (unsigned int)mClientHeight,
+            ResourceEnum::Format::R32G32B32A32_FLOAT, // will be ignored
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::DSView
+    );
 }
 
 void Graphics::InitPassMgrs()
@@ -433,6 +444,7 @@ void Graphics::AddLightPass()
             ResourceData{ "WorldPosX", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
             ResourceData{ "ViewPosY", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
             ResourceData{ "Velocity", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
+            ResourceData{ "ShadowMap", ResourceEnum::State::Read,  }
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
@@ -551,7 +563,7 @@ void Graphics::AddTAAPass()
             ResourceData{"Velocity", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
         };
         data.outputs = {
-            ResourceData{"PostProcessBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D } // will use CurrentBackBuffer()
+            ResourceData{"PostProcessBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
         };
         data.psoData = PSOData{  
             false,   // enable depth 
@@ -572,6 +584,11 @@ void Graphics::AddTAAPass()
 
         Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
     });
+}
+
+void Graphics::AddShadowPass()
+{
+
 }
 
 void Graphics::Draw(const GameTimer& gt)

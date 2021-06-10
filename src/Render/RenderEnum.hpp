@@ -13,6 +13,7 @@ enum Type {
     Constant,
     Texture2D,
     TextureCube,
+    DepthStencil,
 };
 
 enum Format {

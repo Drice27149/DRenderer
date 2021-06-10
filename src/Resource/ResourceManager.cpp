@@ -22,10 +22,21 @@ void ResourceManager::RegisterResource(std::string name, ID3D12Resource* res, Re
     stateTrack[name] = state;
 }
 
+void ResourceManager::RegisterResourceInfo(std::string name, ResourceEnum::Type type)
+{
+    typeTrack[name] = type;
+}
+
 ResourceEnum::State ResourceManager::GetResourceState(std::string name)
 {
     assert(stateTrack.count(name));
     return stateTrack[name];
+}
+
+ResourceEnum::Type ResourceManager::GetResourceType(std::string name)
+{
+    assert(typeTrack.count(name));
+    return typeTrack[name];
 }
 
 void ResourceManager::ResourceBarrier(std::string name, ResourceEnum::State dest)
@@ -33,10 +44,18 @@ void ResourceManager::ResourceBarrier(std::string name, ResourceEnum::State dest
     assert(stateTrack.count(name));
     if(stateTrack[name] == dest)
         return ;
+    
+    D3D12_RESOURCE_STATES writeState;
+    auto resType = GetResourceType(name);
+    if(resType == ResourceEnum::Type::DepthStencil)
+        writeState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    else if(resType == ResourceEnum::Type::Texture2D)
+        writeState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
     if(dest == ResourceEnum::State::Read){
         Context::GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
             GetResource(name),
-            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            writeState,
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
             )
         );
@@ -45,7 +64,7 @@ void ResourceManager::ResourceBarrier(std::string name, ResourceEnum::State dest
         Context::GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
             GetResource(name),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-            D3D12_RESOURCE_STATE_RENDER_TARGET
+            writeState
             )
         );
     }
@@ -127,6 +146,7 @@ void ResourceManager::CreateRenderTarget(std::string name, ResourceDesc desc, un
     ResFatory::CreateRenderTarget2DResource(res, desc.width, desc.height, dxFormat);
     res->SetName(WString(name).c_str());
     RegisterResource(name, res, ResourceEnum::State::Write);
+    RegisterResourceInfo(name, ResourceEnum::Type::Texture2D);
 
     ResourceManager::CreateViews(res, name, usage);
 
@@ -169,6 +189,7 @@ void ResourceManager::CreateImageTexture(std::string name, unsigned int usage)
     ResFatory::CreateImageTexture(res, uploadBuffer, name);
     res->SetName(WString(name).c_str());
     RegisterResource(name, res);
+    RegisterResourceInfo(name, ResourceEnum::Type::Texture2D);
     // create views
     ResourceManager::CreateViews(res, name, usage);
     // keep ref from GC
@@ -198,6 +219,7 @@ void ResourceManager::CreateDepthStencil(std::string name, ResourceDesc desc, un
     ResFatory::CreateDepthStencil(res, desc.width, desc.height, format);
     res->SetName(WString(name).c_str());
     RegisterResource(name, res, ResourceEnum::State::Write);
+    RegisterResourceInfo(name, ResourceEnum::Type::DepthStencil);
     // create views
     ResourceManager::CreateViews(res, name, usage);
     // keep ref from GC

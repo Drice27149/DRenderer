@@ -83,6 +83,7 @@ private:
     void AddTAAPass();
     void AddPostProcessPass();
     void AddCopyPass(std::string from, std::string to);
+    void AddShadowPass();
     
 private:
     int CurrentFrame = 0;
