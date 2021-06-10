@@ -105,14 +105,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         hulk->pitch = 90;
         hulk->yaw = 180;
         hulk->mask = 0;
-        // objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
+        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
 
         std::shared_ptr<Object> chessBoard = std::make_shared<Object>();
-        chessBoard->Scale(1.0);
-        chessBoard->pitch = 90;
+        chessBoard->Scale(50.0);
+        chessBoard->pitch = 0.0;
         chessBoard->yaw = 180;
         chessBoard->mask = 0;
         objJobs.emplace_back(ObjJob("../assets/models/chessboard/scene.gltf", chessBoard));
+        chessBoard->mask |= (1<<23);
 
         auto WorkFunc = [](int64_t id)->void{
             auto& job = objJobs[id];

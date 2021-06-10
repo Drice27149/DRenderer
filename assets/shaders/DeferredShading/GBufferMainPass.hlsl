@@ -156,6 +156,9 @@ PixelOut PS(VertexOut pin)
 		metallic = _metallic;
 		normal = pin.N;
 	}
+	if(_mask & (1<<23)){
+		baseColor = baseColor.rrr;
+	}
 
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);
