@@ -41,7 +41,7 @@ struct ResourceDesc {
 struct PSOData {
     // for init pso
     bool enableDepth = true;
-    // for deferred shading
+    // for deferred shading blend op add
     bool enableAdd = false;
     // PSOEnum::BlendMode blendMode = @TODO: blend op for transparent obj ?
     ResourceData depthStencil;

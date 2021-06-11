@@ -98,6 +98,16 @@ void ResourceManager::RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HA
     ResourceManager::RegisterHandle(name, ghandle, view);
 }
 
+void ResourceManager::RegisterStateTrack(std::string name, ResourceEnum::State state)
+{
+    stateTrack[name] = state;
+}
+    
+void ResourceManager::RegisterTypeTrack(std::string name, ResourceEnum::Type type)
+{
+    typeTrack[name] = type;
+}
+
 ID3D12Resource* ResourceManager::GetResource(std::string name)
 {
     assert(resources.count(name));

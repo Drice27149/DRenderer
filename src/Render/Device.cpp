@@ -179,7 +179,6 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
         psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
     }
 
-
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.RasterizerState.FrontCounterClockwise = true;
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
@@ -211,38 +210,41 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
     for(const auto& res: data.outputs){
         Renderer::ResManager->ResourceBarrier(res.name, res.state);
     }
+    // depth stencil state transition
+    if(data.psoData.enableDepth){
+        Renderer::ResManager->ResourceBarrier(data.psoData.depthStencil.name, data.psoData.depthStencil.state);
+    }
 
     // output, render targets and depth stencil
-    if(data.outputs.size()!=0){
-        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rts;
-        for(const auto& out: data.outputs){
-            CD3DX12_CPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetCPU(out.name, ResourceEnum::View::RTView);
-            rts.push_back(view);
-        }
-        if(data.psoData.enableDepth){
-            CD3DX12_CPU_DESCRIPTOR_HANDLE dsv = Renderer::ResManager->GetCPU(data.psoData.depthStencil.name, ResourceEnum::View::DSView);
-            Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, &dsv);
-        }
-        else
-            Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
-        if(data.psoData.width > 0 && data.psoData.height > 0){
-            D3D12_VIEWPORT screenViewport; 
-            D3D12_RECT scissorRect;
-
-            screenViewport.TopLeftX = 0;
-            screenViewport.TopLeftY = 0;
-            screenViewport.Width    = (float)(data.psoData.width);
-            screenViewport.Height   = (float)(data.psoData.height);
-            screenViewport.MinDepth = 0.0f;
-            screenViewport.MaxDepth = 1.0f;
-            scissorRect = { 0, 0, (long)data.psoData.width, (long)data.psoData.height };
-
-            // viewport information for viewport transform/culling
-            Context::GetContext()->RSSetViewports(1, &screenViewport);
-            // scissor test: self define culling
-            Context::GetContext()->RSSetScissorRects(1, &scissorRect);
-        }
+    std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> rts;
+    for(const auto& out: data.outputs){
+        CD3DX12_CPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetCPU(out.name, ResourceEnum::View::RTView);
+        rts.push_back(view);
     }
+    if(data.psoData.enableDepth){
+        CD3DX12_CPU_DESCRIPTOR_HANDLE dsv = Renderer::ResManager->GetCPU(data.psoData.depthStencil.name, ResourceEnum::View::DSView);
+        Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, &dsv);
+    }
+    else
+        Context::GetContext()->OMSetRenderTargets(rts.size(), rts.data(), false, nullptr);
+    if(data.psoData.width > 0 && data.psoData.height > 0){
+        D3D12_VIEWPORT screenViewport; 
+        D3D12_RECT scissorRect;
+
+        screenViewport.TopLeftX = 0;
+        screenViewport.TopLeftY = 0;
+        screenViewport.Width    = (float)(data.psoData.width);
+        screenViewport.Height   = (float)(data.psoData.height);
+        screenViewport.MinDepth = 0.0f;
+        screenViewport.MaxDepth = 1.0f;
+        scissorRect = { 0, 0, (long)data.psoData.width, (long)data.psoData.height };
+
+        // viewport information for viewport transform/culling
+        Context::GetContext()->RSSetViewports(1, &screenViewport);
+        // scissor test: self define culling
+        Context::GetContext()->RSSetScissorRects(1, &scissorRect);
+    }
+    
 
     // input, graphics root params
     for(unsigned int i = 0; i < (int)data.inputs.size(); i++){

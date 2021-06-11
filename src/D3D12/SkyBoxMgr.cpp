@@ -1,5 +1,6 @@
 #include "SkyBoxMgr.hpp"
 #include "Graphics.hpp"
+#include "Renderer.hpp"
 
 SkyBoxMgr::SkyBoxMgr(ID3D12Device* device, 
     ID3D12GraphicsCommandList*  commandList):

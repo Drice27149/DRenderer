@@ -221,6 +221,11 @@ float3 ApproximateSpecularIBL(float3 N, float3 V, float3 baseColor, float roughn
     return radiance * (f0 * brdf.x + brdf.y);
 }
 
+float3 ApproximateIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
+{
+    return ApproximateDiffuseIBL(N, (1.0-metallic)*baseColor) + ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
+}
+
 float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
 {
 	// uint NUM_SAMPLE = 512;
@@ -231,8 +236,5 @@ float3 AmbientIBL(float3 N, float3 V, float3 baseColor, float roughness, float m
     return float3(0.0, 0.0, 0.0);
 }
 
-float3 ApproximateIBL(float3 N, float3 V, float3 baseColor, float roughness, float metallic)
-{
-    return ApproximateDiffuseIBL(N, (1.0-metallic)*baseColor) + ApproximateSpecularIBL(N, V, baseColor, roughness, metallic);
-}
+
 

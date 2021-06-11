@@ -106,6 +106,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         hulk->yaw = 180;
         hulk->mask = 0;
         objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
+        
 
         std::shared_ptr<Object> chessBoard = std::make_shared<Object>();
         chessBoard->Scale(50.0);
@@ -120,6 +121,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
             AssimpLoader ld;
             ld.LoadFile(job.obj.get(), job.name);
         };
+        chessBoard->z = 7.0;
 
         parallelInit();
         parallelFor1D(WorkFunc, objJobs.size(), 1);

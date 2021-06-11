@@ -195,14 +195,25 @@ void Graphics::CreatePersistentResource()
     );
 
     Renderer::ResManager->CreateDepthStencil(
-        std::string("ShadowMap"),
+        std::string("ShadowDepth"),
         ResourceDesc{
-            (unsigned int)mClientWidth,
-            (unsigned int)mClientHeight,
+            (unsigned int)2048,
+            (unsigned int)2048,
             ResourceEnum::Format::R32G32B32A32_FLOAT, // will be ignored
             ResourceEnum::Type::Texture2D,
         },
         1<<ResourceEnum::SRView | 1<<ResourceEnum::DSView
+    );
+
+    Renderer::ResManager->CreateRenderTarget(
+        std::string("ShadowMap"),
+        ResourceDesc{
+            (unsigned int)2048,
+            (unsigned int)2048,
+            ResourceEnum::Format::R32G32B32A32_FLOAT, // will be ignored
+            ResourceEnum::Type::Texture2D,
+        },
+        1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
     );
 }
 
@@ -254,8 +265,6 @@ void Graphics::InitPassMgrs()
     shadowMgr->Init();
 
     // 天空盒管理类
-    skyBoxMgr = std::make_shared<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get());
-    skyBoxMgr->Init();
 
     // light culling step 0: generate depth
     heapMgr->GetNewSRV(srvCpu, srvGpu);
@@ -439,12 +448,14 @@ void Graphics::AddLightPass()
     [&](PassData& data){
         data.inputs = {
             ResourceData{ "dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant },
-            ResourceData{ "DiffuseMetallic", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM },
-            ResourceData{ "NormalRoughness", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
-            ResourceData{ "WorldPosX", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
-            ResourceData{ "ViewPosY", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT },
-            ResourceData{ "Velocity", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R16G16_FLOAT },
-            ResourceData{ "ShadowMap", ResourceEnum::State::Read,  }
+            ResourceData{ "dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant },
+            ResourceData{ "DiffuseMetallic", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "NormalRoughness", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "WorldPosX", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "ViewPosY", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "ShadowMap", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "EnvRadiance", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "EnvLUT", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
@@ -468,16 +479,20 @@ void Graphics::AddLightPass()
 
         struct LightDesc {
             float f[4]; // directional light: dx, dy, dz, intensity
+            int sh;
         };
         LightDesc l0[4];
-        l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0};
+        l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource0", &(l0[0]));
-        l0[1] = LightDesc {-1.0, 1.0, 1.0, 1.0};
+        l0[1] = LightDesc {-1.0, 1.0, 1.0, 0.4, 0};
         Renderer::GDevice->SetShaderConstant("LightSource1", &(l0[1]));
-        l0[2] = LightDesc {0.0, 1.0, 1.0, 1.0};
+        l0[2] = LightDesc {0.0, 1.0, 1.0, 0.4, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[2]));
-        l0[3] = LightDesc {0.0, 1.0, -1.0, 1.0};
+        l0[3] = LightDesc {0.0, 1.0, -1.0, 0.4, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[3]));
+
+        auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
+        Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
 
         for(int i = 0; i < 3; i++){
             std::string resName = "LightSource";
@@ -588,7 +603,60 @@ void Graphics::AddTAAPass()
 
 void Graphics::AddShadowPass()
 {
+    Renderer::FG->AddPass("ShadowPass",
+        [&](PassData& data){
+            data.inputs = {
+                ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
+                ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
+            };
+            data.outputs = {
+                ResourceData{"ShadowMap", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
+            };
+            data.psoData = PSOData{  
+                true,   // enable depth 
+                false,
+                ResourceData{ "ShadowDepth", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D}, // depth stencil data
+                (int)2048,
+                (int)2048,
+            };
+            data.shaders = { 
+                ShaderData{std::string("../assets/shaders/DeferredShading/Shadow.hlsl"), ShaderEnum::VS},
+                ShaderData{std::string("../assets/shaders/DeferredShading/Shadow.hlsl"), ShaderEnum::PS},
+            };
+        },
+        [=](){
+            // @TODO: clear RT and depth here
+            // @TODO: constant commit and done
+            Context::GetContext()->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
+            Context::GetContext()->IASetIndexBuffer(&objMesh->IndexBufferView());
+            Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+            // clear depth stencil
+            float clearC[4] = {0.0, 0.0, 0.0, 0.0};
+            auto dsvHandle = Renderer::ResManager->GetCPU("ShadowDepth", ResourceEnum::View::DSView);
+            Context::GetContext()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+            auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
+            int idOffset = 0, vsOffset = 0;
+            
+            auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
+            Context::GetContext()->SetGraphicsRootConstantBufferView(0, passAddr);
+
+            for(Object* obj: DEngine::gobjs){
+                Context::GetContext()->SetGraphicsRootConstantBufferView(1, objectAddr);
+                // rendering
+                for(Mesh& mesh: obj->meshes){
+                    int idSize = mesh.ids.size();
+                    if(obj->drawType == DrawType::Normal) 
+                        Context::GetContext()->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+
+                    idOffset += mesh.ids.size();
+                    vsOffset += mesh.vs.size();
+                }
+                objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+            }
+        }
+    );
 }
 
 void Graphics::Draw(const GameTimer& gt)
@@ -605,6 +673,13 @@ void Graphics::Draw(const GameTimer& gt)
     
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	
+    if(firstFrame){
+         PrecomputeResource();
+         firstFrame = false;
+    }
+
+    AddShadowPass();
+
     AddGBufferMainPass();
 
     AddLightPass();
@@ -618,6 +693,8 @@ void Graphics::Draw(const GameTimer& gt)
 
     AddPostProcessPass();
 
+    DrawSkyBox();
+
     guiMgr->Draw();
 
     // @TODO: shadow pass
@@ -625,10 +702,6 @@ void Graphics::Draw(const GameTimer& gt)
 
 
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-    // if(firstFrame){
-    //     PrecomputeResource();
-    // }
 
     // // DrawShadowMap();
 
@@ -700,7 +773,7 @@ void Graphics::Draw(const GameTimer& gt)
 
     // if(firstFrame){
         
-    //     firstFrame = false;
+    //     
     // }
     
 
@@ -761,6 +834,9 @@ void Graphics::BuildDescriptorHeaps()
 
 void Graphics::PrecomputeResource()
 {
+    skyBoxMgr = std::make_shared<SkyBoxMgr>(md3dDevice.Get(), mCommandList.Get());
+    skyBoxMgr->Init();
+
     if (prefilterIBL == nullptr) {
         prefilterIBL = std::make_shared<PrefilterIBL>();
         prefilterIBL->rootors = {
@@ -770,6 +846,13 @@ void Graphics::PrecomputeResource()
         prefilterIBL->Init();
     }
     prefilterIBL->PreComputeFilter();
+
+    Renderer::ResManager->RegisterHandle("EnvRadiance", prefilterIBL->GetPrefilterEnvMap(), ResourceEnum::View::SRView);
+    Renderer::ResManager->RegisterStateTrack("EnvRadiance", ResourceEnum::State::Read);
+    Renderer::ResManager->RegisterTypeTrack("EnvRadiance", ResourceEnum::Type::Texture2D);
+    Renderer::ResManager->RegisterHandle("EnvLUT", prefilterIBL->GetEnvBRDFMap(), ResourceEnum::View::SRView);
+    Renderer::ResManager->RegisterStateTrack("EnvLUT", ResourceEnum::State::Read);
+    Renderer::ResManager->RegisterTypeTrack("EnvLUT", ResourceEnum::Type::Texture2D);
 }
 
 
@@ -785,6 +868,8 @@ void Graphics::DrawShadowMap()
 void Graphics::DrawSkyBox()
 {
     skyBoxMgr->PrePass();
+    auto dsvHandle = Renderer::ResManager->GetCPU("GBufferDepth", ResourceEnum::View::DSView);
+    Context::GetContext()->OMSetRenderTargets(1, &CurrentBackBufferView(), false, &dsvHandle);
     skyBoxMgr->Pass();
     skyBoxMgr->PostPass();
 }

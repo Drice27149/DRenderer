@@ -67,7 +67,7 @@ VertexOut VS(VertexIn vin)
 	}
 	lastTemp[3][3] = 1.0;
 
-	float4x4 mvp = mul(_JProj, temp);
+	float4x4 mvp = mul(Proj, temp);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f)).xyww;
     vout.uv = vin.vertex;
 	mvp = mul(Proj, temp);
@@ -91,10 +91,7 @@ float2 PixelVelocity(VertexOut pin)
 	return diff;
 }
 
-PixOut PS(VertexOut pin): SV_TARGET
+float4 PS(VertexOut pin): SV_TARGET
 {
-	PixOut pixOut;
-	pixOut.color = gCubeMap.Sample(gsamLinear, pin.uv);
-	pixOut.velocity = PixelVelocity(pin);
-	return pixOut;
+	return gCubeMap.Sample(gsamLinear, pin.uv);
 }

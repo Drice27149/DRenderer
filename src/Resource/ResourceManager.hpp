@@ -32,6 +32,8 @@ public:
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_GPU_DESCRIPTOR_HANDLE handle, ResourceEnum::View view);
     void RegisterHandle(std::string name, CD3DX12_CPU_DESCRIPTOR_HANDLE chandle, CD3DX12_GPU_DESCRIPTOR_HANDLE ghandle, ResourceEnum::View view);
+    void RegisterStateTrack(std::string name, ResourceEnum::State state);
+    void RegisterTypeTrack(std::string name, ResourceEnum::Type type);
 
     ResourceEnum::State GetResourceState(std::string name);
     ResourceEnum::Type GetResourceType(std::string name);

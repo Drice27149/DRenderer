@@ -59,6 +59,7 @@ void ConstantMgr::Update()
 
 void ConstantMgr::UpdatePassConstants()
 {
+    /** nobody use this one **/
     // shadow map pass constant
     glm::mat4 tempLight = glm::lookAt(vec3(-8.0, 8.0, 0.0), vec3(0.0,0.0,0.0), vec3(0.0,1.0,0.0));
     auto passCB = frameResources[curFrame]->PassCB.get();
@@ -66,10 +67,12 @@ void ConstantMgr::UpdatePassConstants()
     temp.view = glm::transpose(tempLight); // glm::transpose(DEngine::GetCamMgr().GetViewTransform());
     temp.proj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     passCB->CopyData(0, temp);
+    /** nobody use this one **/
+
     // camera pass constant
     // @TODO: jitter shadow
     temp.view = DEngine::GetCamMgr().GetViewTransform();
-    temp.proj = DEngine::GetCamMgr().GetProjectionTransform();
+    temp.proj = DEngine::GetCamMgr().GetProjectionTransform(); // glm::ortho(-1000.0, 1000.0, -1000.0, 1000.0, 1.0, 5000.0);
     
     // enable taa, jitter
     if(sceneInfo->taa){
@@ -83,8 +86,13 @@ void ConstantMgr::UpdatePassConstants()
     else
         temp.JProj = temp.proj;
     
-    temp.SMView = glm::transpose(tempLight);
-    temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
+    if(firstFrame){
+        lightView = DEngine::GetCamMgr().GetViewTransform();
+        lightProj = glm::ortho(-1000.0, 1000.0, -1000.0, 1000.0, 1.0, 5000.0);
+    }
+    temp.SMView = lightView;
+    temp.SMProj = lightProj;
+    // temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
     temp.CamPos = DEngine::GetCamMgr().GetViewPos();
 
     if(firstFrame){

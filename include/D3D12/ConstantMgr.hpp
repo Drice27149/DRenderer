@@ -44,5 +44,7 @@ public:
 public:
     glm::mat4 lastView;
     glm::mat4 lastProj;
+    glm::mat4 lightView;
+    glm::mat4 lightProj;
     bool firstFrame = true;
 };
