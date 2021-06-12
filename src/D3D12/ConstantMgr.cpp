@@ -87,7 +87,7 @@ void ConstantMgr::UpdatePassConstants()
         temp.JProj = temp.proj;
     
     if(firstFrame){
-        lightView = DEngine::GetCamMgr().GetViewTransform();
+        lightView = glm::lookAt(vec3(10.0, 3374.0, 765.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
         lightProj = glm::ortho(-1000.0, 1000.0, -1000.0, 1000.0, 1.0, 5000.0);
     }
     temp.SMView = lightView;

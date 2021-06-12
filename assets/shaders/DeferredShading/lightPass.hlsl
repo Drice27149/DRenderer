@@ -57,7 +57,7 @@ VertexOut VS(VertexIn vin, uint id: SV_VertexID)
     return vout;
 }
 
-float GetShadowBlur(float4 clipPos, float z)
+float GetVisibility(float4 clipPos, float z)
 {
 	// clipPos.xyz /= clipPos.w;
 	float x = clipPos.x/clipPos.w * 0.5 + 0.5;
@@ -65,12 +65,12 @@ float GetShadowBlur(float4 clipPos, float z)
 	if(x>=0.0 && x<=1.0 && y>=0.0 && y<=1.0){
 		float depth = shadowMap.Sample(gsamLinear, float2(x,y)).r;
 		if(z < depth + 0.005) 
-			return 0.0;
-		else 
 			return 1.0;
+		else 
+			return 0.0;
 	}
 	else
-		return 0.0;
+		return 1.0;
 }
 
 float DecodeLOD(float roughness)
@@ -128,16 +128,17 @@ float4 PS(VertexOut pin): SV_TARGET
     // return float4(testColor, 1.0);
 
     float3 color = BRDF_Faliment(normal, viewDir, L, baseColor, metallic, roughness) * inten * ao * saturate(dot(normal, L));
+    float vis = 0.0;
 
     if(_mainLight){
         float4x4 vp = mul(_JProj, _SMView);
         float4 clipPos = mul(vp, float4(worldPos, 1.0));
         vp = mul(_SMProj, _SMView);
         float shadowZ = mul(vp, float4(worldPos, 1.0)).z;
-        float factor = GetShadowBlur(clipPos, shadowZ);
-        color = color * (1.0 - factor);
+        float vis = GetVisibility(clipPos, shadowZ);
+        color = color * vis;
 
-        color = color + AmbientEnvLight(normal, viewDir, baseColor, metallic, roughness) * ao;
+        // color = color + AmbientEnvLight(normal, viewDir, baseColor, metallic, roughness) * ao;
 
         color = color + emissive;
     }

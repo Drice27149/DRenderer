@@ -484,7 +484,7 @@ void Graphics::AddLightPass()
         LightDesc l0[4];
         l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource0", &(l0[0]));
-        l0[1] = LightDesc {-1.0, 1.0, 1.0, 0.4, 0};
+        l0[1] = LightDesc {-1.0, 1.0, 1.0, 1.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource1", &(l0[1]));
         l0[2] = LightDesc {0.0, 1.0, 1.0, 0.4, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[2]));
@@ -494,7 +494,7 @@ void Graphics::AddLightPass()
         auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
         Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
 
-        for(int i = 0; i < 3; i++){
+        for(int i = 1; i < 2; i++){
             std::string resName = "LightSource";
             resName.push_back('0'+i);
             auto lightRes = Renderer::ResManager->GetResource(resName);
