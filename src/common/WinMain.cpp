@@ -98,15 +98,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         //     }
         // }
         // IBL测试1: 导入模型, 基于贴图的metallicRoughness
+
+        // std::shared_ptr<Object> spheres[9];
+        // for(int i = 0; i < 9; i++){
+        //     spheres[i] = std::make_shared<Object>();
+        //     spheres[i]->metallic = (float)(i/3) * 0.4 + 0.01;
+        //     spheres[i]->roughness = (float)(i%3) * 0.4 + 0.01;
+        //     spheres[i]->Scale(2.50);
+        //     spheres[i]->pitch = 90;
+        //     spheres[i]->yaw = 180;
+        //     spheres[i]->x = (float)(i % 3) * 25.0 - 80.0;
+        //     spheres[i]->y = 0.0;
+        //     spheres[i]->z = (float)(i / 3) * 25.0;
+        //     spheres[i]->mask = 0;
+        //     objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", spheres[i]));
+        // }
+
         std::shared_ptr<Object> hulk = std::make_shared<Object>();
         hulk->metallic = 0.8;
         hulk->roughness = 0.1;
-        hulk->Scale(1.0);
-        hulk->pitch = 90;
-        hulk->yaw = 180;
+        hulk->Scale(100.0);
+        hulk->pitch = 0.0;
+        hulk->yaw = 0.0;
+        hulk->z = 30.0;
         hulk->mask = 0;
-        objJobs.emplace_back(ObjJob("../assets/models/hulkbuster/scene.gltf", hulk));
-        
+        objJobs.emplace_back(ObjJob("../assets/models/sponza/sponza.obj", hulk));
 
         std::shared_ptr<Object> chessBoard = std::make_shared<Object>();
         chessBoard->Scale(50.0);

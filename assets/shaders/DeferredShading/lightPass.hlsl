@@ -121,8 +121,8 @@ float4 PS(VertexOut pin): SV_TARGET
     float3 L = normalize(_lightDir);
     float inten = _lightInten;
 
-    if(baseColor.r==0.0 && baseColor.g==0.0 && baseColor.b==0.0)
-        return float4(0.0, 0.0, 0.0, 1.0);
+    //if(baseColor.r==0.0 && baseColor.g==0.0 && baseColor.b==0.0)
+        //return float4(1.0, 0.0, 0.0, 1.0);
 
     float3 testColor = baseColor * saturate(dot(normal, L));
     // return float4(testColor, 1.0);

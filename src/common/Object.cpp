@@ -49,13 +49,16 @@ mat4 Object::GetModelTransform()
 {
 	mat4 result = glm::mat4(1.0);
 	// scale first, only support equal scale
-	result = glm::scale(result, vec3(scale, scale, scale));
+	for(int i = 0; i < 3; i++){
+		result[i][i] *= scale;
+	}
 	// rotation second
 	result = glm::rotate(result, glm::radians(pitch), vec3(1.0, 0.0, 0.0));
 	result = glm::rotate(result, glm::radians(yaw), vec3(0.0, 1.0, 0.0));
 	result = glm::rotate(result, glm::radians(roll), vec3(0.0, 0.0, 1.0));
+
 	// translation last
-	result = glm::translate(result, vec3(x, y, z));
+	result[3] = result[3] + glm::vec4(x, y, z, 0.0);
 
 	return result;
 }

@@ -684,6 +684,8 @@ void Graphics::Draw(const GameTimer& gt)
 
     AddLightPass();
 
+    DrawSkyBox();
+
     if(acFrame == 1)
         AddCopyPass("ColorBuffer", "HistoryBuffer");
 
@@ -692,8 +694,6 @@ void Graphics::Draw(const GameTimer& gt)
     AddCopyPass("PostProcessBuffer", "HistoryBuffer");
 
     AddPostProcessPass();
-
-    DrawSkyBox();
 
     guiMgr->Draw();
 
@@ -868,8 +868,9 @@ void Graphics::DrawShadowMap()
 void Graphics::DrawSkyBox()
 {
     skyBoxMgr->PrePass();
+    auto rtHandle = Renderer::ResManager->GetCPU("ColorBuffer", ResourceEnum::View::RTView);
     auto dsvHandle = Renderer::ResManager->GetCPU("GBufferDepth", ResourceEnum::View::DSView);
-    Context::GetContext()->OMSetRenderTargets(1, &CurrentBackBufferView(), false, &dsvHandle);
+    Context::GetContext()->OMSetRenderTargets(1, &D3D12_CPU_DESCRIPTOR_HANDLE(rtHandle), false, &dsvHandle);
     skyBoxMgr->Pass();
     skyBoxMgr->PostPass();
 }

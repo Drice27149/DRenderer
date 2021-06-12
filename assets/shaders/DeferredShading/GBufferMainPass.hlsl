@@ -151,10 +151,11 @@ PixelOut PS(VertexOut pin)
 	normal = normal*2.0 - 1.0;
 	normal = tangentToWorldNormal(normal, pin.N, pin.T);
 	if(!(_mask & (1<<6))){
-		baseColor = float3(_cx, _cy, _cz);
+		baseColor = float3(1.0, 1.0, 1.0);
 		roughness = _roughness;
 		metallic = _metallic;
 		normal = pin.N;
+		ao = 1.0;
 	}
 	if(_mask & (1<<23)){
 		baseColor = baseColor.rrr;

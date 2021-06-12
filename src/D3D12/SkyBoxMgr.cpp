@@ -36,7 +36,7 @@ void SkyBoxMgr::BuildPSO()
 
     psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
     psoDesc.VS = 
 	{ 
@@ -100,7 +100,7 @@ void SkyBoxMgr::CreateResources()
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(
         device,
         commandList,
-        L"..\\assets\\envs\\pillars.dds", 
+        L"..\\assets\\envs\\nightSky.dds", 
         skyTexture->Resource, 
         skyTexture->UploadHeap
         )

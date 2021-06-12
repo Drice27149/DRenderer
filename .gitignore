@@ -17,3 +17,7 @@ CMakeFiles
 *.tgz
 *.tar
 *.hdr
+*.png
+*.JPG
+*.obj
+*.mtl
