@@ -62,3 +62,34 @@ mat4 Object::GetModelTransform()
 
 	return result;
 }
+
+void Object::deserialize(std::vector<Reflect::Data> datas)
+{
+	for(const auto& data: datas){
+		if(data.type == Reflect::Type::FLOAT){
+			float* ptr = (float*)((unsigned long long)this + data.offset);
+			*ptr = data.d[0];
+		}
+		if(data.type == Reflect::Type::FLOAT3){
+			float* ptr0 = (float*)((unsigned long long)this + data.offset);
+			float* ptr1 = (float*)((unsigned long long)this + data.offset + sizeof(float));
+			float* ptr2 = (float*)((unsigned long long)this + data.offset + 2*sizeof(float));
+			*ptr0 = data.d[0];
+			*ptr1 = data.d[1];
+			*ptr2 = data.d[2];
+		}
+	}
+}
+
+std::vector<Reflect::Data> Object::serialize()
+{
+	std::vector<Reflect::Data> res = {
+		// offset, type, name[3], data[3]
+		Reflect::Data{offsetof(Object, scale), Reflect::Type::FLOAT, "Scale", "", "", scale},
+		Reflect::Data{offsetof(Object, x), Reflect::Type::FLOAT3, "X", "Y", "Z", x, y, z},
+		Reflect::Data{offsetof(Object, pitch), Reflect::Type::FLOAT3, "Pitch", "Yaw", "Roll", pitch, yaw, roll},
+		Reflect::Data{offsetof(Object, metallic), Reflect::Type::FLOAT, "Metallic", "", "", metallic},
+		Reflect::Data{offsetof(Object, roughness), Reflect::Type::FLOAT, "Roughness", "", "", roughness},
+	};
+	return res;
+}

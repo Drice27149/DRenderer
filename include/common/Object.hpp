@@ -3,6 +3,7 @@
 #include "Global.hpp"
 #include "Mesh.hpp"
 #include "Struct.hpp"
+#include "Reflect.hpp"
 
 enum DrawType {
     Normal,
@@ -19,12 +20,14 @@ public:
 	void Scale(float rate);
 	void MergeMesh(Mesh& mesh);
 	mat4 GetModelTransform();
+	void deserialize(std::vector<Reflect::Data> datas);
+	std::vector<Reflect::Data> serialize();
 public:
 	// transform data
 	float scale;
-	float roll;
 	float pitch;
 	float yaw;
+	float roll;
 	float x;
 	float y;
 	float z;
