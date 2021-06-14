@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Global.hpp"
+#include "Reflect.hpp"
 
 // TODO: w zoom in, s zoom out
 // TODO: a/d 左右移动
@@ -21,8 +22,10 @@ public:
     vec3 getOrigin();
     void zoom(float dir);
     void updatePosition();
+    
 public:
-
+    void deserialize(std::vector<Reflect::Data> datas);
+	std::vector<Reflect::Data> serialize();
 
 public:
     vec3 firstGaze;

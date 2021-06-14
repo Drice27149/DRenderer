@@ -86,3 +86,43 @@ void Camera::updatePosition()
     position.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     position = glm::normalize(position) * radius;
 }
+
+void Camera::deserialize(std::vector<Reflect::Data> datas)
+{
+	for(const auto& data: datas){
+		if(data.type == Reflect::Type::FLOAT){
+			float* ptr = (float*)((unsigned long long)this + data.offset);
+			*ptr = data.f[0];
+		}
+		if(data.type == Reflect::Type::FLOAT3){
+			float* ptr0 = (float*)((unsigned long long)this + data.offset);
+			float* ptr1 = (float*)((unsigned long long)this + data.offset + sizeof(float));
+			float* ptr2 = (float*)((unsigned long long)this + data.offset + 2*sizeof(float));
+			*ptr0 = data.f[0];
+			*ptr1 = data.f[1];
+			*ptr2 = data.f[2];
+		}
+		if(data.type == Reflect::Type::INT){
+			int* ptr = (int*)((unsigned long long)this + data.offset);
+			*ptr = data.i[0];
+		}
+		if(data.type == Reflect::Type::STRING){
+			string* ptr = (string*)((unsigned long long)this + data.offset);
+			*ptr = data.s;
+		}
+	}
+}
+
+std::vector<Reflect::Data> Camera::serialize()
+{
+    // yaw, pitch, radiance, position, offset
+	std::vector<Reflect::Data> res = {
+		// offset, type, name[3], data[3]
+		Reflect::Data{offsetof(Camera, yaw), Reflect::Type::FLOAT, "Yaw", "", "", yaw},
+		Reflect::Data{offsetof(Camera, pitch), Reflect::Type::FLOAT, "Pitch", "", "", pitch},
+		Reflect::Data{offsetof(Camera, radius), Reflect::Type::FLOAT, "Radius", "", "", radius},
+		Reflect::Data{offsetof(Camera, position), Reflect::Type::FLOAT3, "x", "y", "z", position[0], position[1], position[2]},
+		Reflect::Data{offsetof(Camera, offset), Reflect::Type::FLOAT3, "offsetX", "offsetY", "offsetZ", offset[0], offset[1], offset[2]},
+	};
+	return res;
+}
