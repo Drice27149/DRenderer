@@ -108,6 +108,8 @@ int D3DApp::Run()
         }
     }
 
+	this->Exit();
+
 	return (int)msg.wParam;
 }
 

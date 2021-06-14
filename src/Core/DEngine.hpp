@@ -16,10 +16,13 @@ public:
     static SceneMgr& GetSceneMgr(){ return instance->sceneMgr; }
     static void Tick();
     static void LogError(string s);
+
+public:
+    void Init();
+    void Exit();
+
 public:
     static DEngine* instance;
-    static GLFWwindow* window;
-    static Object* gobj;
     static vector<Object*> gobjs;
     static vector<Mesh*> meshes;
     CamMgr camMgr;

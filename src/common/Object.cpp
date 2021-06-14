@@ -68,15 +68,15 @@ void Object::deserialize(std::vector<Reflect::Data> datas)
 	for(const auto& data: datas){
 		if(data.type == Reflect::Type::FLOAT){
 			float* ptr = (float*)((unsigned long long)this + data.offset);
-			*ptr = data.d[0];
+			*ptr = data.f[0];
 		}
 		if(data.type == Reflect::Type::FLOAT3){
 			float* ptr0 = (float*)((unsigned long long)this + data.offset);
 			float* ptr1 = (float*)((unsigned long long)this + data.offset + sizeof(float));
 			float* ptr2 = (float*)((unsigned long long)this + data.offset + 2*sizeof(float));
-			*ptr0 = data.d[0];
-			*ptr1 = data.d[1];
-			*ptr2 = data.d[2];
+			*ptr0 = data.f[0];
+			*ptr1 = data.f[1];
+			*ptr2 = data.f[2];
 		}
 	}
 }

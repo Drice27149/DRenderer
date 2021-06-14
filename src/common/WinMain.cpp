@@ -7,7 +7,6 @@
 #include "Light.hpp"
 #include "Parallel.hpp"
 
-Object* DEngine::gobj = nullptr;
 DEngine* DEngine::instance = nullptr;
 std::vector<Object*> DEngine::gobjs;
 

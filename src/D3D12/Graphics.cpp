@@ -19,6 +19,7 @@ Graphics::Graphics(HINSTANCE hInstance)
 
 Graphics::~Graphics()
 {
+    
 }
 
 bool Graphics::Initialize()
@@ -234,98 +235,6 @@ void Graphics::InitPassMgrs()
     guiMgr->mhMainWnd = mhMainWnd;
     guiMgr->Init();
     GUIInit = true;
-
-    return ;
-    // Pre-Z 管理类
-    preZMgr = std::make_shared<PreZMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu;
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE dsvGpu;
-    heapMgr->GetNewDSV(dsvCpu, dsvGpu);
-
-    preZMgr->srvCpu = srvCpu;
-    preZMgr->srvGpu = srvGpu;
-    preZMgr->dsvCpu = dsvCpu;
-    // 临时
-    preZMgr->constantMgr = constantMgr;
-    preZMgr->Init();
-
-    // 阴影管理类
-    shadowMgr = std::make_shared<ShadowMgr>(md3dDevice.Get(), mCommandList.Get(), 1024, 1024);
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    heapMgr->GetNewDSV(dsvCpu, dsvGpu);
-
-    shadowMgr->srvCpu = srvCpu;
-    shadowMgr->srvGpu = srvGpu;
-    shadowMgr->dsvCpu = dsvCpu;
-    // 临时
-    shadowMgr->constantMgr = constantMgr;
-    shadowMgr->Init();
-
-    // 天空盒管理类
-
-    // light culling step 0: generate depth
-    heapMgr->GetNewSRV(srvCpu, srvGpu);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE rtvGpu;
-    heapMgr->GetNewRTV(rtvCpu, rtvGpu);
-    clusterMgr = std::make_shared<ClusterMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
-    clusterMgr->srvCpu = srvCpu;
-    clusterMgr->srvGpu = srvGpu;
-    clusterMgr->rtvCpu = rtvCpu;
-    clusterMgr->rtvGpu = rtvGpu;
-    clusterMgr->constantMgr = constantMgr;
-    clusterMgr->Init();
-    // light culling step 1: cull the light
-
-    lightCullMgr = std::make_shared<LightCullMgr>(md3dDevice.Get(), mCommandList.Get(), 16, 8, 4);
-    for(int i = 0; i < 2; i++){
-        heapMgr->GetNewSRV(srvCpu, srvGpu);
-        lightCullMgr->srvCpu[i] = srvCpu;
-        lightCullMgr->srvGpu[i] = srvGpu;
-    }
-    lightCullMgr->clusterDepth = clusterMgr->srvGpu;
-    lightCullMgr->constantMgr = constantMgr;
-    lightCullMgr->Init();
-
-    // debug, for now cluster line only
-    debugVisMgr = std::make_shared<DebugVisMgr>(md3dDevice.Get(), mCommandList.Get());
-    debugVisMgr->offsetTable = lightCullMgr->srvGpu[0];
-    debugVisMgr->entryTable = lightCullMgr->srvGpu[1];
-    debugVisMgr->clusterDepth = clusterMgr->srvGpu;
-    debugVisMgr->constantMgr = constantMgr;
-    debugVisMgr->Init();
-
-    // shading
-    pbrMgr = std::make_shared<PBRMgr>(md3dDevice.Get(), mCommandList.Get());
-    pbrMgr->objMesh = objMesh;
-    pbrMgr->width = mClientWidth;
-    pbrMgr->height = mClientHeight;
-    pbrMgr->Init();
-
-    // AA
-    aaMgr = std::make_shared<AAMgr>(md3dDevice.Get(), mCommandList.Get());
-    aaMgr->sWidth = ssRate*mClientWidth;
-    aaMgr->sHeight = ssRate*mClientHeight;
-    aaMgr->width = mClientWidth;
-    aaMgr->height = mClientHeight;
-    aaMgr->ssRate = ssRate;
-    aaMgr->heapMgr = heapMgr;
-    aaMgr->Init();
-    // taa
-    temporalAA = std::make_shared<TemporalAA>();
-    temporalAA->inputs.resize(3);
-    temporalAA->Init();
-    // tone map
-    toneMapping = std::make_shared<ToneMapping>();
-    toneMapping->inputs.resize(2);
-    toneMapping->Init();
-    // bloom
-    bloom = std::make_shared<Bloom>();
-    bloom->inputs.resize(2);
-    bloom->Init();
 }
 
 void Graphics::OnResize()
@@ -697,10 +606,6 @@ void Graphics::Draw(const GameTimer& gt)
 
     guiMgr->Draw();
 
-    // @TODO: shadow pass
-    // @TODO: point light pass
-
-
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
     // // DrawShadowMap();
@@ -983,5 +888,11 @@ void Graphics::OnMouseMove(WPARAM btnState, int x, int y)
 void Graphics::DrawGUI()
 {
     guiMgr->Draw();
+}
+
+void Graphics::Exit()
+{
+    FlushCommandQueue();
+    DEngine::instance->Exit();
 }
 

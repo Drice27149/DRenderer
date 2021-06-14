@@ -45,6 +45,7 @@ private:
     virtual void OnResize()override;
     virtual void Update(const GameTimer& gt)override;
     virtual void Draw(const GameTimer& gt)override;
+    virtual void Exit() override;
 
     virtual void OnLMouseDown(WPARAM btnState, int x, int y)override;
     virtual void OnLMouseUp(WPARAM btnState, int x, int y)override;

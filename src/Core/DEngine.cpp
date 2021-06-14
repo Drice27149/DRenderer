@@ -1,6 +1,6 @@
 #include "DEngine.hpp"
-
-GLFWwindow* DEngine::window = nullptr;
+#include "ConfigLoader.hpp"
+#include "Reflect.hpp"
 
 DEngine::DEngine()
 {
@@ -13,6 +13,20 @@ void DEngine::Launch()
     {
         instance = new DEngine();
     }
+}
+
+void DEngine::Init()
+{
+
+}
+
+void DEngine::Exit()
+{
+    std::vector<Reflect::Element> datas;
+    for(Object* obj: gobjs){
+        datas.push_back(Reflect::Element{obj->serialize()});
+    }
+    ConfigLoader::SaveConfig("../Save/Config.txt", datas);
 }
 
 void DEngine::Tick()
