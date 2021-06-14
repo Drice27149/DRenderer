@@ -11,7 +11,7 @@ class ConfigLoader {
 public:
     static vector<Reflect::Element> LoadConfig(string fn)
     {
-        freopen(fn.c_str(),"w",stdin);
+        freopen(fn.c_str(),"r",stdin);
 
         std::vector<Reflect::Element> elements;
         string line;
@@ -28,18 +28,22 @@ public:
                 if(line == "f1"){
                     cin >> data.offset;
                     cin >> data.f[0];
+                    data.type = Reflect::Type::FLOAT;
                 }
                 else if(line == "f3"){
                     cin >> data.offset;
                     cin >> data.f[0] >> data.f[1] >> data.f[2];
+                    data.type = Reflect::Type::FLOAT3;
                 }
                 else if(line == "i1"){
                     cin >> data.offset;
                     cin >> data.i[0];
+                    data.type = Reflect::Type::INT;
                 }
                 else if(line == "s"){
                     cin >> data.offset;
-                    cin >> data.s[0];
+                    cin >> data.s;
+                    data.type = Reflect::Type::STRING;
                 }
                 else {
                     int SaveConfigBadType = 0;

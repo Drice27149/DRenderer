@@ -22,6 +22,9 @@ public:
     void zoom(float dir);
     void updatePosition();
 public:
+
+
+public:
     vec3 firstGaze;
     vec3 origin;
     vec3 gaze;

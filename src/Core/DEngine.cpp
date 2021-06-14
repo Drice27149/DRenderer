@@ -17,7 +17,12 @@ void DEngine::Launch()
 
 void DEngine::Init()
 {
-
+    std::vector<Reflect::Element> datas = ConfigLoader::LoadConfig("../Save/Config.txt");
+    for(const auto& ele: datas){
+        auto Obj = new Object();
+        Obj->deserialize(ele.datas);
+        gobjs.push_back(Obj);
+    }
 }
 
 void DEngine::Exit()

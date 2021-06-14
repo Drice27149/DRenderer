@@ -78,6 +78,14 @@ void Object::deserialize(std::vector<Reflect::Data> datas)
 			*ptr1 = data.f[1];
 			*ptr2 = data.f[2];
 		}
+		if(data.type == Reflect::Type::INT){
+			int* ptr = (int*)((unsigned long long)this + data.offset);
+			*ptr = data.i[0];
+		}
+		if(data.type == Reflect::Type::STRING){
+			string* ptr = (string*)((unsigned long long)this + data.offset);
+			*ptr = data.s;
+		}
 	}
 }
 
@@ -90,6 +98,7 @@ std::vector<Reflect::Data> Object::serialize()
 		Reflect::Data{offsetof(Object, pitch), Reflect::Type::FLOAT3, "Pitch", "Yaw", "Roll", pitch, yaw, roll},
 		Reflect::Data{offsetof(Object, metallic), Reflect::Type::FLOAT, "Metallic", "", "", metallic},
 		Reflect::Data{offsetof(Object, roughness), Reflect::Type::FLOAT, "Roughness", "", "", roughness},
+		Reflect::Data{offsetof(Object, fn), Reflect::Type::STRING, "FileName", "", "", 0.0, 0.0, 0.0, 0, 0, 0, fn},
 	};
 	return res;
 }

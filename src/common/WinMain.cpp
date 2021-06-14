@@ -80,6 +80,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         // @TODO: 基于配置的场景加载
         DEngine::gobjs.clear();
 
+        DEngine::instance->Init();
+
         // IBL测试0: 小球, 基于参数的metallicRoughness
         // int length = 100;
         // int count = 5;
@@ -113,38 +115,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
         //     objJobs.emplace_back(ObjJob("../assets/models/sphere/scene.gltf", spheres[i]));
         // }
 
-        std::shared_ptr<Object> hulk = std::make_shared<Object>();
-        hulk->metallic = 0.8;
-        hulk->roughness = 0.1;
-        hulk->Scale(100.0);
-        hulk->pitch = 0.0;
-        hulk->yaw = 0.0;
-        hulk->z = 30.0;
-        hulk->mask = 0;
-        objJobs.emplace_back(ObjJob("../assets/models/sponza/sponza.obj", hulk));
+        // std::shared_ptr<Object> hulk = std::make_shared<Object>();
+        // hulk->metallic = 0.8;
+        // hulk->roughness = 0.1;
+        // hulk->Scale(100.0);
+        // hulk->pitch = 0.0;
+        // hulk->yaw = 0.0;
+        // hulk->z = 30.0;
+        // hulk->mask = 0;
+        // hulk->fn = "../assets/models/sponza/sponza.obj";
+        // DEngine::gobjs.push_back(hulk.get());
 
-        std::shared_ptr<Object> chessBoard = std::make_shared<Object>();
-        chessBoard->Scale(50.0);
-        chessBoard->pitch = 0.0;
-        chessBoard->yaw = 180;
-        chessBoard->mask = 0;
-        objJobs.emplace_back(ObjJob("../assets/models/chessboard/scene.gltf", chessBoard));
-        chessBoard->mask |= (1<<23);
+        // std::shared_ptr<Object> chessBoard = std::make_shared<Object>();
+        // chessBoard->Scale(50.0);
+        // chessBoard->pitch = 0.0;
+        // chessBoard->yaw = 180;
+        // chessBoard->mask = 0;
+        // chessBoard->mask |= (1<<23);
+        // chessBoard->z = 7.0;
+        // chessBoard->fn = "../assets/models/chessboard/scene.gltf";
+        // DEngine::gobjs.push_back(chessBoard.get());
+
+        for(auto obj: DEngine::gobjs){
+            waitLoadObj.push_back(obj);
+        }
 
         auto WorkFunc = [](int64_t id)->void{
-            auto& job = objJobs[id];
+            auto obj = waitLoadObj[id];
             AssimpLoader ld;
-            ld.LoadFile(job.obj.get(), job.name);
+            ld.LoadFile(obj, obj->fn);
         };
-        chessBoard->z = 7.0;
 
         parallelInit();
-        parallelFor1D(WorkFunc, objJobs.size(), 1);
+        parallelFor1D(WorkFunc, waitLoadObj.size(), 1);
         parallelCleanUp();
-
-        for(auto& job: objJobs){
-             DEngine::gobjs.push_back(job.obj.get());
-        }
 
         // debug cluster
         // Object cluster;

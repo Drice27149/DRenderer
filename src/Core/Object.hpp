@@ -24,6 +24,7 @@ public:
 	std::vector<Reflect::Data> serialize();
 public:
 	// transform data
+	string fn;
 	float scale;
 	float pitch;
 	float yaw;
@@ -35,7 +36,7 @@ public:
 	float roughness;
 public:
 	// render data
-	unsigned int mask;
+	int mask;
 	std::vector<std::string> texns;
 	// @TODO: shading model
 	// @TODO: material data
@@ -48,12 +49,4 @@ public:
 	int id;
 };
 
-struct ObjJob {
-	std::string name;
-	std::shared_ptr<Object> obj;
-	ObjJob(std::string name, std::shared_ptr<Object> obj):
-	name(name), obj(obj)
-	{}
-};
-
-static std::vector<ObjJob> objJobs;
+static std::vector<Object*> waitLoadObj;
