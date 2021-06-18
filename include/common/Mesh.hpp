@@ -8,8 +8,10 @@ public:
     Mesh();
     Mesh(vector<Vertex> vs, vector<unsigned int> ids); // TODO: 列表复制使用右值引用
 public:
-    vector<Vertex> vs;          // 顶点数组
-    vector<unsigned int> ids;   // 顶点索引数组
+    vector<Vertex> vs;          // vertex buffer
+    vector<unsigned int> ids;   // index buffer
+    std::vector<std::string> texns; 
+    int mask;
 };
 
 class Grid: public Mesh {

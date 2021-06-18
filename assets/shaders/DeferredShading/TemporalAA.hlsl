@@ -133,8 +133,10 @@ float4 PS(VertexOut pin): SV_TARGET
     float lumaNow = luma(now);
     float lumaHis = luma(history);
 
-    // float diff = 1.0 - abs(lumaNow - lumaHis) / (0.001 + max(lumaNow, lumaHis));
-    // taaAlpha *= diff * diff;
+    float diff = abs(lumaNow - lumaHis) / (0.001 + max(lumaNow, lumaHis));
+    // return float4(lumaNow, lumaHis, 0.0, 1.0);
+    // if(diff > 0.95) 
+    //     return float4(now, 1.0);
 
     // tonemapping for handling HDR
     now.rgb *= 1.0 / (1.0 + luma(now));

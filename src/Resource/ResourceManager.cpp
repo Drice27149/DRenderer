@@ -210,13 +210,17 @@ void ResourceManager::CreateImageTexture(std::string name, unsigned int usage)
 void ResourceManager::LoadObjectTextures()
 {
     for(Object* obj: DEngine::gobjs){
-        for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
-            if (obj->mask & (1 << it)) {
-                std::string fn = obj->texns[it];
-                CreateImageTexture(
-                    fn,
-                    1<<ResourceEnum::SRView
-                );
+        for(Mesh& mesh: obj->meshes){
+            for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
+                if (mesh.mask & (1 << it)) {
+                    std::string fn = mesh.texns[it];
+                    if(!resources.count(fn)){
+                        CreateImageTexture(
+                            fn,
+                            1<<ResourceEnum::SRView
+                        );
+                    }
+                }
             }
         }
     }

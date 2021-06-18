@@ -38,26 +38,30 @@ void AssimpLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene)
             ids.push_back(mesh->mFaces[i].mIndices[j]);
         }
     }
+
+    curMesh = new Mesh(vs, ids);
+
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     ProcessMaterial(material);
     
-    Mesh* newMesh = new Mesh(vs, ids);
-    obj->MergeMesh(*newMesh);
+    obj->MergeMesh(*curMesh);
 }
 
 void AssimpLoader::ProcessMaterial(aiMaterial* mat)
 {
+    curMesh->mask = 0;
+    curMesh->texns.resize(aiTextureType_UNKNOWN + 1);
     // 遍历所有纹理类型, 看是否有对应的纹理贴图
     for(int it = aiTextureType_NONE ; it <= aiTextureType_UNKNOWN; it++){
         aiTextureType texType = static_cast<aiTextureType>(it); 
         if(mat->GetTextureCount(texType)){
             obj->mask |= 1 << it;
+            curMesh->mask |= 1<< it;
             // 只取第一张贴图, 因为多出来的大概率是重复的同一个
             aiString texn;
             mat->GetTexture(texType, 0, &texn);
             string fulltexn = fpath + string(texn.C_Str());
-
-            obj->texns[it] = fulltexn;
+            curMesh->texns[it] = fulltexn;
         }
     }
 }
@@ -65,7 +69,6 @@ void AssimpLoader::ProcessMaterial(aiMaterial* mat)
 void AssimpLoader::LoadFile(Object* obj, string fn)
 {
     this->obj = obj;
-    obj->texns.resize(aiTextureType_UNKNOWN + 1);
 
     meshCnt = 0;
 

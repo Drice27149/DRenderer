@@ -138,33 +138,33 @@ void PBRMgr::CreateResources()
 
 void PBRMgr::Pass()
 {
-    auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
-    int idOffset = 0, vsOffset = 0;
+    // auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
+    // int idOffset = 0, vsOffset = 0;
     
-    for(Object* obj: DEngine::gobjs){
-        commandList->SetGraphicsRootConstantBufferView(1, objectAddr);
-        // set per object image texture for shading
-        for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
-            if(obj->mask & (1<<i)){
-                unsigned int slot = mapping[i];
-                if(slot != -1){
-                    commandList->SetGraphicsRootDescriptorTable(slot, Graphics::textureMgr->GetGPUHandle(obj->texns[i]));
-                }
-            }
-        }
-        // rendering
-        for(Mesh& mesh: obj->meshes){
-            int idSize = mesh.ids.size();
+    // for(Object* obj: DEngine::gobjs){
+    //     commandList->SetGraphicsRootConstantBufferView(1, objectAddr);
+    //     // set per object image texture for shading
+    //     for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
+    //         if(obj->mask & (1<<i)){
+    //             unsigned int slot = mapping[i];
+    //             if(slot != -1){
+    //                 commandList->SetGraphicsRootDescriptorTable(slot, Graphics::textureMgr->GetGPUHandle(obj->texns[i]));
+    //             }
+    //         }
+    //     }
+    //     // rendering
+    //     for(Mesh& mesh: obj->meshes){
+    //         int idSize = mesh.ids.size();
 
-            if(obj->drawType == DrawType::Normal) 
-                commandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+    //         if(obj->drawType == DrawType::Normal) 
+    //             commandList->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
 
-            idOffset += mesh.ids.size();
-            vsOffset += mesh.vs.size();
-        }
+    //         idOffset += mesh.ids.size();
+    //         vsOffset += mesh.vs.size();
+    //     }
 
-        objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
-    }
+    //     objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+    // }
 }
 
 void PBRMgr::PrePass()

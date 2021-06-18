@@ -37,7 +37,6 @@ public:
 public:
 	// render data
 	int mask;
-	std::vector<std::string> texns;
 	// @TODO: shading model
 	// @TODO: material data
 	vector<Mesh> meshes;

@@ -2,7 +2,8 @@ Texture2D gNormalMap: register(t0);
 Texture2D gDiffuseMap: register(t1);
 Texture2D gMetallicMap: register(t2);
 Texture2D gEmissiveMap: register(t3);
-Texture2D gShadowMap: register(t4);
+Texture2D gHeightMap: register(t4);
+Texture2D gShadowMap: register(t5);
 
 SamplerState gsamLinear: register(s0);
 
@@ -83,6 +84,7 @@ VertexOut VS(VertexIn vin)
     return vout;
 }
 
+// normal mapping
 float3 tangentToWorldNormal(float3 normal, float3 N, float3 T)
 {
 	N = normalize(N);
@@ -91,6 +93,8 @@ float3 tangentToWorldNormal(float3 normal, float3 N, float3 T)
     float3x3 TBN = transpose(float3x3(T, B, N));
 	return normalize(mul(TBN, normal));
 }
+
+// bump mapping
 
 float3 GetLightDir()
 {
@@ -126,8 +130,8 @@ float GetShadowBlur(float4 clipPos)
 
 float2 PixelMotionVector(VertexOut pin)
 {
-	float width = 860;
-	float height = 720;
+	float width = 1280;
+	float height = 780;
 	float4 clipPos = pin.clipPos;
 	clipPos = clipPos / clipPos.w;
 	float2 now = float2((clipPos.x*0.5+0.5)*width, (1.0 - (clipPos.y*0.5+0.5))*height);
@@ -143,23 +147,32 @@ PixelOut PS(VertexOut pin)
 	float2 uv = pin.uv;
 	float3 baseColor = gDiffuseMap.Sample(gsamLinear, uv).rgb;
 	baseColor = pow(baseColor, 2.2);
-	float ao = gMetallicMap.Sample(gsamLinear, uv).r;
+	float ao = 1.0;
 	float roughness = gMetallicMap.Sample(gsamLinear, uv).g;
 	float emissive = gEmissiveMap.Sample(gsamLinear, uv).r;
 	float metallic = gMetallicMap.Sample(gsamLinear, uv).b;
-	float3 normal = gNormalMap.Sample(gsamLinear, uv).rgb;
-	normal = normal*2.0 - 1.0;
-	normal = tangentToWorldNormal(normal, pin.N, pin.T);
-	if(!(_mask & (1<<6))){
+	float3 normal = pin.N;
+	float height = gHeightMap.Sample(gsamLinear, uv).r;
+
+	if(false){
+		ao = gMetallicMap.Sample(gsamLinear, uv).r;
+	}
+	if(_mask & 1){
+		normal = gNormalMap.Sample(gsamLinear, uv).rgb;
+		normal = normal*2.0 - 1.0;
+		normal = tangentToWorldNormal(normal, pin.N, pin.T);
+	}
+	if(!(_mask & 2)){
 		baseColor = float3(1.0, 1.0, 1.0);
+	}
+	if(!(_mask & 64)){
 		roughness = _roughness;
 		metallic = _metallic;
-		normal = pin.N;
-		ao = 1.0;
 	}
-	if(_mask & (1<<23)){
-		baseColor = baseColor.rrr;
+	if(_mask & 32){
+		//normal = normalize(float3(height, height, height));
 	}
+
 
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);

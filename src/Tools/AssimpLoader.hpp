@@ -18,4 +18,5 @@ public:
 private:
     string fpath;
     Object* obj;
+    Mesh* curMesh;
 };

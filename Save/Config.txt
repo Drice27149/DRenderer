@@ -1,7 +1,7 @@
 ---
 f1
 40
-100.00
+1.00
 f3
 56
 0.00 0.00 30.00
@@ -10,13 +10,13 @@ f3
 0.00 0.00 0.00
 f1
 68
-0.80
+0.01
 f1
 72
 1.00
 s
 0
-../assets/models/sibenik/sibenik.obj
+../assets/models/sponza_scene/scene.gltf
 ---
 ---
 f1

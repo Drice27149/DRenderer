@@ -268,6 +268,7 @@ void Graphics::AddGBufferMainPass()
                 ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // baseColor
                 ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // metallicRoughness
                 ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // emissive
+                ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // height map
             };
             data.outputs = {
                 ResourceData{"DiffuseMetallic", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R8G8B8A8_UNORM},
@@ -314,6 +315,7 @@ void Graphics::AddGBufferMainPass()
             mapping[aiTextureType_EMISSIVE] = 5;
             mapping[aiTextureType_METALNESS] = 4;
             mapping[aiTextureType_DIFFUSE_ROUGHNESS] = 4;
+            mapping[aiTextureType_HEIGHT] = 6;
             mapping[aiTextureType_UNKNOWN] = 4;
 
             auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
@@ -324,23 +326,22 @@ void Graphics::AddGBufferMainPass()
 
             for(Object* obj: DEngine::gobjs){
                 Context::GetContext()->SetGraphicsRootConstantBufferView(1, objectAddr);
-                // set per object image texture for shading
-                for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
-                    if(obj->mask & (1<<i)){
-                        unsigned int slot = mapping[i];
-                        if(slot != -1){
-                            auto& handle = Renderer::ResManager->GetGPU(obj->texns[i], ResourceEnum::View::SRView);
-                            Context::GetContext()->SetGraphicsRootDescriptorTable(slot, handle);
+                // draw per mesh
+                for(Mesh& mesh: obj->meshes){
+                    // set up material and texture
+                    for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
+                        if(mesh.mask & (1<<i)){
+                            unsigned int slot = mapping[i];
+                            if(slot != -1){
+                                auto& handle = Renderer::ResManager->GetGPU(mesh.texns[i], ResourceEnum::View::SRView);
+                                Context::GetContext()->SetGraphicsRootDescriptorTable(slot, handle);
+                            }
                         }
                     }
-                }
-                // rendering
-                for(Mesh& mesh: obj->meshes){
+                    // issue the draw call
                     int idSize = mesh.ids.size();
-
                     if(obj->drawType == DrawType::Normal) 
                         Context::GetContext()->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
-
                     idOffset += mesh.ids.size();
                     vsOffset += mesh.vs.size();
                 }

@@ -30,6 +30,8 @@ void Object::Scale(float rate)
 
 void Object::MergeMesh(Mesh& mesh)
 {
+	meshes.push_back(mesh);
+	/*
 	if(meshes.size() == 0) 
 		meshes.push_back(mesh);
 	else{
@@ -42,7 +44,7 @@ void Object::MergeMesh(Mesh& mesh)
 		for(unsigned int id: mesh.ids){
 			org.ids.push_back(offvs + id);
 		}
-	}
+	}*/
 }
 
 mat4 Object::GetModelTransform()
