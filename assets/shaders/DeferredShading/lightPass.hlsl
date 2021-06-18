@@ -136,7 +136,7 @@ float4 PS(VertexOut pin): SV_TARGET
         vp = mul(_SMProj, _SMView);
         float shadowZ = mul(vp, float4(worldPos, 1.0)).z;
         float vis = GetVisibility(clipPos, shadowZ);
-        color = color * vis;
+        // color = color * vis;
 
         // color = color + AmbientEnvLight(normal, viewDir, baseColor, metallic, roughness) * ao;
 

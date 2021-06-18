@@ -128,7 +128,7 @@ float4 PS(VertexOut pin): SV_TARGET
     int2 uv = int2(u+du, v+dv);
     float3 history = _historyBuffer.Load(int3(uv, 0)).rgb;
 
-    // history = getClipHistory(uv, history.rgb);
+    history = getClipHistory(uv, history.rgb);
 
     float lumaNow = luma(now);
     float lumaHis = luma(history);

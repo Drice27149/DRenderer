@@ -29,7 +29,7 @@ mat4 CamMgr::GetViewTransform()
 
 mat4 CamMgr::GetProjectionTransform()
 {
-    return glm::perspective(45.0, 1.3, 1.0, 4000.0);
+    return camera.getProjTransform();
 }
 
 vec3 CamMgr::GetViewPos()

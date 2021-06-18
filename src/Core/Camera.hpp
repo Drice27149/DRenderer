@@ -19,6 +19,7 @@ public:
     void SetMSpeed(float speed);
     void SetRSpeed(float speed);
     mat4 getCamTransform();
+    mat4 getProjTransform();
     vec3 getOrigin();
     void zoom(float dir);
     void updatePosition();
@@ -39,4 +40,8 @@ public:
     float radius;
     vec3 position;
     vec3 offset;
+    float zNear = 1.0;
+    float zFar = 8000.0;
+    float aspect = 1.3;
+    float fov = 45.0;
 };

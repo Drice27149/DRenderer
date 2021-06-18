@@ -37,6 +37,11 @@ mat4 Camera::getCamTransform(){
     return res;
 }
 
+mat4 Camera::getProjTransform()
+{
+    return glm::perspective(glm::radians(fov), aspect, zNear, zFar);
+}
+
 void Camera::updateDirection(){
     gaze.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     gaze.y = sin(glm::radians(pitch));
@@ -123,6 +128,11 @@ std::vector<Reflect::Data> Camera::serialize()
 		Reflect::Data{offsetof(Camera, radius), Reflect::Type::FLOAT, "Radius", "", "", radius},
 		Reflect::Data{offsetof(Camera, position), Reflect::Type::FLOAT3, "x", "y", "z", position[0], position[1], position[2]},
 		Reflect::Data{offsetof(Camera, offset), Reflect::Type::FLOAT3, "offsetX", "offsetY", "offsetZ", offset[0], offset[1], offset[2]},
+        Reflect::Data{offsetof(Camera, fov), Reflect::Type::FLOAT, "fov", "", "", fov},
+        Reflect::Data{offsetof(Camera, aspect), Reflect::Type::FLOAT, "aspect", "", "", aspect},
+        Reflect::Data{offsetof(Camera, zNear), Reflect::Type::FLOAT, "near", "", "", zNear},
+        Reflect::Data{offsetof(Camera, zFar), Reflect::Type::FLOAT, "far", "", "", zFar},
 	};
 	return res;
 }
+

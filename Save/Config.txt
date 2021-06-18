@@ -16,7 +16,7 @@ f1
 1.00
 s
 0
-../assets/models/sponza/sponza.obj
+../assets/models/sibenik/sibenik.obj
 ---
 ---
 f1
