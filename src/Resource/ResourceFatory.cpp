@@ -112,4 +112,27 @@ namespace ResFatory {
             )
         );
     }
+
+    void CreateTexture3D(ComPtr<ID3D12Resource>& resource, unsigned int x, unsigned int y, unsigned int z, DXGI_FORMAT format)
+    {
+        CD3DX12_RESOURCE_DESC texDesc(
+            D3D12_RESOURCE_DIMENSION_TEXTURE3D,
+            0,		// alignment
+            x, y, z,
+            1,		// mip levels
+            format,
+            1, 0,	// sample count/quality
+            D3D12_TEXTURE_LAYOUT_UNKNOWN,
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+        );
+
+        Device::GetDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, 0, 0),
+            D3D12_HEAP_FLAG_NONE,
+            &texDesc,
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+            nullptr, // &clearValue,
+            IID_PPV_ARGS(&resource)
+        );
+    }
 };

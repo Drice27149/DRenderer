@@ -216,6 +216,20 @@ void Graphics::CreatePersistentResource()
         },
         1<<ResourceEnum::SRView | 1<<ResourceEnum::RTView
     );
+
+    // voxel grid
+    Renderer::ResManager->CreateTexture3D(
+        std::string("VoxelGrid"),
+        ResourceDesc {
+            (unsigned int)512, 
+            (unsigned int)512,
+            ResourceEnum::Format::R32G32B32A32_FLOAT,
+            ResourceEnum::Type::Texture3D,
+            ResourceEnum::State::Write
+        },
+        (unsigned int)512,
+        1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
+    );
 }
 
 void Graphics::InitPassMgrs()
@@ -759,6 +773,37 @@ void Graphics::PrecomputeResource()
     Renderer::ResManager->RegisterHandle("EnvLUT", prefilterIBL->GetEnvBRDFMap(), ResourceEnum::View::SRView);
     Renderer::ResManager->RegisterStateTrack("EnvLUT", ResourceEnum::State::Read);
     Renderer::ResManager->RegisterTypeTrack("EnvLUT", ResourceEnum::Type::Texture2D);
+}
+
+void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
+{
+    // post processing code sample
+    Renderer::FG->AddPass(std::string("Voxelization"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
+            ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+        };
+        data.outputs = {
+        };
+        data.psoData = PSOData{  
+            false,   // enable depth 
+            false,
+            ResourceData{},
+            (int)512,
+            (int)512,
+            true,
+        };
+        data.shaders = {
+            ShaderData{std::string("../assets/shaders/Voxel/Voxelize.hlsl"), ShaderEnum::PS},
+            ShaderData{std::string("../assets/shaders/Voxel/Voxelize.hlsl"), ShaderEnum::GS},
+            ShaderData{std::string("../assets/shaders/Voxel/Voxelize.hlsl"), ShaderEnum::VS},
+        };
+    },
+    [=](){
+        
+    });
 }
 
 

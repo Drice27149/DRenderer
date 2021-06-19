@@ -179,9 +179,28 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
         psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
     }
 
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.RasterizerState.FrontCounterClockwise = true;
-    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    // set up rasterizer state, conservative rasterization on/off
+    if(data.psoData.conservative){
+        D3D12_RASTERIZER_DESC rasterDescFront;
+        rasterDescFront.AntialiasedLineEnable = FALSE;
+        rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
+        rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+        rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+        rasterDescFront.DepthClipEnable = TRUE;
+        rasterDescFront.FillMode = D3D12_FILL_MODE_SOLID;
+        rasterDescFront.ForcedSampleCount = 0;
+        rasterDescFront.FrontCounterClockwise = FALSE;
+        rasterDescFront.MultisampleEnable = FALSE;
+        rasterDescFront.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+        psoDesc.RasterizerState = rasterDescFront;
+    }
+    else{
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.RasterizerState.FrontCounterClockwise = true;
+        psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    }
+    
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.SampleDesc.Count = 1;
@@ -258,6 +277,17 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
             CD3DX12_GPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
             if(view.ptr)
                 Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+        }
+        else if(in.type == ResourceEnum::Type::Texture3D){
+            CD3DX12_GPU_DESCRIPTOR_HANDLE view;
+            if(in.state == ResourceEnum::State::Write)
+                view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::UAView);
+            else
+                view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
+            if(view.ptr)
+                Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+            else   
+                assert(0);
         }
         // @TODO: structure buffer bounding
         else if(in.type == ResourceEnum::Type::Buffer){

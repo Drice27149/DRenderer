@@ -12,6 +12,7 @@ enum Type {
     Buffer,
     Constant,
     Texture2D,
+    Texture3D,
     TextureCube,
     DepthStencil,
 };

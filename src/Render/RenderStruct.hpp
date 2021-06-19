@@ -47,6 +47,7 @@ struct PSOData {
     ResourceData depthStencil;
     int width = -1;
     int height = -1;
+    bool conservative = false;
 };
 
 struct PassData {

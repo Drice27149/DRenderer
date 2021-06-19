@@ -85,6 +85,8 @@ private:
     void AddPostProcessPass();
     void AddCopyPass(std::string from, std::string to);
     void AddShadowPass();
+
+    void VoxelizeScene(unsigned int x, unsigned int y, unsigned z);
     
 private:
     int CurrentFrame = 0;

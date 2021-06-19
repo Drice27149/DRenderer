@@ -187,6 +187,22 @@ void ResourceManager::CreateViews(ComPtr<ID3D12Resource>& res, std::string name,
                 ViewFatory::AppendDSV(res, dsvFormat, cpu);
                 RegisterHandle(name, cpu, gpu, ResourceEnum::View::DSView);
             }
+            if(i == ResourceEnum::View::UAView){
+                Graphics::heapMgr->GetNewSRV(cpu, gpu);
+                D3D12_UAV_DIMENSION viewDim;
+
+                auto type = typeTrack[name];
+                if(type == ResourceEnum::Type::Texture3D)
+                    viewDim = D3D12_UAV_DIMENSION_TEXTURE3D;
+                else if(type == ResourceEnum::Type::Texture2D)
+                    viewDim = D3D12_UAV_DIMENSION_TEXTURE2D;
+                else if(type == ResourceEnum::Type::Buffer)
+                    viewDim = D3D12_UAV_DIMENSION_BUFFER;
+                else 
+                    viewDim = D3D12_UAV_DIMENSION_UNKNOWN;
+
+                ViewFatory::AppendUAV(res, viewDim, cpu);
+            }
         }
     }
 }
@@ -234,6 +250,21 @@ void ResourceManager::CreateDepthStencil(std::string name, ResourceDesc desc, un
     res->SetName(WString(name).c_str());
     RegisterResource(name, res, ResourceEnum::State::Write);
     RegisterResourceInfo(name, ResourceEnum::Type::DepthStencil);
+    // create views
+    ResourceManager::CreateViews(res, name, usage);
+    // keep ref from GC
+    resPools.push_back(res);
+}
+
+void ResourceManager::CreateTexture3D(std::string name, ResourceDesc desc, unsigned int depth, unsigned int usage)
+{
+    ComPtr<ID3D12Resource> res;
+    // temporal hack
+    DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    ResFatory::CreateTexture3D(res, desc.width, desc.height, depth, format);
+    res->SetName(WString(name).c_str());
+    RegisterResource(name, res, desc.state);
+    RegisterResourceInfo(name, desc.type);
     // create views
     ResourceManager::CreateViews(res, name, usage);
     // keep ref from GC
