@@ -202,6 +202,7 @@ void ResourceManager::CreateViews(ComPtr<ID3D12Resource>& res, std::string name,
                     viewDim = D3D12_UAV_DIMENSION_UNKNOWN;
 
                 ViewFatory::AppendUAV(res, viewDim, cpu);
+                RegisterHandle(name, cpu, gpu, ResourceEnum::View::UAView);
             }
         }
     }

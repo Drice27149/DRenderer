@@ -9,6 +9,7 @@
 #include "Device.hpp"
 #include "Context.hpp"
 #include "Renderer.hpp"
+#include "ViewFatory.hpp"
 
 const int FrameCount = 2;
 
@@ -230,6 +231,10 @@ void Graphics::CreatePersistentResource()
         (unsigned int)512,
         1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
     );
+
+    auto res = Renderer::ResManager->GetResource("VoxelGrid");
+    heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
+    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
 }
 
 void Graphics::InitPassMgrs()
@@ -597,6 +602,8 @@ void Graphics::Draw(const GameTimer& gt)
     
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	
+    VoxelizeScene(512, 512, 512);
+
     if(firstFrame){
          PrecomputeResource();
          firstFrame = false;
@@ -781,7 +788,7 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
     Renderer::FG->AddPass(std::string("Voxelization"),
     [&](PassData& data){
         data.inputs = {
-            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
+            ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
             ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
             ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
         };
@@ -800,9 +807,50 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
             ShaderData{std::string("../assets/shaders/Voxel/Voxelize.hlsl"), ShaderEnum::GS},
             ShaderData{std::string("../assets/shaders/Voxel/Voxelize.hlsl"), ShaderEnum::VS},
         };
+
+        // set up voxelization constant
+        struct VoxelPass {
+            int width;
+            int height;
+            int depth;
+            glm::mat4 ortho;
+        };
+        VoxelPass voxelPassConstant = VoxelPass {
+            512,
+            512,
+            512,
+            glm::ortho(-100.0, 100.0, -100.0, 100.0),
+        };
+        Renderer::GDevice->SetShaderConstant("VoxelPassConstant", &voxelPassConstant);
     },
     [=](){
-        
+        Context::GetContext()->IASetVertexBuffers(0, 1, &objMesh->VertexBufferView());
+        Context::GetContext()->IASetIndexBuffer(&objMesh->IndexBufferView());
+        Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        // clear last frame voxel data first )
+        auto voxelGridGpu = Renderer::ResManager->GetGPU("VoxelGrid", ResourceEnum::View::UAView);
+        auto voxelGridCpu = Renderer::ResManager->GetCPU("VoxelGrid", ResourceEnum::View::UAView);
+        auto voxelRes = Renderer::ResManager->GetResource("VoxelGrid");
+        float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+        Renderer::GContext->GetContext()->ClearUnorderedAccessViewFloat(gpuVoxel, cpuVoxel, voxelRes, clearColor, 0, nullptr);
+
+        // issue object draw call..
+        auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
+        int idOffset = 0, vsOffset = 0;
+
+        for(Object* obj: DEngine::gobjs){
+            Context::GetContext()->SetGraphicsRootConstantBufferView(1, objectAddr);
+            // draw per mesh
+            for(Mesh& mesh: obj->meshes){
+                // issue the draw call
+                int idSize = mesh.ids.size();
+                if(obj->drawType == DrawType::Normal) 
+                    Context::GetContext()->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
+                idOffset += mesh.ids.size();
+                vsOffset += mesh.vs.size();
+            }
+            objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
+        }
     });
 }
 

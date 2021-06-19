@@ -59,25 +59,32 @@ ID3D12RootSignature* Device::CreateRSt(const PassData& data, const std::string& 
     ComPtr<ID3D12RootSignature> rst;
 
     std::vector<CD3DX12_ROOT_PARAMETER> rootParams;
-    unsigned cbv = 0;
-    unsigned srv = 0;
+    unsigned int cbv = 0;
+    unsigned int srv = 0;
+    unsigned int uav = 0;
     CD3DX12_DESCRIPTOR_RANGE desc[32];
     int cdesc = -1;
     for(const auto& input: data.inputs){
-        if(input.state == ResourceEnum::State::Read) {
-            if(input.type==ResourceEnum::Type::Constant){
-                CD3DX12_ROOT_PARAMETER param;
-                param.InitAsConstantBufferView(cbv++);
-                rootParams.push_back(param);
-            }
-            else if(input.type==ResourceEnum::Type::Texture2D || input.type==ResourceEnum::Type::TextureCube){
+        if(input.type==ResourceEnum::Type::Constant){
+            CD3DX12_ROOT_PARAMETER param;
+            param.InitAsConstantBufferView(cbv++);
+            rootParams.push_back(param);
+        }
+        else if(input.type==ResourceEnum::Type::Texture2D || input.type==ResourceEnum::Type::TextureCube || input.type==ResourceEnum::Type::Texture3D){
+            if(input.state==ResourceEnum::State::Read){
                 desc[++cdesc].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, srv++);
                 CD3DX12_ROOT_PARAMETER param;
                 param.InitAsDescriptorTable(1, &(desc[cdesc]) , D3D12_SHADER_VISIBILITY_PIXEL);
                 rootParams.push_back(param);
             }
-            // @TODO: else
+            else{
+                desc[++cdesc].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, uav++);
+                CD3DX12_ROOT_PARAMETER param;
+                param.InitAsDescriptorTable(1, &(desc[cdesc]));
+                rootParams.push_back(param);
+            }
         }
+        // @TODO: else
     }
 
     // sampler for texture fetch
@@ -142,6 +149,12 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
 	            sh->GetBufferSize() 
             };
         }
+        else if(shader.type == ShaderEnum::GS){
+            psoDesc.GS = {
+                reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
+	            sh->GetBufferSize() 
+            };
+        }
     }
 
     // set up render targets
@@ -183,7 +196,7 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
     if(data.psoData.conservative){
         D3D12_RASTERIZER_DESC rasterDescFront;
         rasterDescFront.AntialiasedLineEnable = FALSE;
-        rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
         rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
         rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
         rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -200,7 +213,7 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
         psoDesc.RasterizerState.FrontCounterClockwise = true;
         psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     }
-    
+
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.SampleDesc.Count = 1;

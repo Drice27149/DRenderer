@@ -24,11 +24,22 @@ device(device), commandList(commandList)
     rtvHeapDesc.NodeMask = 0;
     ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(RTVHeap.GetAddressOf())));
 
+    D3D12_DESCRIPTOR_HEAP_DESC UAVDesc;
+    UAVDesc.NumDescriptors = SRV;
+    UAVDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    UAVDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	UAVDesc.NodeMask = 0;
+    ThrowIfFailed(device->CreateDescriptorHeap(&UAVDesc, IID_PPV_ARGS(UAVHeap.GetAddressOf())));
+
+    UAVDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    ThrowIfFailed(device->CreateDescriptorHeap(&UAVDesc, IID_PPV_ARGS(UAVGpuHeap.GetAddressOf())));
+
     srvSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	dsvSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	rtvSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    uavSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    SRVCnt = DSVCnt = RTVCnt = 0;
+    SRVCnt = DSVCnt = RTVCnt = UAVCnt = 0;
 }
 
 void HeapMgr::GetNewSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& cpuHandle, CD3DX12_GPU_DESCRIPTOR_HANDLE& gpuHandle)
@@ -56,4 +67,13 @@ void HeapMgr::GetNewRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE& cpuHandle, CD3DX12_GPU_DE
     cpuHandle.Offset(RTVCnt*rtvSize);
     gpuHandle.Offset(RTVCnt*rtvSize);
     RTVCnt++;
+}
+
+void HeapMgr::GetNewUAV(CD3DX12_CPU_DESCRIPTOR_HANDLE& cpuHandle, CD3DX12_GPU_DESCRIPTOR_HANDLE& gpuHandle)
+{
+    cpuHandle = UAVHeap->GetCPUDescriptorHandleForHeapStart();
+    gpuHandle = UAVHeap->GetGPUDescriptorHandleForHeapStart();
+    cpuHandle.Offset(UAVCnt*uavSize);
+    gpuHandle.Offset(UAVCnt*uavSize);
+    UAVCnt++;
 }

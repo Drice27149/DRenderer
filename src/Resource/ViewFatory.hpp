@@ -1,3 +1,5 @@
+#pragma once
+
 #include <d3d12.h>
 #include <wrl.h>
 #include <vector>
@@ -12,4 +14,5 @@ namespace ViewFatory {
     void AppendRTV(ComPtr<ID3D12Resource>& resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
     void AppendDSV(ComPtr<ID3D12Resource>& resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
     void AppendUAV(ComPtr<ID3D12Resource>& resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
+    void AppendUAV(ID3D12Resource* resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle);
 };

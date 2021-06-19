@@ -40,7 +40,7 @@ struct ResourceDesc {
 // data to build Pipeline state object
 struct PSOData {
     // for init pso
-    bool enableDepth = true;
+    bool enableDepth = false;
     // for deferred shading blend op add
     bool enableAdd = false;
     // PSOEnum::BlendMode blendMode = @TODO: blend op for transparent obj ?

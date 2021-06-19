@@ -52,5 +52,7 @@ private:
 template<typename T>
 void Device::SetShaderConstant(std::string name, T* data, bool persistent)
 {
+    Microsoft::WRL::ComPtr<ID3D12Resource> res;
+    Renderer::ResManager->RegisterResource(name, res);
     Renderer::ResManager->CommitConstantBuffer(name, data, persistent);
 }

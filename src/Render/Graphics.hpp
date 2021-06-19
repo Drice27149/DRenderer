@@ -128,5 +128,10 @@ public:
     static ID3D12GraphicsCommandList* GCmdList;
     static unsigned int viewPortWidth;
     static unsigned int viewPortHeight;
+
+private:
+    // use to clear voxel grid
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuVoxel; 
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuVoxel;
 };
 
