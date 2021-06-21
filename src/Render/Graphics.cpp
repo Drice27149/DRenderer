@@ -42,6 +42,7 @@ bool Graphics::Initialize()
 
     // build it before texture loading
     BuildDescriptorHeaps();
+    GeneratePrimitive();
     UploadMeshes();
     UploadTextures();
     CreatePersistentResource();
@@ -222,13 +223,13 @@ void Graphics::CreatePersistentResource()
     Renderer::ResManager->CreateTexture3D(
         std::string("VoxelGrid"),
         ResourceDesc {
-            (unsigned int)512, 
-            (unsigned int)512,
+            (unsigned int)256, 
+            (unsigned int)256,
             ResourceEnum::Format::R32G32B32A32_FLOAT,
             ResourceEnum::Type::Texture3D,
             ResourceEnum::State::Write
         },
-        (unsigned int)512,
+        (unsigned int)256,
         1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
     );
 
@@ -602,20 +603,20 @@ void Graphics::Draw(const GameTimer& gt)
     
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	
-    VoxelizeScene(512, 512, 512);
+    
+    
 
     if(firstFrame){
          PrecomputeResource();
          firstFrame = false;
     }
 
-    AddShadowPass();
-
-    AddGBufferMainPass();
-
-    AddLightPass();
-
-    DrawSkyBox();
+    //AddShadowPass();
+    //AddGBufferMainPass();
+    //AddLightPass();
+    VoxelizeScene(256, 256, 256);
+    RenderVoxel(256, 256, 256);
+    //DrawSkyBox();
 
     if(acFrame == 1)
         AddCopyPass("ColorBuffer", "HistoryBuffer");
@@ -788,8 +789,8 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
     Renderer::FG->AddPass(std::string("Voxelization"),
     [&](PassData& data){
         data.inputs = {
-            ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
-            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
+            ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // voxelization params
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
             ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
         };
         data.outputs = {
@@ -798,8 +799,8 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
             false,   // enable depth 
             false,
             ResourceData{},
-            (int)512,
-            (int)512,
+            (int)x,
+            (int)y,
             true,
         };
         data.shaders = {
@@ -813,12 +814,18 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
             int width;
             int height;
             int depth;
+            int sizeX;
+            int sizeY;
+            int sizeZ;
             glm::mat4 ortho;
         };
         VoxelPass voxelPassConstant = VoxelPass {
-            512,
-            512,
-            512,
+            (int)x, // block count
+            (int)y,
+            (int)z,
+            1024,   // actual length
+            1024,
+            1024,
             glm::ortho(-100.0, 100.0, -100.0, 100.0),
         };
         Renderer::GDevice->SetShaderConstant("VoxelPassConstant", &voxelPassConstant);
@@ -851,6 +858,57 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
             }
             objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
         }
+
+        // barrier
+        Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
+    });
+}
+
+void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
+{
+    Renderer::FG->AddPass(std::string("Voxelization"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // voxelization params
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
+            ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+        };
+        data.outputs = {
+            ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT }, // will use CurrentBackBuffer()
+        };
+        data.psoData = PSOData{  
+            true,   // enable depth 
+            false,  // blend add
+            ResourceData{ "GBufferDepth", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D}, // depth stencil data
+            (int)mClientWidth,
+            (int)mClientHeight,
+            false,   // conservative
+        };
+        data.shaders = {
+            ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::PS},
+            //ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::GS},
+            ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::VS},
+        };
+    },
+    [=](){
+        Context::GetContext()->IASetVertexBuffers(0, 1, &voxelMesh->VertexBufferView());
+        Context::GetContext()->IASetIndexBuffer(&voxelMesh->IndexBufferView());
+        Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+        auto colorBufferHandle = Renderer::ResManager->GetCPU("ColorBuffer", ResourceEnum::View::RTView);
+        Context::GetContext()->ClearRenderTargetView(colorBufferHandle, clearColor, 0, nullptr);
+
+        auto dsvHandle = Renderer::ResManager->GetCPU("GBufferDepth", ResourceEnum::View::DSView);
+        Context::GetContext()->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+        auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
+        Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
+
+        Renderer::GContext->GetContext()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+        // barrier
+        Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
     });
 }
 
@@ -909,6 +967,82 @@ void Graphics::DrawObjects(DrawType drawType)
 
         objectAddr += d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectUniform));
     }
+}
+
+void Graphics::GeneratePrimitive()
+{
+    vector<Vertex> vs;
+    vector<unsigned int> ids;
+    // for(Object* obj: DEngine::gobjs){
+    //     for(Mesh mesh: obj->meshes){
+    //         for(Vertex v: mesh.vs) vs.push_back(v);
+    //         for(unsigned int id: mesh.ids) ids.push_back(id);
+    //     }
+    // }
+    float ver[] = {
+        -1.0f,-1.0f,-1.0f, // triangle 1 : begin
+        -1.0f,-1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, // triangle 1 : end
+
+        1.0f, 1.0f,-1.0f, // triangle 2 : begin
+        -1.0f,-1.0f,-1.0f,
+        -1.0f, 1.0f,-1.0f, // triangle 2 : end
+
+        1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f,-1.0f,
+        1.0f,-1.0f,-1.0f,
+
+        1.0f, 1.0f,-1.0f,
+        1.0f,-1.0f,-1.0f,
+        -1.0f,-1.0f,-1.0f,
+
+        -1.0f,-1.0f,-1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f,-1.0f,
+
+        1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f,-1.0f,
+
+        -1.0f, 1.0f, 1.0f,
+        -1.0f,-1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f,-1.0f,
+        1.0f, 1.0f,-1.0f,
+
+        1.0f,-1.0f,-1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f,-1.0f,
+        -1.0f, 1.0f,-1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f,-1.0f,
+        -1.0f, 1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f
+    };
+    for(int i = 0; i < 36; i++){
+        vs.push_back(Vertex(glm::vec3(ver[i*3],ver[i*3+1],ver[i*3+2])));
+    }
+    for(int i = 0; i < 36; i++) ids.push_back(i);
+
+    cubeMesh = std::make_shared<DMesh>();
+    cubeMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), vs, ids);
+
+    ids.clear();
+    voxelMesh = std::make_shared<DMesh>();
+    for(int cnt = 0; cnt < 256; cnt++){
+        for(int i = 0; i < 36; i++) ids.push_back(i);
+    }
+    voxelMesh = std::make_shared<DMesh>();
+    voxelMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), vs, ids);
 }
 
 void Graphics::DrawLines()

@@ -3,6 +3,9 @@ cbuffer PassConstant : register(b0)
     int _width;
     int _height;
     int _depth;
+    int _sizeX;
+    int _sizeY;
+    int _sizeZ;
     float4x4 _orthoProj;
 };
 
@@ -29,7 +32,7 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 pos: POSITION;
+	float3 pos: POSITION;
     float shadowZ: TEXCOORD;
 };
 
@@ -41,12 +44,11 @@ struct GeoOut {
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
-	
 	// float4x4 mvp = mul(mul(_JProj, _SMView), _model);
 	// vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
     // mvp = mul(mul(_SMProj, _SMView), _model);
     // vout.shadowZ = mul(mvp, float4(vin.vertex, 1.0f)).z;
-    vout.pos = float4(0.0, 0.0, 0.0, 0.0);
+    vout.pos = vin.vertex;
 
     return vout;
 }
@@ -55,8 +57,13 @@ VertexOut VS(VertexIn vin)
 void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 {
     GeoOut gout;
+    float3 pos[3];
     for(int i = 0; i < 3; i++){
-        gout.pos = gin[i].pos;
+        pos[i] = gin[i].pos;
+    }
+
+    for(int i = 0; i < 3; i++){
+        gout.pos = float4(0.0, 0.0, 0.0, 1.0);
         gout.face = 0;
         stream.Append(gout);
     }

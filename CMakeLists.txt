@@ -46,7 +46,7 @@ add_executable (DRenderer WIN32 ${COMMON_CPP} ${MY_CPP} ${CMAKE_SOURCE_DIR}/thir
 target_link_libraries(DRenderer assimp-vc142-mt)
 
 target_link_libraries(DRenderer glfw3)
-
+ 
 target_link_libraries(DRenderer
     d3d12.lib
     dxgi.lib

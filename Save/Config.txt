@@ -13,7 +13,7 @@ f1
 0.01
 f1
 72
-1.00
+0.50
 s
 0
 ../assets/models/sponza_scene/scene.gltf
@@ -21,7 +21,7 @@ s
 ---
 f1
 40
-50.00
+10.00
 f3
 56
 0.00 0.00 7.00
@@ -30,10 +30,10 @@ f3
 0.00 180.00 0.00
 f1
 68
-0.00
+1.00
 f1
 72
-1.00
+0.50
 s
 0
 ../assets/models/chessboard/scene.gltf

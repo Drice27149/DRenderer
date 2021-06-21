@@ -79,8 +79,8 @@ void ConstantMgr::UpdatePassConstants()
         float sampleX = halton[2*jitterID];
         float sampleY = halton[2*jitterID+1];
         auto proj = DEngine::GetCamMgr().GetProjectionTransform();
-        proj[2][0] += 2.0f * (sampleX - 0.5f) / (float)viewPortWidth;
-        proj[2][1] += 2.0f * (sampleY - 0.5f) / (float)viewPortHeight;
+        proj[2][0] += 1.0f * (sampleX - 0.5f) / (float)viewPortWidth;
+        proj[2][1] += 1.0f * (sampleY - 0.5f) / (float)viewPortHeight;
         temp.JProj = proj;
     }
     else

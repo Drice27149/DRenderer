@@ -49,22 +49,24 @@ namespace ViewFatory {
     void AppendUAV(ComPtr<ID3D12Resource>& resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-        uavDesc.Format = resource->GetDesc().Format;
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+        ZeroMemory(&uavDesc, sizeof(uavDesc));
+	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;
-        uavDesc.Texture3D.WSize = 1;
+        uavDesc.Texture3D.WSize = resource->GetDesc().DepthOrArraySize;
         Device::GetDevice()->CreateUnorderedAccessView(resource.Get(), nullptr, &uavDesc, handle);
     }
 
     void AppendUAV(ID3D12Resource* resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-        uavDesc.Format = resource->GetDesc().Format;
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+        ZeroMemory(&uavDesc, sizeof(uavDesc));
+	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;
-        uavDesc.Texture3D.WSize = 1;
+        uavDesc.Texture3D.WSize = resource->GetDesc().DepthOrArraySize;
         Device::GetDevice()->CreateUnorderedAccessView(resource, nullptr, &uavDesc, handle);
     }
 };

@@ -64,6 +64,8 @@ private:
     // New, for ibl now 
     void PrecomputeResource();
 
+    void GeneratePrimitive();
+
     void DrawSkyBox();
     void DrawShadowMap();
     void DrawObjects(DrawType drawType);
@@ -87,6 +89,7 @@ private:
     void AddShadowPass();
 
     void VoxelizeScene(unsigned int x, unsigned int y, unsigned z);
+    void RenderVoxel(unsigned int x, unsigned int y, unsigned int z);
     
 private:
     int CurrentFrame = 0;
@@ -98,7 +101,9 @@ private:
 
 //  -- begin of the new journey
     std::shared_ptr<DMesh> objMesh = nullptr;
-
+    std::shared_ptr<DMesh> cubeMesh = nullptr;
+    std::shared_ptr<DMesh> voxelMesh = nullptr;
+    
 public:
     static std::shared_ptr<ConstantMgr> constantMgr;
     static std::shared_ptr<HeapMgr> heapMgr;
