@@ -1,7 +1,7 @@
 ---
 f1
 40
-1.00
+300.00
 f3
 56
 0.00 0.00 30.00
@@ -10,13 +10,13 @@ f3
 0.00 0.00 0.00
 f1
 68
-0.01
+0.50
 f1
 72
-0.50
+0.70
 s
 0
-../assets/models/sponza_scene/scene.gltf
+../assets/models/bunny/bunny.obj
 ---
 ---
 f1

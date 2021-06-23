@@ -225,7 +225,7 @@ void Graphics::CreatePersistentResource()
         ResourceDesc {
             (unsigned int)256, 
             (unsigned int)256,
-            ResourceEnum::Format::R32G32B32A32_FLOAT,
+            ResourceEnum::Format::R32G32B32A32_UINT,
             ResourceEnum::Type::Texture3D,
             ResourceEnum::State::Write
         },
@@ -603,9 +603,6 @@ void Graphics::Draw(const GameTimer& gt)
     
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	
-    
-    
-
     if(firstFrame){
          PrecomputeResource();
          firstFrame = false;
@@ -886,7 +883,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
         };
         data.shaders = {
             ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::PS},
-            //ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::GS},
+            ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::GS},
             ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::VS},
         };
     },
@@ -905,7 +902,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
         auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
         Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
 
-        Renderer::GContext->GetContext()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+        Renderer::GContext->GetContext()->DrawIndexedInstanced(36, 256*256*256, 0, 0, 0);
 
         // barrier
         Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
@@ -1038,9 +1035,7 @@ void Graphics::GeneratePrimitive()
 
     ids.clear();
     voxelMesh = std::make_shared<DMesh>();
-    for(int cnt = 0; cnt < 256; cnt++){
-        for(int i = 0; i < 36; i++) ids.push_back(i);
-    }
+    for(int i = 0; i < 36; i++) ids.push_back(i);
     voxelMesh = std::make_shared<DMesh>();
     voxelMesh->BuildVertexAndIndexBuffer(md3dDevice.Get(), mCommandList.Get(), vs, ids);
 }

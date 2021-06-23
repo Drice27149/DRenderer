@@ -32,88 +32,66 @@ struct VertexIn
 
 struct VertexOut
 {
+    float4 pos: POSITION1;
+	uint4 voxel: POSITION0;
+};
+
+struct GeoOut {
     float4 pos: SV_POSITION;
 };
 
-// struct GeoOut {
-//     float4 pos: SV_POSITION;
-//     float4 color: TEXCOORD;
-// };
+RWTexture3D<uint4> voxelGrid: register(u0);
 
-RWTexture3D<float4> voxelGrid: register(u0);
+int3 GetOffsetByID(int id)
+{
+	int unit = _width;
+	int3 res;
+	res.x = id % unit;
+	res.y = (id / unit) % unit;
+	res.z = (id/(unit*unit)) % unit;
+	return res;
+}
 
-VertexOut VS(VertexIn vin, uint id: SV_VertexID)
+VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 {
 	VertexOut vout;
 	float4x4 model;
+	int step = _sizeX / _width;
+	int3 index = GetOffsetByID(id);
+	vout.voxel = voxelGrid[index];
+	int3 offset = index * step;
 	for(int i = 0; i <  4; i++){
 		for(int j = 0; j < 4; j++){
 			if(i==j){
 				if(i==3) model[i][j] = 1.0;
-				else model[i][j] = 100.0;
+				else model[i][j] = step*0.5;
 			}
 			else
 				model[i][j] = 0.0;
 		}
 	}
+	model[0][3] += offset.x;
+	model[1][3] += offset.y;
+	model[2][3] += offset.z;
 	float4x4 mvp = mul(mul(_Proj, _View), model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 
     return vout;
-	// VertexOut vout;
-	// if(id == 0 || id==5){
-    //     vout.pos = float4(-1.0, 1.0, 0.0, 1.0);
-    // }
-    // else if(id==1){
-    //     vout.pos = float4(1.0, 1.0, 0.0, 1.0);
-    // }
-    // else if(id==2 || id==3){
-    //     vout.pos = float4(1.0, -1.0, 0.0, 1.0);
-    // }
-    // else{
-    //     vout.pos = float4(-1.0, -1.0, 0.0, 1.0);
-    // }
-    return vout;
 }
 
-// void EmmitGrid(int3 offset, int step, inout TriangleStream<GeoOut> stream)
-// {
+[maxvertexcount(3)]
+void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
+{
+	GeoOut gout;
+	if(gin[0].voxel.x != 0){
+		for(int i = 0; i < 3; i++){
+			gout.pos = gin[i].pos;
+			stream.Append(gout);
+		}
+	}
+}
 
-
-//     for(int i = 0; i < 3; i++){
-//         float ver[3];
-//         ver[0] = vertices[i*3];// * step + offset;
-//         ver[1] = vertices[i*3+1];// * step + offset;
-//         ver[2] = vertices[i*3+2];// * step + offset;
-
-//         GeoOut gout;
-//         float4x4 vp = mul(_Proj, _View);
-//         gout.pos = float4(ver[0], ver[1], ver[2], -2.0);
-//         gout.color = float4(1.0, 1.0, 1.0, 1.0);
-//         stream.Append(gout);
-//     }
-// }
-
-// [maxvertexcount(3)]
-// void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
-// {
-//     for(int i = 0; i < 1; i++){
-//         uint row = gin[i].voxelIndex % _width;
-//         uint col = (gin[i].voxelIndex/_width) %  _width;
-//         uint dep = (gin[i].voxelIndex/_width/_width) % _width;
-
-//         int stepX = _sizeX / _width;
-//         int stepY = _sizeY / _height;
-//         int stepZ = _sizeZ / _depth;
-//         int offsetX = stepX * row;
-//         int offsetY = stepY * col;
-//         int offsetZ = stepZ * dep;
-
-//         EmmitGrid(int3(offsetX, offsetY, offsetZ), stepX, stream);
-//     }
-// }
-
-float4 PS(VertexOut pin): SV_TARGET
+float4 PS(GeoOut pin): SV_TARGET
 {
     return float4(1.0, 1.0, 1.0, 1.0);
 }

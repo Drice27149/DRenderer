@@ -50,7 +50,7 @@ namespace ViewFatory {
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
         ZeroMemory(&uavDesc, sizeof(uavDesc));
-	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
 	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;
@@ -62,7 +62,7 @@ namespace ViewFatory {
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
         ZeroMemory(&uavDesc, sizeof(uavDesc));
-	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
 	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;

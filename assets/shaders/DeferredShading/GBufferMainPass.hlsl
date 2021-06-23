@@ -130,7 +130,7 @@ float GetShadowBlur(float4 clipPos)
 
 float2 PixelMotionVector(VertexOut pin)
 {
-	float width = 1280;
+	float width = 1080;
 	float height = 780;
 	float4 clipPos = pin.clipPos;
 	clipPos = clipPos / clipPos.w;
@@ -165,6 +165,8 @@ PixelOut PS(VertexOut pin)
 	if(!(_mask & 2)){
 		baseColor = float3(1.0, 1.0, 1.0);
 	}
+	if(baseColor.r > 0.9 && baseColor.g < 0.1 && baseColor.b < 0.1)
+		baseColor = float3(1.0, 1.0, 1.0);
 	if(!(_mask & 64)){
 		roughness = _roughness;
 		metallic = _metallic;
