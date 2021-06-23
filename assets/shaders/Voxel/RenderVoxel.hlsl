@@ -33,11 +33,13 @@ struct VertexIn
 struct VertexOut
 {
     float4 pos: POSITION1;
+	float3 worldPos: POSITION2;
 	uint4 voxel: POSITION0;
 };
 
 struct GeoOut {
     float4 pos: SV_POSITION;
+	float3 normal: POSITION0;
 };
 
 RWTexture3D<uint4> voxelGrid: register(u0);
@@ -59,8 +61,8 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	int step = _sizeX / _width;
 	int3 index = GetOffsetByID(id);
 	vout.voxel = voxelGrid[index];
-	int3 offset = index * step;
-	for(int i = 0; i <  4; i++){
+	int3 offset = (index - int3(_width/2, _width/2, _width/2)) * step;
+	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
 			if(i==j){
 				if(i==3) model[i][j] = 1.0;
@@ -75,7 +77,7 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	model[2][3] += offset.z;
 	float4x4 mvp = mul(mul(_Proj, _View), model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
-
+	vout.worldPos = mul(model, float4(vin.vertex, 1.0f)).xyz;
     return vout;
 }
 
@@ -84,8 +86,10 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 {
 	GeoOut gout;
 	if(gin[0].voxel.x != 0){
+		float3 normal = normalize(cross(gin[1].worldPos-gin[0].worldPos, gin[2].worldPos-gin[0].worldPos));
 		for(int i = 0; i < 3; i++){
 			gout.pos = gin[i].pos;
+			gout.normal = normal;
 			stream.Append(gout);
 		}
 	}
@@ -93,5 +97,7 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 
 float4 PS(GeoOut pin): SV_TARGET
 {
-    return float4(1.0, 1.0, 1.0, 1.0);
+	float3 lightDir = normalize(float3(-1.0, 5.0, 5.0));
+	float c = saturate(dot(lightDir, pin.normal));
+    return float4(c, c, c, 1.0);
 }

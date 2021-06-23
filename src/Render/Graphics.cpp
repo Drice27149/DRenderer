@@ -223,13 +223,13 @@ void Graphics::CreatePersistentResource()
     Renderer::ResManager->CreateTexture3D(
         std::string("VoxelGrid"),
         ResourceDesc {
-            (unsigned int)256, 
-            (unsigned int)256,
+            (unsigned int)voxelX, 
+            (unsigned int)voxelY,
             ResourceEnum::Format::R32G32B32A32_UINT,
             ResourceEnum::Type::Texture3D,
             ResourceEnum::State::Write
         },
-        (unsigned int)256,
+        (unsigned int)voxelZ,
         1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
     );
 
@@ -611,8 +611,8 @@ void Graphics::Draw(const GameTimer& gt)
     //AddShadowPass();
     //AddGBufferMainPass();
     //AddLightPass();
-    VoxelizeScene(256, 256, 256);
-    RenderVoxel(256, 256, 256);
+    VoxelizeScene(voxelX, voxelY, voxelZ);
+    RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
     if(acFrame == 1)
@@ -902,7 +902,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
         auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
         Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
 
-        Renderer::GContext->GetContext()->DrawIndexedInstanced(36, 256*256*256, 0, 0, 0);
+        Renderer::GContext->GetContext()->DrawIndexedInstanced(36, voxelX*voxelY*voxelZ, 0, 0, 0);
 
         // barrier
         Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));

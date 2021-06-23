@@ -125,6 +125,8 @@ float4 PS(VertexOut pin): SV_TARGET
     dv = 0;
     float3 now = _colorBuffer.Load(int3(u, v, 0)).rgb;
 
+    return float4(now, 1.0);
+
     int2 uv = int2(u+du, v+dv);
     float3 history = _historyBuffer.Load(int3(uv, 0)).rgb;
 

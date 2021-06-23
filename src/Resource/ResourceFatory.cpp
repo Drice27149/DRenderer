@@ -118,7 +118,7 @@ namespace ResFatory {
         CD3DX12_RESOURCE_DESC texDesc(
             D3D12_RESOURCE_DIMENSION_TEXTURE3D,
             0,		// alignment
-            256, 256, 256,
+            x, y, z,
             1,		// mip levels
             format,
             1, 0,	// sample count/quality
