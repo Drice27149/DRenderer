@@ -42,7 +42,7 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 	
-	float4x4 mvp = mul(mul(_JProj, _SMView), _model);
+	float4x4 mvp = mul(mul(_Proj, _SMView), _model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
     mvp = mul(mul(_SMProj, _SMView), _model);
     vout.shadowZ = mul(mvp, float4(vin.vertex, 1.0f)).z;

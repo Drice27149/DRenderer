@@ -65,7 +65,7 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 	
-	float4x4 mvp = mul(mul(_JProj, _View), _model);
+	float4x4 mvp = mul(mul(_Proj, _View), _model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 
 	vout.worldPos = mul(_model, float4(vin.vertex, 1.0f)).rgb;

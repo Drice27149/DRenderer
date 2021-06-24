@@ -99,9 +99,9 @@ private:
     int ClusterY = 8;
     int ClusterZ = 4;
 
-    unsigned int voxelX = 128;
-    unsigned int voxelY = 128;
-    unsigned int voxelZ = 128;
+    unsigned int voxelX = 256;
+    unsigned int voxelY = 256;
+    unsigned int voxelZ = 256;
 
 //  -- begin of the new journey
     std::shared_ptr<DMesh> objMesh = nullptr;

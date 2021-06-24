@@ -44,4 +44,7 @@ public:
     float zFar = 8000.0;
     float aspect = 0.5;
     float fov = 45.0;
+    vec3 lightPos;
+    vec3 lightDir;
+    vec3 lightColor;
 };

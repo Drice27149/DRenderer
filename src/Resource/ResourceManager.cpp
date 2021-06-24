@@ -261,7 +261,7 @@ void ResourceManager::CreateTexture3D(std::string name, ResourceDesc desc, unsig
 {
     ComPtr<ID3D12Resource> res;
     // temporal hack
-    DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_UINT;
+    DXGI_FORMAT format = DXGI_FORMAT_R32_UINT;
     ResFatory::CreateTexture3D(res, desc.width, desc.height, depth, format);
     res->SetName(WString(name).c_str());
     RegisterResource(name, res, desc.state);

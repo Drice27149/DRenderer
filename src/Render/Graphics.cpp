@@ -221,11 +221,11 @@ void Graphics::CreatePersistentResource()
 
     // voxel grid
     Renderer::ResManager->CreateTexture3D(
-        std::string("VoxelGrid"),
+        std::string("VoxelGridR"),
         ResourceDesc {
             (unsigned int)voxelX, 
             (unsigned int)voxelY,
-            ResourceEnum::Format::R32G32B32A32_UINT,
+            ResourceEnum::Format::R32_UINT,
             ResourceEnum::Type::Texture3D,
             ResourceEnum::State::Write
         },
@@ -233,7 +233,58 @@ void Graphics::CreatePersistentResource()
         1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
     );
 
-    auto res = Renderer::ResManager->GetResource("VoxelGrid");
+    auto res = Renderer::ResManager->GetResource("VoxelGridR");
+    heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
+    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+
+    Renderer::ResManager->CreateTexture3D(
+        std::string("VoxelGridG"),
+        ResourceDesc {
+            (unsigned int)voxelX, 
+            (unsigned int)voxelY,
+            ResourceEnum::Format::R32_UINT,
+            ResourceEnum::Type::Texture3D,
+            ResourceEnum::State::Write
+        },
+        (unsigned int)voxelZ,
+        1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
+    );
+
+    res = Renderer::ResManager->GetResource("VoxelGridG");
+    heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
+    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+
+    Renderer::ResManager->CreateTexture3D(
+        std::string("VoxelGridB"),
+        ResourceDesc {
+            (unsigned int)voxelX, 
+            (unsigned int)voxelY,
+            ResourceEnum::Format::R32_UINT,
+            ResourceEnum::Type::Texture3D,
+            ResourceEnum::State::Write
+        },
+        (unsigned int)voxelZ,
+        1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
+    );
+
+    res = Renderer::ResManager->GetResource("VoxelGridB");
+    heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
+    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+
+    Renderer::ResManager->CreateTexture3D(
+        std::string("VoxelGridA"),
+        ResourceDesc {
+            (unsigned int)voxelX, 
+            (unsigned int)voxelY,
+            ResourceEnum::Format::R32_UINT,
+            ResourceEnum::Type::Texture3D,
+            ResourceEnum::State::Write
+        },
+        (unsigned int)voxelZ,
+        1<<ResourceEnum::UAView// | 1<<ResourceEnum::SRView
+    );
+
+    res = Renderer::ResManager->GetResource("VoxelGridA");
     heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
     ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
 }
@@ -608,7 +659,7 @@ void Graphics::Draw(const GameTimer& gt)
          firstFrame = false;
     }
 
-    //AddShadowPass();
+    AddShadowPass();
     //AddGBufferMainPass();
     //AddLightPass();
     VoxelizeScene(voxelX, voxelY, voxelZ);
@@ -787,8 +838,17 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
     [&](PassData& data){
         data.inputs = {
             ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // voxelization params
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // pass constant
             ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per object constant
-            ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // normal
+            ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // baseColor
+            ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // metallicRoughness
+            ResourceData{"dummyTexture", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D }, // emissive
+            ResourceData{"ShadowMap", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{"VoxelGridR", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},   // voxel grid, keep voxel data
+            ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},   // voxel grid, keep voxel data
+            ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},   // voxel grid, keep voxel data
+            ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},   // voxel grid, keep voxel data
         };
         data.outputs = {
         };
@@ -820,10 +880,9 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
             (int)x, // block count
             (int)y,
             (int)z,
-            1024,   // actual length
-            1024,
-            1024,
-            glm::ortho(-100.0, 100.0, -100.0, 100.0),
+            2048,   // actual length
+            2048,
+            2048,
         };
         Renderer::GDevice->SetShaderConstant("VoxelPassConstant", &voxelPassConstant);
     },
@@ -832,20 +891,47 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
         Context::GetContext()->IASetIndexBuffer(&objMesh->IndexBufferView());
         Context::GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         // clear last frame voxel data first )
-        auto voxelGridGpu = Renderer::ResManager->GetGPU("VoxelGrid", ResourceEnum::View::UAView);
-        auto voxelGridCpu = Renderer::ResManager->GetCPU("VoxelGrid", ResourceEnum::View::UAView);
-        auto voxelRes = Renderer::ResManager->GetResource("VoxelGrid");
-        float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
-        Renderer::GContext->GetContext()->ClearUnorderedAccessViewFloat(gpuVoxel, cpuVoxel, voxelRes, clearColor, 0, nullptr);
+        std::string letter = "RGBA";
+        for(int i = 0; i < 4; i++){
+            std::string cName = "VoxelGrid";
+            cName.push_back(letter[i]);
+            auto voxelGridGpu = Renderer::ResManager->GetGPU(cName, ResourceEnum::View::UAView);
+            auto voxelGridCpu = Renderer::ResManager->GetCPU(cName, ResourceEnum::View::UAView);
+            auto voxelRes = Renderer::ResManager->GetResource(cName);
+            float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
+            Renderer::GContext->GetContext()->ClearUnorderedAccessViewFloat(gpuVoxel, cpuVoxel, voxelRes, clearColor, 0, nullptr);
+        }
 
-        // issue object draw call..
+        int mapping[30];
+        for(int i = 0; i < 25; i++)
+            mapping[i] = -1;
+        mapping[aiTextureType_NORMALS] = 3;
+        mapping[aiTextureType_DIFFUSE] = 4;
+        mapping[aiTextureType_LIGHTMAP] = 5;
+        mapping[aiTextureType_EMISSIVE] = 6;
+        mapping[aiTextureType_METALNESS] = 5;
+        mapping[aiTextureType_DIFFUSE_ROUGHNESS] = 5;
+
         auto objectAddr = Graphics::constantMgr->GetObjectConstant((unsigned long long)0);
         int idOffset = 0, vsOffset = 0;
+        
+        auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
+        Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
 
         for(Object* obj: DEngine::gobjs){
-            Context::GetContext()->SetGraphicsRootConstantBufferView(1, objectAddr);
+            Context::GetContext()->SetGraphicsRootConstantBufferView(2, objectAddr);
             // draw per mesh
             for(Mesh& mesh: obj->meshes){
+                // set up material and texture
+                for(int i = 0; i < aiTextureType_UNKNOWN+1; i++){
+                    if(mesh.mask & (1<<i)){
+                        unsigned int slot = mapping[i];
+                        if(slot != -1){
+                            auto& handle = Renderer::ResManager->GetGPU(mesh.texns[i], ResourceEnum::View::SRView);
+                            Context::GetContext()->SetGraphicsRootDescriptorTable(slot, handle);
+                        }
+                    }
+                }
                 // issue the draw call
                 int idSize = mesh.ids.size();
                 if(obj->drawType == DrawType::Normal) 
@@ -863,12 +949,15 @@ void Graphics::VoxelizeScene(unsigned int x, unsigned int y, unsigned z)
 
 void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
 {
-    Renderer::FG->AddPass(std::string("Voxelization"),
+    Renderer::FG->AddPass(std::string("RenderVoxel"),
     [&](PassData& data){
         data.inputs = {
             ResourceData{"VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // voxelization params
             ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // per pass constant
-            ResourceData{"VoxelGrid", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridR", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT }, // will use CurrentBackBuffer()

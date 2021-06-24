@@ -64,7 +64,7 @@ float GetVisibility(float4 clipPos, float z)
 	float y = (-clipPos.y/clipPos.w) * 0.5 + 0.5;
 	if(x>=0.0 && x<=1.0 && y>=0.0 && y<=1.0){
 		float depth = shadowMap.Sample(gsamLinear, float2(x,y)).r;
-		if(z < depth + 0.005) 
+		if(z < depth + 0.02) 
 			return 1.0;
 		else 
 			return 0.0;
@@ -131,12 +131,12 @@ float4 PS(VertexOut pin): SV_TARGET
     float vis = 0.0;
 
     if(_mainLight){
-        float4x4 vp = mul(_JProj, _SMView);
+        float4x4 vp = mul(_Proj, _SMView);
         float4 clipPos = mul(vp, float4(worldPos, 1.0));
         vp = mul(_SMProj, _SMView);
         float shadowZ = mul(vp, float4(worldPos, 1.0)).z;
         float vis = GetVisibility(clipPos, shadowZ);
-        // color = color * vis;
+        color = color * vis;
 
         // color = color + AmbientEnvLight(normal, viewDir, baseColor, metallic, roughness) * ao;
 

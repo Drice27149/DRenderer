@@ -132,6 +132,9 @@ std::vector<Reflect::Data> Camera::serialize()
         Reflect::Data{offsetof(Camera, aspect), Reflect::Type::FLOAT, "aspect", "", "", aspect},
         Reflect::Data{offsetof(Camera, zNear), Reflect::Type::FLOAT, "near", "", "", zNear},
         Reflect::Data{offsetof(Camera, zFar), Reflect::Type::FLOAT, "far", "", "", zFar},
+        Reflect::Data{offsetof(Camera, lightPos), Reflect::Type::FLOAT3, "LihgtPosX", "LightPosY", "LightPosZ", lightPos[0], lightPos[1], lightPos[2]},
+        Reflect::Data{offsetof(Camera, lightDir), Reflect::Type::FLOAT3, "LightDirX", "LightDirY", "LightDirZ", lightDir[0], lightDir[1], lightDir[2]},
+        Reflect::Data{offsetof(Camera, lightColor), Reflect::Type::FLOAT3, "LightColorX", "LightColorY", "LightColorZ", lightColor[0], lightColor[1], lightColor[2]},
 	};
 	return res;
 }

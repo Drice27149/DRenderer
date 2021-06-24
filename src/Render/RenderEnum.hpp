@@ -22,6 +22,7 @@ enum Format {
     R32G32B32A32_FLOAT,
     R16G16_FLOAT,
     R32G32B32A32_UINT,
+    R32_UINT,
 };
 
 enum View {
