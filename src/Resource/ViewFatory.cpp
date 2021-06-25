@@ -46,11 +46,11 @@ namespace ViewFatory {
         Device::GetDevice()->CreateDepthStencilView(resource.Get(), &dsvDesc, handle);
     }
 
-    void AppendUAV(ComPtr<ID3D12Resource>& resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    void AppendUAV(ComPtr<ID3D12Resource>& resource, DXGI_FORMAT format, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
         ZeroMemory(&uavDesc, sizeof(uavDesc));
-	    uavDesc.Format = DXGI_FORMAT_R32_UINT;
+	    uavDesc.Format = format;
 	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;
@@ -58,15 +58,27 @@ namespace ViewFatory {
         Device::GetDevice()->CreateUnorderedAccessView(resource.Get(), nullptr, &uavDesc, handle);
     }
 
-    void AppendUAV(ID3D12Resource* resource, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    void AppendUAV(ID3D12Resource* resource, DXGI_FORMAT format, D3D12_UAV_DIMENSION viewDim, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
         ZeroMemory(&uavDesc, sizeof(uavDesc));
-	    uavDesc.Format = DXGI_FORMAT_R32_UINT;
+	    uavDesc.Format = format;
 	    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
         uavDesc.Texture3D.MipSlice = 0;
         uavDesc.Texture3D.FirstWSlice = 0;
         uavDesc.Texture3D.WSize = resource->GetDesc().DepthOrArraySize;
         Device::GetDevice()->CreateUnorderedAccessView(resource, nullptr, &uavDesc, handle);
+    }
+
+    void AppendTexture3DSRV(ComPtr<ID3D12Resource>& resource, DXGI_FORMAT format, CD3DX12_CPU_DESCRIPTOR_HANDLE handle)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = resource->GetDesc().Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        Device::GetDevice()->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
     }
 };

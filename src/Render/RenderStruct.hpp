@@ -48,6 +48,7 @@ struct PSOData {
     int width = -1;
     int height = -1;
     bool conservative = false;
+    bool computePass = false;
 };
 
 struct PassData {

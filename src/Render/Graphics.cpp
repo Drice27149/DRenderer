@@ -10,6 +10,7 @@
 #include "Context.hpp"
 #include "Renderer.hpp"
 #include "ViewFatory.hpp"
+#include "Mipmap.hpp"
 
 const int FrameCount = 2;
 
@@ -235,7 +236,7 @@ void Graphics::CreatePersistentResource()
 
     auto res = Renderer::ResManager->GetResource("VoxelGridR");
     heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
-    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+    ViewFatory::AppendUAV(res, res->GetDesc().Format, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
 
     Renderer::ResManager->CreateTexture3D(
         std::string("VoxelGridG"),
@@ -252,7 +253,7 @@ void Graphics::CreatePersistentResource()
 
     res = Renderer::ResManager->GetResource("VoxelGridG");
     heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
-    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+    ViewFatory::AppendUAV(res, res->GetDesc().Format, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
 
     Renderer::ResManager->CreateTexture3D(
         std::string("VoxelGridB"),
@@ -269,7 +270,7 @@ void Graphics::CreatePersistentResource()
 
     res = Renderer::ResManager->GetResource("VoxelGridB");
     heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
-    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+    ViewFatory::AppendUAV(res, res->GetDesc().Format, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
 
     Renderer::ResManager->CreateTexture3D(
         std::string("VoxelGridA"),
@@ -286,7 +287,9 @@ void Graphics::CreatePersistentResource()
 
     res = Renderer::ResManager->GetResource("VoxelGridA");
     heapMgr->GetNewUAV(cpuVoxel, gpuVoxel);
-    ViewFatory::AppendUAV(res, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+    ViewFatory::AppendUAV(res, res->GetDesc().Format, D3D12_UAV_DIMENSION_TEXTURE3D, cpuVoxel);
+
+    Mipmap::CreateMipmap(voxelX);
 }
 
 void Graphics::InitPassMgrs()
@@ -663,6 +666,7 @@ void Graphics::Draw(const GameTimer& gt)
     //AddGBufferMainPass();
     //AddLightPass();
     VoxelizeScene(voxelX, voxelY, voxelZ);
+    MipmapVoxel(voxelX, voxelY, voxelZ);
     RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
@@ -998,14 +1002,46 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
     });
 }
 
-
-void Graphics::DrawShadowMap()
+void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
 {
-    shadowMgr->PrePass();
+    struct MipLevel {
+        unsigned int level;
+    };
 
-    DrawObjects(DrawType::Normal);
+for(int round = 0; round < 3; round++){
+    Renderer::FG->AddPass(std::string("MipmapVoxel"),
+    [&](PassData& data){
+        data.inputs = {
+            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // mipmap constant
+            ResourceData{"VoxelGridR", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+            ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+        };
+        data.outputs = {
+        };
+        data.psoData = PSOData{  
+            false,              // enable depth 
+            false,              // blend add
+            ResourceData{},     // depth stencil data
+            (int)mClientWidth,
+            (int)mClientHeight,
+            false,              // conservative
+            true,               // compute pass
+        };
+        data.shaders = {
+            ShaderData{std::string("../assets/shaders/Voxel/MipmapVoxel.hlsl"), ShaderEnum::CS},
+        };
 
-    shadowMgr->PostPass();
+        MipLevel mipL = MipLevel{(unsigned int)round};
+        Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
+    },
+    [=](){
+        
+    });
+}
 }
 
 void Graphics::DrawSkyBox()
@@ -1059,12 +1095,7 @@ void Graphics::GeneratePrimitive()
 {
     vector<Vertex> vs;
     vector<unsigned int> ids;
-    // for(Object* obj: DEngine::gobjs){
-    //     for(Mesh mesh: obj->meshes){
-    //         for(Vertex v: mesh.vs) vs.push_back(v);
-    //         for(unsigned int id: mesh.ids) ids.push_back(id);
-    //     }
-    // }
+
     float ver[] = {
         -1.0f,-1.0f,-1.0f, // triangle 1 : begin
         -1.0f,-1.0f, 1.0f,

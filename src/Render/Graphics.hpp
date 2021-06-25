@@ -90,7 +90,8 @@ private:
 
     void VoxelizeScene(unsigned int x, unsigned int y, unsigned z);
     void RenderVoxel(unsigned int x, unsigned int y, unsigned int z);
-    
+    void MipmapVoxel(unsigned int x, unsigned int y, unsigned int z);
+
 private:
     int CurrentFrame = 0;
     int acFrame = 0;

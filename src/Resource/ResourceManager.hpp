@@ -23,7 +23,7 @@ public:
     void CreateRenderTarget(std::string name, ResourceDesc desc, unsigned int usage);
     void CreateImageTexture(std::string name, unsigned int usage);
     void CreateDepthStencil(std::string name, ResourceDesc desc, unsigned int usage);
-    void CreateTexture3D(std::string name, ResourceDesc desc, unsigned int depth, unsigned int usage);
+    void CreateTexture3D(std::string name, ResourceDesc desc, unsigned int depth, unsigned int usage, unsigned int mipLevel = 1);
     // internal function 
     void CreateViews(ComPtr<ID3D12Resource>&, std::string name, unsigned int usage);
 

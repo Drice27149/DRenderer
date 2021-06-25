@@ -175,7 +175,6 @@ PixelOut PS(VertexOut pin)
 		//normal = normalize(float3(height, height, height));
 	}
 
-
     PixelOut pixOut;
     pixOut.diffuseMetallic = float4(baseColor, metallic);
     pixOut.normalRoughness = float4(normal, roughness);

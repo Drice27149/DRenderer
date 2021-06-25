@@ -24,6 +24,7 @@ public:
 
     static void FullScreenPass()
     {
+		Graphics::GCmdList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         Graphics::GCmdList->DrawInstanced(6, 1, 0, 0);
     }
 };

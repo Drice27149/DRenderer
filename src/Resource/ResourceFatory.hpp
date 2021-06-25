@@ -11,5 +11,5 @@ namespace ResFatory {
 	void CreateImageTexture(ComPtr<ID3D12Resource>& resource, ComPtr<ID3D12Resource>& uploadBuffer, std::string fn);
 	void CreateRenderTarget2DResource(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, DXGI_FORMAT format);
 	void CreateDepthStencil(ComPtr<ID3D12Resource>& resource, unsigned int width, unsigned int height, DXGI_FORMAT format);
-	void CreateTexture3D(ComPtr<ID3D12Resource>& resource, unsigned int x, unsigned int y, unsigned int z, DXGI_FORMAT format);
+	void CreateTexture3D(ComPtr<ID3D12Resource>& resource, unsigned int x, unsigned int y, unsigned int z, DXGI_FORMAT format, unsigned int mipLevel = 1);
 };

@@ -122,105 +122,126 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
 
     if(psoCache.count(name))
         renderPass.pso = psoCache[name];
-    
+
     // create pipeline state object
     ComPtr<ID3D12PipelineState> pso;
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-    psoDesc.InputLayout = { Util::inputLayout.data(), (unsigned int)Util::inputLayout.size() };
-    psoDesc.pRootSignature = renderPass.rst;
-    psoDesc.VS = {nullptr, 0};
-    psoDesc.GS = {nullptr, 0};
-    psoDesc.PS = {nullptr, 0};
 
-    // compile shaders
-    for(const auto& shader: data.shaders){
-        ID3DBlob* sh = Device::GetShader(shader);
+    if(data.psoData.computePass == false){
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+        ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+        psoDesc.InputLayout = { Util::inputLayout.data(), (unsigned int)Util::inputLayout.size() };
+        psoDesc.pRootSignature = renderPass.rst;
+        psoDesc.VS = {nullptr, 0};
+        psoDesc.GS = {nullptr, 0};
+        psoDesc.PS = {nullptr, 0};
+
+        // compile shaders
+        for(const auto& shader: data.shaders){
+            ID3DBlob* sh = Device::GetShader(shader);
+            
+            if(shader.type==ShaderEnum::VS){
+                psoDesc.VS = {
+                    reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
+                    sh->GetBufferSize() 
+                };
+            }
+            else if(shader.type==ShaderEnum::PS){
+                psoDesc.PS = {
+                    reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
+                    sh->GetBufferSize() 
+                };
+            }
+            else if(shader.type == ShaderEnum::GS){
+                psoDesc.GS = {
+                    reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
+                    sh->GetBufferSize() 
+                };
+            }
+        }
+
+        // set up render targets
+        psoDesc.NumRenderTargets = 0;
+        for(const auto& out: data.outputs){
+            if(out.format == ResourceEnum::Format::R32G32B32A32_FLOAT){
+                psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            }
+            else if(out.format == ResourceEnum::Format::R8G8B8A8_UNORM){
+                psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R8G8B8A8_UNORM;
+            }
+            else if(out.format == ResourceEnum::Format::R16G16_FLOAT){
+                psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R16G16_FLOAT;
+            }
+            // @TODO: else
+            psoDesc.NumRenderTargets++;
+        }
+
+        // set up depth stencil
+        if(data.psoData.enableDepth){
+            psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+            psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        }
+        else{
+            psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+            psoDesc.DepthStencilState.DepthEnable = FALSE;
+            psoDesc.DepthStencilState.StencilEnable = FALSE;
+        }
+
+        // set up blend state
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        if(data.psoData.enableAdd){
+            psoDesc.BlendState.RenderTarget[0].BlendEnable = true;
+            psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+            psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+        }
+
+        // set up rasterizer state, conservative rasterization on/off
+        if(data.psoData.conservative){
+            D3D12_RASTERIZER_DESC rasterDescFront;
+            rasterDescFront.AntialiasedLineEnable = FALSE;
+            rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+            rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
+            rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+            rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+            rasterDescFront.DepthClipEnable = TRUE;
+            rasterDescFront.FillMode = D3D12_FILL_MODE_SOLID;
+            rasterDescFront.ForcedSampleCount = 0;
+            rasterDescFront.FrontCounterClockwise = FALSE;
+            rasterDescFront.MultisampleEnable = FALSE;
+            rasterDescFront.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+            psoDesc.RasterizerState = rasterDescFront;
+        }
+        else{
+            psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+            psoDesc.RasterizerState.FrontCounterClockwise = true;
+            psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+        }
+
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        psoDesc.SampleDesc.Count = 1;
+        psoDesc.SampleDesc.Quality = 0;
+
+        ThrowIfFailed(Device::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    }
+    else{
+        D3D12_COMPUTE_PIPELINE_STATE_DESC computeDesc = {};
+        computeDesc.pRootSignature = renderPass.rst;
+
+        for(const auto& shader: data.shaders){
+            ID3DBlob* sh = Device::GetShader(shader);
+            if(shader.type == ShaderEnum::CS){
+                computeDesc.CS =
+                {
+                    reinterpret_cast<BYTE*>(sh->GetBufferPointer()),
+                    sh->GetBufferSize()
+                };
+            }
+        }
         
-        if(shader.type==ShaderEnum::VS){
-            psoDesc.VS = {
-                reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
-	            sh->GetBufferSize() 
-            };
-        }
-        else if(shader.type==ShaderEnum::PS){
-            psoDesc.PS = {
-                reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
-	            sh->GetBufferSize() 
-            };
-        }
-        else if(shader.type == ShaderEnum::GS){
-            psoDesc.GS = {
-                reinterpret_cast<BYTE*>(sh->GetBufferPointer()), 
-	            sh->GetBufferSize() 
-            };
-        }
+        computeDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+        ThrowIfFailed(Device::GetDevice()->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&pso)));
     }
-
-    // set up render targets
-    psoDesc.NumRenderTargets = 0;
-    for(const auto& out: data.outputs){
-        if(out.format == ResourceEnum::Format::R32G32B32A32_FLOAT){
-            psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        }
-        else if(out.format == ResourceEnum::Format::R8G8B8A8_UNORM){
-            psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R8G8B8A8_UNORM;
-        }
-        else if(out.format == ResourceEnum::Format::R16G16_FLOAT){
-            psoDesc.RTVFormats[psoDesc.NumRenderTargets] = DXGI_FORMAT_R16G16_FLOAT;
-        }
-        // @TODO: else
-        psoDesc.NumRenderTargets++;
-    }
-
-    // set up depth stencil
-    if(data.psoData.enableDepth){
-        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-        psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    }
-    else{
-        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-        psoDesc.DepthStencilState.DepthEnable = FALSE;
-        psoDesc.DepthStencilState.StencilEnable = FALSE;
-    }
-
-    // set up blend state
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    if(data.psoData.enableAdd){
-        psoDesc.BlendState.RenderTarget[0].BlendEnable = true;
-        psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-        psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
-    }
-
-    // set up rasterizer state, conservative rasterization on/off
-    if(data.psoData.conservative){
-        D3D12_RASTERIZER_DESC rasterDescFront;
-        rasterDescFront.AntialiasedLineEnable = FALSE;
-        rasterDescFront.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
-        rasterDescFront.CullMode = D3D12_CULL_MODE_NONE;
-        rasterDescFront.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-        rasterDescFront.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-        rasterDescFront.DepthClipEnable = TRUE;
-        rasterDescFront.FillMode = D3D12_FILL_MODE_SOLID;
-        rasterDescFront.ForcedSampleCount = 0;
-        rasterDescFront.FrontCounterClockwise = FALSE;
-        rasterDescFront.MultisampleEnable = FALSE;
-        rasterDescFront.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-        psoDesc.RasterizerState = rasterDescFront;
-    }
-    else{
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        psoDesc.RasterizerState.FrontCounterClockwise = true;
-        psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-    }
-
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.SampleDesc.Count = 1;
-    psoDesc.SampleDesc.Quality = 0;
     
-    ThrowIfFailed(Device::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
-
     renderPass.pso = psoCache[name] = pso.Get();
 
     // keep ref, may be very slow

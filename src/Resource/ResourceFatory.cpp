@@ -113,13 +113,13 @@ namespace ResFatory {
         );
     }
 
-    void CreateTexture3D(ComPtr<ID3D12Resource>& resource, unsigned int x, unsigned int y, unsigned int z, DXGI_FORMAT format)
+    void CreateTexture3D(ComPtr<ID3D12Resource>& resource, unsigned int x, unsigned int y, unsigned int z, DXGI_FORMAT format, unsigned int mipLevel)
     {
         CD3DX12_RESOURCE_DESC texDesc(
             D3D12_RESOURCE_DIMENSION_TEXTURE3D,
             0,		// alignment
             x, y, z,
-            1,		// mip levels
+            mipLevel,		// mip levels
             format,
             1, 0,	// sample count/quality
             D3D12_TEXTURE_LAYOUT_UNKNOWN,

@@ -10,6 +10,18 @@
 #include "Graphics.hpp"
 #include "DEngine.hpp"
 
+DXGI_FORMAT GetDXFormat(ResourceEnum::Format format)
+{
+    DXGI_FORMAT mapping[35];
+    mapping[ResourceEnum::Format::R16G16_FLOAT] = DXGI_FORMAT_R16G16_FLOAT;
+    mapping[ResourceEnum::Format::R32_UINT] = DXGI_FORMAT_R32_UINT;
+    mapping[ResourceEnum::Format::R8G8B8A8_UNORM] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    mapping[ResourceEnum::Format::R32G32B32A32_UINT] = DXGI_FORMAT_R32G32B32A32_UINT;
+    mapping[ResourceEnum::Format::R32G32B32A32_FLOAT] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+    return mapping[format];
+}
+
 void ResourceManager::RegisterResource(std::string name, ComPtr<ID3D12Resource>&res, ResourceEnum::State state)
 {
     resources[name] = res.Get();
@@ -45,25 +57,29 @@ void ResourceManager::ResourceBarrier(std::string name, ResourceEnum::State dest
     if(stateTrack[name] == dest)
         return ;
     
+    D3D12_RESOURCE_STATES readState;
     D3D12_RESOURCE_STATES writeState;
     auto resType = GetResourceType(name);
     if(resType == ResourceEnum::Type::DepthStencil)
         writeState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
     else if(resType == ResourceEnum::Type::Texture2D)
         writeState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    else if(resType == ResourceEnum::Type::Texture3D)
+        writeState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    readState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
     if(dest == ResourceEnum::State::Read){
         Context::GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
             GetResource(name),
             writeState,
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+            readState
             )
         );
     }
     else if(dest == ResourceEnum::State::Write){
         Context::GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
             GetResource(name),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            readState,
             writeState
             )
         );
@@ -172,7 +188,10 @@ void ResourceManager::CreateViews(ComPtr<ID3D12Resource>& res, std::string name,
             CD3DX12_GPU_DESCRIPTOR_HANDLE gpu;
             if(i == ResourceEnum::View::SRView){
                 Graphics::heapMgr->GetNewSRV(cpu, gpu);
-                ViewFatory::AppendTexture2DSRV(res, res->GetDesc().Format, cpu);
+                if(res->GetDesc().Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+                    ViewFatory::AppendTexture3DSRV(res, res->GetDesc().Format, cpu);
+                else
+                    ViewFatory::AppendTexture2DSRV(res, res->GetDesc().Format, cpu);
                 RegisterHandle(name, cpu, gpu, ResourceEnum::View::SRView);
             }
             if(i == ResourceEnum::View::RTView){
@@ -201,7 +220,7 @@ void ResourceManager::CreateViews(ComPtr<ID3D12Resource>& res, std::string name,
                 else 
                     viewDim = D3D12_UAV_DIMENSION_UNKNOWN;
 
-                ViewFatory::AppendUAV(res, viewDim, cpu);
+                ViewFatory::AppendUAV(res, res->GetDesc().Format, viewDim, cpu);
                 RegisterHandle(name, cpu, gpu, ResourceEnum::View::UAView);
             }
         }
@@ -257,12 +276,12 @@ void ResourceManager::CreateDepthStencil(std::string name, ResourceDesc desc, un
     resPools.push_back(res);
 }
 
-void ResourceManager::CreateTexture3D(std::string name, ResourceDesc desc, unsigned int depth, unsigned int usage)
+void ResourceManager::CreateTexture3D(std::string name, ResourceDesc desc, unsigned int depth, unsigned int usage, unsigned int mipLevel)
 {
     ComPtr<ID3D12Resource> res;
     // temporal hack
-    DXGI_FORMAT format = DXGI_FORMAT_R32_UINT;
-    ResFatory::CreateTexture3D(res, desc.width, desc.height, depth, format);
+    DXGI_FORMAT format = GetDXFormat(desc.format);
+    ResFatory::CreateTexture3D(res, desc.width, desc.height, depth, format, mipLevel);
     res->SetName(WString(name).c_str());
     RegisterResource(name, res, desc.state);
     RegisterResourceInfo(name, desc.type);
