@@ -85,7 +85,7 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
     return vout;
 }
 
-float3 UnpackInt2Float(int4 u)
+float3 UnpackInt2Float(uint4 u)
 {
     float3 res;
 	float v = u.x;

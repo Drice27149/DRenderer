@@ -203,7 +203,7 @@ float3 DirectLightColor(GeoOut pin)
     float shadowZ = mul(vp, float4(worldPos, 1.0)).z;
     float vis = GetVisibility(clipPos, shadowZ);
 
-    color = color * vis;
+    //color = color * vis;
 
     return color;
 }

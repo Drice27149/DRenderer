@@ -87,10 +87,15 @@ ID3D12RootSignature* Device::CreateRSt(const PassData& data, const std::string& 
         // @TODO: else
     }
 
-    // sampler for texture fetch
-    auto staticSamplers = GetStaticSamplers();
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(rootParams.size(), rootParams.data(), (unsigned int)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc;
+    if(data.psoData.computePass == false){
+        // sampler for texture fetch
+        auto staticSamplers = GetStaticSamplers();
+	    rootSigDesc = CD3DX12_ROOT_SIGNATURE_DESC(rootParams.size(), rootParams.data(), (unsigned int)staticSamplers.size(), staticSamplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    }
+    else{
+        rootSigDesc = CD3DX12_ROOT_SIGNATURE_DESC(rootParams.size(), rootParams.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
+    }
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -120,8 +125,10 @@ void Device::SetUpRenderPass(RenderPass& renderPass, const PassData& data, const
     // create root signature
     renderPass.rst = Device::CreateRSt(data, name);
 
-    if(psoCache.count(name))
+    if(psoCache.count(name)){
         renderPass.pso = psoCache[name];
+        //return ;
+    }
 
     // create pipeline state object
     ComPtr<ID3D12PipelineState> pso;
@@ -252,7 +259,10 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
 {   
     // pso, rst, renderTargets
     Context::GetContext()->SetPipelineState(renderPass.pso);
-    Context::GetContext()->SetGraphicsRootSignature(renderPass.rst);
+    if(!data.psoData.computePass)
+        Context::GetContext()->SetGraphicsRootSignature(renderPass.rst);
+    else
+        Context::GetContext()->SetComputeRootSignature(renderPass.rst);
 
     // resource state transition
     for(const auto& res: data.inputs){
@@ -305,12 +315,19 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
         // @TODO: set graphics root params
         if(in.type == ResourceEnum::Type::Constant){
             ID3D12Resource* res = Renderer::ResManager->GetResource(in.name);
-            Context::GetContext()->SetGraphicsRootConstantBufferView(i, res->GetGPUVirtualAddress());
+            if(data.psoData.computePass == false)
+                Context::GetContext()->SetGraphicsRootConstantBufferView(i, res->GetGPUVirtualAddress());
+            else 
+                Context::GetContext()->SetComputeRootConstantBufferView(i, res->GetGPUVirtualAddress());
         }
         else if(in.type == ResourceEnum::Type::Texture2D || in.type == ResourceEnum::Type::TextureCube){
             CD3DX12_GPU_DESCRIPTOR_HANDLE view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
-            if(view.ptr)
-                Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+            if(view.ptr){
+                if(data.psoData.computePass == false)
+                    Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+                else
+                    Context::GetContext()->SetComputeRootDescriptorTable(i, view);
+            }
         }
         else if(in.type == ResourceEnum::Type::Texture3D){
             CD3DX12_GPU_DESCRIPTOR_HANDLE view;
@@ -318,8 +335,12 @@ void Device::ExecuteRenderPass(RenderPass& renderPass, const PassData& data)
                 view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::UAView);
             else
                 view = Renderer::ResManager->GetGPU(in.name, ResourceEnum::View::SRView);
-            if(view.ptr)
-                Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+            if(view.ptr){
+                if(data.psoData.computePass == false)
+                    Context::GetContext()->SetGraphicsRootDescriptorTable(i, view);
+                else
+                    Context::GetContext()->SetComputeRootDescriptorTable(i, view);
+            }
             else   
                 assert(0);
         }

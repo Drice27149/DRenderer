@@ -15,6 +15,6 @@ public:
     static void CreateMipmap(unsigned int length);
     static void ProcessMipmap(unsigned int length);
 public:
-    static CD3DX12_CPU_DESCRIPTOR_HANDLE mipCpu[3];
-    static CD3DX12_GPU_DESCRIPTOR_HANDLE mipGpu[3];
+    static CD3DX12_CPU_DESCRIPTOR_HANDLE mipCpu[16];
+    static CD3DX12_GPU_DESCRIPTOR_HANDLE mipGpu[16];
 };

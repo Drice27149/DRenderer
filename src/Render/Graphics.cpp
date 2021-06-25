@@ -662,11 +662,11 @@ void Graphics::Draw(const GameTimer& gt)
          firstFrame = false;
     }
 
-    AddShadowPass();
+    //AddShadowPass();
     //AddGBufferMainPass();
     //AddLightPass();
     VoxelizeScene(voxelX, voxelY, voxelZ);
-    MipmapVoxel(voxelX, voxelY, voxelZ);
+    //MipmapVoxel(voxelX, voxelY, voxelZ);
     RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
@@ -1007,41 +1007,54 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
     struct MipLevel {
         unsigned int level;
     };
+    int length = x;
+    int l = x;
+    int count = 0;
+    while(l!=0){
+        l /= 2;
+        count++;
+    }
 
-for(int round = 0; round < 3; round++){
-    Renderer::FG->AddPass(std::string("MipmapVoxel"),
-    [&](PassData& data){
-        data.inputs = {
-            ResourceData{"dummyConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // mipmap constant
-            ResourceData{"VoxelGridR", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
-            ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
-        };
-        data.outputs = {
-        };
-        data.psoData = PSOData{  
-            false,              // enable depth 
-            false,              // blend add
-            ResourceData{},     // depth stencil data
-            (int)mClientWidth,
-            (int)mClientHeight,
-            false,              // conservative
-            true,               // compute pass
-        };
-        data.shaders = {
-            ShaderData{std::string("../assets/shaders/Voxel/MipmapVoxel.hlsl"), ShaderEnum::CS},
-        };
+    for(int round = 0; round < count; round++){
+        std::string passName = "MipmapVoxel";
+        passName.push_back('0'+round);
+        Renderer::FG->AddPass(passName,
+        [&](PassData& data){
+            data.inputs = {
+                ResourceData{"MipConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant}, // mipmap constant
+                ResourceData{"VoxelGridR", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+                ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+                ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+                ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+                ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+                ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+            };
+            data.outputs = {
+            };
+            data.psoData = PSOData{  
+                false,              // enable depth 
+                false,              // blend add
+                ResourceData{},     // depth stencil data
+                (int)mClientWidth,
+                (int)mClientHeight,
+                false,              // conservative
+                true,               // compute pass
+            };
+            data.shaders = {
+                ShaderData{std::string("../assets/shaders/Voxel/MipmapVoxel.hlsl"), ShaderEnum::CS},
+            };
 
-        MipLevel mipL = MipLevel{(unsigned int)round};
-        Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
-    },
-    [=](){
-        
-    });
-}
+            MipLevel mipL = MipLevel{(unsigned int)round};
+            Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
+        },
+        [=](){
+            Renderer::GContext->GetContext()->Dispatch(length*length*length,1,1);
+            // barrier
+            Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
+        });
+
+        length /= 2;
+    }
 }
 
 void Graphics::DrawSkyBox()
