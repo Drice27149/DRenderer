@@ -35,18 +35,25 @@ struct VertexOut
     float4 pos: POSITION1;
 	float3 worldPos: POSITION2;
 	uint4 voxel: POSITION0;
+	float4 voxelColor: POSITION3;
+	int3 voxelIndex: POSITION4;
 };
 
 struct GeoOut {
     float4 pos: SV_POSITION;
 	float3 normal: POSITION0;
 	float3 color: POSITION1;
+	float4 voxelColor: POSITION2;
+	int3 voxelIndex: POSITION3;
 };
 
 RWTexture3D<uint> voxelGridR: register(u0);
 RWTexture3D<uint> voxelGridG: register(u1);
 RWTexture3D<uint> voxelGridB: register(u2);
 RWTexture3D<uint> voxelGridA: register(u3);
+//Texture3D voxelMip: register(t0);
+Texture3D voxelMip: register(t0);
+SamplerState gsamLinear: register(s0);
 
 int3 GetOffsetByID(int id)
 {
@@ -65,6 +72,7 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	int step = _sizeX / _width;
 	int3 index = GetOffsetByID(id);
 	vout.voxel = uint4(voxelGridR[index], voxelGridG[index], voxelGridB[index], voxelGridA[index]);
+	vout.voxelIndex = index;
 	int3 offset = (index - int3(_width/2, _width/2, _width/2)) * step;
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
@@ -82,6 +90,8 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	float4x4 mvp = mul(mul(_Proj, _View), model);
 	vout.pos = mul(mvp, float4(vin.vertex, 1.0f));
 	vout.worldPos = mul(model, float4(vin.vertex, 1.0f)).xyz;
+	vout.voxelColor = float4(1.0, 1.0, 1.0,1.0); 
+	//voxelMip.SampleLevel(gsamLinear, index, 0).rgba;
     return vout;
 }
 
@@ -109,6 +119,8 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 			gout.pos = gin[i].pos;
 			gout.normal = normal;
 			gout.color = UnpackInt2Float(gin[i].voxel);
+			gout.voxelColor = gin[i].voxelColor;
+			gout.voxelIndex = gin[i].voxelIndex;
 			stream.Append(gout);
 		}
 	}
@@ -116,5 +128,7 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 
 float4 PS(GeoOut pin): SV_TARGET
 {
+	return voxelMip.SampleLevel(gsamLinear, pin.voxelIndex, 0).rgba;
+	//return float4(pin.voxelColor.rgb, 1.0);
     return float4(pin.color, 1.0);
 }

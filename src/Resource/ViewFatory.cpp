@@ -76,9 +76,9 @@ namespace ViewFatory {
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Format = resource->GetDesc().Format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-        srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
-        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        srvDesc.Texture3D.MostDetailedMip = 0;
+        srvDesc.Texture3D.MipLevels = resource->GetDesc().MipLevels;
+        srvDesc.Texture3D.ResourceMinLODClamp = 0.0f;
         Device::GetDevice()->CreateShaderResourceView(resource.Get(), &srvDesc, handle);
     }
 };

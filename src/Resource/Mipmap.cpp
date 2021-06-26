@@ -4,11 +4,18 @@
 #include "Device.hpp"
 #include "Graphics.hpp"
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Mipmap::mipCpu[3];
-CD3DX12_GPU_DESCRIPTOR_HANDLE Mipmap::mipGpu[3];
+CD3DX12_CPU_DESCRIPTOR_HANDLE Mipmap::mipCpu[16];
+CD3DX12_GPU_DESCRIPTOR_HANDLE Mipmap::mipGpu[16];
 
 void Mipmap::CreateMipmap(unsigned int length)
 {
+    int l = length;
+    unsigned int count = 0;
+    while(l!=0){
+        l /= 2;
+        count++;
+    }
+
     Renderer::ResManager->CreateTexture3D(
         "VoxelMip",
         ResourceDesc {
@@ -20,14 +27,14 @@ void Mipmap::CreateMipmap(unsigned int length)
         },
         length,
         1<<ResourceEnum::View::UAView|1<<ResourceEnum::View::SRView,
-        3u   
+        count
     );
 
     ID3D12Resource* res = Renderer::ResManager->GetResource("VoxelMip");
 
     int dimLength = length;
 
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < count; i++){
         Graphics::heapMgr->GetNewSRV(mipCpu[i], mipGpu[i]);
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
         ZeroMemory(&uavDesc, sizeof(uavDesc));

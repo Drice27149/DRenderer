@@ -666,7 +666,7 @@ void Graphics::Draw(const GameTimer& gt)
     //AddGBufferMainPass();
     //AddLightPass();
     VoxelizeScene(voxelX, voxelY, voxelZ);
-    //MipmapVoxel(voxelX, voxelY, voxelZ);
+    MipmapVoxel(voxelX, voxelY, voxelZ);
     RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
@@ -962,6 +962,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
             ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
+            ResourceData{"VoxelMip", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D },
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT }, // will use CurrentBackBuffer()
@@ -979,6 +980,24 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
             ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::GS},
             ShaderData{std::string("../assets/shaders/Voxel/RenderVoxel.hlsl"), ShaderEnum::VS},
         };
+        struct VoxelPass {
+            int width;
+            int height;
+            int depth;
+            int sizeX;
+            int sizeY;
+            int sizeZ;
+            glm::mat4 ortho;
+        };
+        VoxelPass voxelPassConstant = VoxelPass {
+            (int)x, // block count
+            (int)y,
+            (int)z,
+            2048,   // actual length
+            2048,
+            2048,
+        };
+        Renderer::GDevice->SetShaderConstant("VoxelPassConstant", &voxelPassConstant);
     },
     [=](){
         Context::GetContext()->IASetVertexBuffers(0, 1, &voxelMesh->VertexBufferView());
@@ -1048,7 +1067,12 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
             Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
         },
         [=](){
-            Renderer::GContext->GetContext()->Dispatch(length*length*length,1,1);
+            Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(6, Mipmap::mipGpu[round]);
+            if(round)
+                Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(5, Mipmap::mipGpu[round-1]);
+
+            Renderer::GContext->GetContext()->Dispatch(length, length, length);
+            
             // barrier
             Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
         });

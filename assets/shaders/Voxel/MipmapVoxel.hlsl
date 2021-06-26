@@ -25,6 +25,7 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
         int3 index = int3(2*x+dx, 2*y+dy, 2*z+dz);
         float4 res = float4(0.0, 0.0, 0.0, 0.0);
         if(level==0){
+            index = int3(x,y,z);
             int r = voxelGridR[index];
             int g = voxelGridG[index];
             int b = voxelGridB[index];
@@ -33,6 +34,10 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
             float rg = g;
             float rb = b;
             float ra = a;
+            float div1000 = 1.0 / 1000.0;
+            rf *= div1000;
+            rg *= div1000;
+            rb *= div1000;
             float3 color = float3(rf, rg, rb) / ra;
             res = float4(color, max(ra, 1.0));
         }
@@ -41,5 +46,6 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
         }
         sum = sum + res / 8.0;
     }
-    toVoxel[int3(x,y,z)] = sum;
+    fromVoxel[int3(x,y,z)] = float4(1.0, 1.0, 1.0, 1.0);
+    toVoxel[int3(x,y,z)] = float4(1.0, 1.0, 1.0, 1.0);
 } 
