@@ -684,111 +684,6 @@ void Graphics::Draw(const GameTimer& gt)
 
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-    // // DrawShadowMap();
-
-    // // PreZPass();
-
-    // // PrepareCluster();
-
-    // // ExecuteComputeShader();
-    
-    // // begin of rendering a scene
-    
-    // aaMgr->BeginFrame();
-
-    // CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2] = {aaMgr->GetCurRTRTV(), pbrMgr->GetVelocityRTV()};
-
-	// mCommandList->OMSetRenderTargets(2, rtvs, false, &(aaMgr->GetDepthBuffer()));
-    // mCommandList->ClearRenderTargetView(aaMgr->GetCurRTRTV(), Colors::LightSteelBlue, 0, nullptr);
-    // float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
-    // mCommandList->ClearRenderTargetView(pbrMgr->GetVelocityRTV(), clearColor, 0, nullptr);
-    // mCommandList->ClearDepthStencilView(aaMgr->GetDepthBuffer(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    // mCommandList->RSSetViewports(1, &sScreenViewport);
-    // mCommandList->RSSetScissorRects(1, &sScissorRect);
-
-    // // // DrawObjects(DrawType::Normal);
-    // DrawOpaque();
-    // // // place at last
-    // DrawSkyBox();
-    // // // debugvis
-    // // DrawLines();
-
-    // // end of rendering a scene
-
-    // // rtv -> srv, scroll it 
-    // aaMgr->StartTAA();
-    // // must connect with the last one
-    // mCommandList->OMSetRenderTargets(1, &(aaMgr->GetNextRenderTarget()), true, &(aaMgr->GetDepthBuffer()));
-
-    // if(constantMgr->GetSceneInfo()->taa){
-    //     temporalAA->PrePass();
-    //     temporalAA->Pass();
-    //     temporalAA->PostPass();
-    // }
-
-    // aaMgr->EndTAA();
-
-    // if (constantMgr->GetSceneInfo()->taa)
-    //     bloom->input = aaMgr->GetTAAResult();
-    // else
-    //     bloom->input = aaMgr->GetCurRTSRV();
-    // bloom->BloomPass();
-
-    // // draw to screen
-    // // transition first
-    // mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-    // // change render target
-    // mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-    // mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-    // mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    // mCommandList->RSSetViewports(1, &mScreenViewport);
-    // mCommandList->RSSetScissorRects(1, &mScissorRect);
-
-    // if(constantMgr->GetSceneInfo()->taa)
-    //     toneMapping->input = aaMgr->GetTAAResult();
-    // else 
-    //     toneMapping->input = aaMgr->GetCurRTSRV();
-
-    // Renderer::ResManager->RegisterHandle(std::string("testTarget"), CD3DX12_CPU_DESCRIPTOR_HANDLE(CurrentBackBufferView()), ResourceEnum::View::RTView);
-    // Renderer::ResManager->RegisterHandle(std::string("testSRV"), aaMgr->GetTAAResult(), ResourceEnum::View::SRView);
-
-    // if(firstFrame){
-        
-    //     
-    // }
-    
-
-    // Renderer::FG->AddPass(std::string("TestPass"),
-    // [&](PassData& data){
-    //     data.inputs = {
-    //         ResourceData{std::string("testInfo"), ResourceEnum::State::Read, ResourceEnum::Type::Constant},
-    //         ResourceData{"testSRV", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D},
-    //     };
-    //     data.outputs = {
-    //         // ResourceData{"testCreate"},
-    //     };
-    //     data.psoData.enableDepth = false;
-    //     // data.psoData.depthStencil = ...
-    //     data.shaders = {
-    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::PS},
-    //         ShaderData{std::string("../assets/shaders/test/pure.hlsl"), ShaderEnum::VS},
-    //     };
-    //     float color = 0.5;
-    //     Renderer::GDevice->SetShaderConstant("testInfo", &color);
-    // },
-    // [=](){
-    //     Renderer::GContext->GetContext()->DrawInstanced(6, 1, 0, 0);
-    // });
-    // // Renderer::FG->AddPass(name, name, name);
-
-    // // toneMapping->PrePass();
-    // // toneMapping->Pass();
-    // // toneMapping->PostPass();
-    // // GUI
-    // DrawGUI();
-
-    // only hard code work here
-
     // Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
  
@@ -963,7 +858,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
             ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelMipLevel0", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D },
+            ResourceData{"VoxelMip", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D },
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT }, // will use CurrentBackBuffer()
@@ -1014,6 +909,8 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
 
         auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
         Context::GetContext()->SetGraphicsRootConstantBufferView(1, passAddr);
+
+        Renderer::GContext->GetContext()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(nullptr));
 
         Renderer::GContext->GetContext()->DrawIndexedInstanced(36, voxelX*voxelY*voxelZ, 0, 0, 0);
 
@@ -1073,9 +970,6 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
             Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
         },
         [=](){
-            // Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(6, Mipmap::mipGpu[round]);
-            //if(round)
-            //    Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(5, Mipmap::mipGpu[round-1]);
 
             Renderer::GContext->GetContext()->Dispatch(length, length, length);
             

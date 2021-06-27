@@ -36,7 +36,7 @@ struct VertexOut
 	float3 worldPos: POSITION2;
 	uint4 voxel: POSITION0;
 	float4 voxelColor: POSITION3;
-	int3 voxelIndex: POSITION4;
+	float3 voxelIndex: POSITION4;
 };
 
 struct GeoOut {
@@ -44,7 +44,7 @@ struct GeoOut {
 	float3 normal: POSITION0;
 	float3 color: POSITION1;
 	float4 voxelColor: POSITION2;
-	int3 voxelIndex: POSITION3;
+	float3 voxelIndex: POSITION3;
 };
 
 RWTexture3D<uint> voxelGridR: register(u0);
@@ -72,7 +72,9 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	int step = _sizeX / _width;
 	int3 index = GetOffsetByID(id);
 	vout.voxel = uint4(voxelGridR[index], voxelGridG[index], voxelGridB[index], voxelGridA[index]);
-	vout.voxelIndex = index;
+	vout.voxelIndex.x = index.x;
+	vout.voxelIndex.y = index.y;
+	vout.voxelIndex.z = index.z;
 	int3 offset = (index - int3(_width/2, _width/2, _width/2)) * step;
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
@@ -128,7 +130,8 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 
 float4 PS(GeoOut pin): SV_TARGET
 {
-	return voxelMip.SampleLevel(gsamLinear, pin.voxelIndex, 0).rgba;
+	return float4(voxelMip.Sample(gsamLinear, pin.voxelIndex / 256.0).rgb, 1.0);
+	//return float4(voxelMip.SampleLevel(gsamLinear, pin.voxelIndex, 0).rgb, 1.0);
 	//return float4(pin.voxelColor.rgb, 1.0);
     return float4(pin.color, 1.0);
 }
