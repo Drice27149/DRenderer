@@ -667,6 +667,7 @@ void Graphics::Draw(const GameTimer& gt)
     //AddLightPass();
     VoxelizeScene(voxelX, voxelY, voxelZ);
     MipmapVoxel(voxelX, voxelY, voxelZ);
+    Mipmap::ProcessMipmap(voxelX);
     RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
@@ -962,7 +963,7 @@ void Graphics::RenderVoxel(unsigned int x, unsigned int y, unsigned int z)
             ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
             ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-            ResourceData{"VoxelMip", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D },
+            ResourceData{"VoxelMipLevel0", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D },
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT }, // will use CurrentBackBuffer()
@@ -1037,6 +1038,11 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
     for(int round = 0; round < count; round++){
         std::string passName = "MipmapVoxel";
         passName.push_back('0'+round);
+        std::string mipChainName = "VoxelMipLevel";
+        mipChainName.push_back('0'+round);
+        std::string lastChainName = "VoxelMipLevel";
+        if(round>=1) lastChainName.push_back('0'+round-1);
+        else lastChainName.push_back('0');
         Renderer::FG->AddPass(passName,
         [&](PassData& data){
             data.inputs = {
@@ -1045,8 +1051,8 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
                 ResourceData{"VoxelGridG", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
                 ResourceData{"VoxelGridB", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
                 ResourceData{"VoxelGridA", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},
-                ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
-                ResourceData{"VoxelMip", ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+                ResourceData{lastChainName, ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
+                ResourceData{mipChainName, ResourceEnum::State::Write, ResourceEnum::Type::Texture3D},    // transfer state && dummy for actual mip slice
             };
             data.outputs = {
             };
@@ -1067,9 +1073,9 @@ void Graphics::MipmapVoxel(unsigned int x, unsigned int y, unsigned int z)
             Renderer::GDevice->SetShaderConstant("MipConstant", &mipL);
         },
         [=](){
-            Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(6, Mipmap::mipGpu[round]);
-            if(round)
-                Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(5, Mipmap::mipGpu[round-1]);
+            // Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(6, Mipmap::mipGpu[round]);
+            //if(round)
+            //    Renderer::GContext->GetContext()->SetGraphicsRootDescriptorTable(5, Mipmap::mipGpu[round-1]);
 
             Renderer::GContext->GetContext()->Dispatch(length, length, length);
             
