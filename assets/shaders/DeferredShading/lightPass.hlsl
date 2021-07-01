@@ -1,4 +1,5 @@
 #include "BRDF.hlsl"
+#include "ConeTracing.hlsl"
 
 Texture2D diffuseMetallic: register(t0);
 Texture2D normalRoughness: register(t1);
@@ -7,6 +8,7 @@ Texture2D viewPosY: register(t3);
 Texture2D shadowMap: register(t4);
 TextureCube gEnvMap: register(t5);
 Texture2D gBrdfMap: register(t6);
+Texture3D voxelMip: register(t7);
 
 SamplerState gsamLinear: register(s0);
 
@@ -27,6 +29,16 @@ cbuffer RealPass : register(b1)
 	float4x4 _lastView;
 	float4x4 _lastProj;
 	float3 _CamPos;
+};
+
+cbuffer VoxelConstant : register(b2)
+{
+    int _cntX;
+    int _cntY;
+    int _cntZ;
+    int _sizeX;
+    int _sizeY;
+    int _sizeZ;
 };
 
 struct VertexIn
@@ -131,6 +143,10 @@ float4 PS(VertexOut pin): SV_TARGET
     float vis = 0.0;
 
     if(_mainLight){
+        float vxao = GetAO(worldPos, normal, voxelMip, gsamLinear, _sizeX, _cntX);
+        float3 pureAO = float3(1.0, 1.0, 1.0) * vxao;
+        return float4(pureAO, 1.0);
+
         float4x4 vp = mul(_Proj, _SMView);
         float4 clipPos = mul(vp, float4(worldPos, 1.0));
         vp = mul(_SMProj, _SMView);
@@ -138,9 +154,16 @@ float4 PS(VertexOut pin): SV_TARGET
         float vis = GetVisibility(clipPos, shadowZ);
         color = color * vis;
 
+        // IBL
         // color = color + AmbientEnvLight(normal, viewDir, baseColor, metallic, roughness) * ao;
 
         color = color + emissive;
+
+        // VXGI
+        float gi = GetRadiance(worldPos, normal, voxelMip, gsamLinear, _sizeX, _cntX);
+        // gi = float3(0.2, 0.2, 0.2);
+        L = normal;
+        //color += BRDF_Faliment(normal, viewDir, L, baseColor, metallic, roughness) * gi * ao * saturate(dot(normal, L));
     }
 
     return float4(color, 1.0);

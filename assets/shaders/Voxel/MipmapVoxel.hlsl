@@ -48,5 +48,5 @@ void CS(int3 groupID: SV_GROUPID, int3 threadID : SV_GROUPTHREADID)
         sum = sum + res / 8.0;
     }
     toVoxel[int3(x,y,z)] = sum;
-    //toVoxel[int3(x,y,z)] = float4(1.0, 1.0, 1.0, 1.0); 
+    //toVoxel[int3(x,y,z)] = float4(10.0, 10.0, 10.0, 1.0); 
 } 

@@ -440,6 +440,8 @@ void Graphics::AddLightPass()
             ResourceData{ "ShadowMap", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
             ResourceData{ "EnvRadiance", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
             ResourceData{ "EnvLUT", ResourceEnum::State::Read, ResourceEnum::Type::Texture2D },
+            ResourceData{ "VoxelMip", ResourceEnum::State::Read, ResourceEnum::Type::Texture3D},
+            ResourceData{ "VoxelPassConstant", ResourceEnum::State::Read, ResourceEnum::Type::Constant},
         };
         data.outputs = {
             ResourceData{ "ColorBuffer", ResourceEnum::State::Write, ResourceEnum::Type::Texture2D, ResourceEnum::Format::R32G32B32A32_FLOAT } // will use CurrentBackBuffer()
@@ -466,13 +468,13 @@ void Graphics::AddLightPass()
             int sh;
         };
         LightDesc l0[4];
-        l0[0] = LightDesc {1.0, 1.0, 1.0, 1.0, 1};
+        l0[0] = LightDesc {1.0, 1.0, 1.0, 0.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource0", &(l0[0]));
-        l0[1] = LightDesc {-1.0, 1.0, 1.0, 1.0, 1};
+        l0[1] = LightDesc {-1.0, 1.0, 1.0, 8.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource1", &(l0[1]));
-        l0[2] = LightDesc {0.0, 1.0, 1.0, 0.4, 0};
+        l0[2] = LightDesc {0.0, 1.0, 1.0, 0.0, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[2]));
-        l0[3] = LightDesc {0.0, 1.0, -1.0, 0.4, 0};
+        l0[3] = LightDesc {0.0, 1.0, -1.0, 0.0, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[3]));
 
         auto passAddr = Graphics::constantMgr->GetCameraPassConstant();
@@ -662,13 +664,16 @@ void Graphics::Draw(const GameTimer& gt)
          firstFrame = false;
     }
 
-    //AddShadowPass();
-    //AddGBufferMainPass();
-    //AddLightPass();
+    AddShadowPass();
+
     VoxelizeScene(voxelX, voxelY, voxelZ);
     MipmapVoxel(voxelX, voxelY, voxelZ);
     Mipmap::ProcessMipmap(voxelX);
-    RenderVoxel(voxelX, voxelY, voxelZ);
+
+    AddGBufferMainPass();
+    AddLightPass();
+
+    //RenderVoxel(voxelX, voxelY, voxelZ);
     //DrawSkyBox();
 
     if(acFrame == 1)

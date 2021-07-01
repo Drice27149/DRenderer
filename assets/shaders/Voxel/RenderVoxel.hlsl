@@ -75,6 +75,8 @@ VertexOut VS(VertexIn vin, uint id: SV_INSTANCEID)
 	vout.voxelIndex.x = index.x;
 	vout.voxelIndex.y = index.y;
 	vout.voxelIndex.z = index.z;
+	float scale = _width;
+	vout.voxelIndex = vout.voxelIndex / scale;
 	int3 offset = (index - int3(_width/2, _width/2, _width/2)) * step;
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
@@ -130,7 +132,7 @@ void GS(triangle VertexOut gin[3], inout TriangleStream<GeoOut> stream)
 
 float4 PS(GeoOut pin): SV_TARGET
 {
-	return float4(voxelMip.Sample(gsamLinear, pin.voxelIndex / 256.0).rgb, 1.0);
+	return float4(voxelMip.SampleLevel(gsamLinear, pin.voxelIndex, 0.0).rgb, 1.0);
 	//return float4(voxelMip.SampleLevel(gsamLinear, pin.voxelIndex, 0).rgb, 1.0);
 	//return float4(pin.voxelColor.rgb, 1.0);
     return float4(pin.color, 1.0);
