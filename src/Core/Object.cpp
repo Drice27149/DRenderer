@@ -12,6 +12,8 @@ Object::Object()
 	pitch = roll = yaw = 0.0;
 	metallic = 0.0;
 	roughness = 1.0;
+	cx = cy = cz = 1.0;
+	sx = sy = sz = 1.0;
 }
 
 void Object::Transform(mat4 trans)
@@ -51,6 +53,9 @@ mat4 Object::GetModelTransform()
 {
 	mat4 result = glm::mat4(1.0);
 	// scale first, only support equal scale
+	result[0][0] *= sx;
+	result[1][1] *= sy;
+	result[2][2] *= sz;
 	for(int i = 0; i < 3; i++){
 		result[i][i] *= scale;
 	}
@@ -101,6 +106,8 @@ std::vector<Reflect::Data> Object::serialize()
 		Reflect::Data{offsetof(Object, metallic), Reflect::Type::FLOAT, "Metallic", "", "", metallic},
 		Reflect::Data{offsetof(Object, roughness), Reflect::Type::FLOAT, "Roughness", "", "", roughness},
 		Reflect::Data{offsetof(Object, fn), Reflect::Type::STRING, "FileName", "", "", 0.0, 0.0, 0.0, 0, 0, 0, fn},
+		Reflect::Data{offsetof(Object, cx), Reflect::Type::FLOAT3, "CX", "CY", "CZ", cx, cy, cz},
+		Reflect::Data{offsetof(Object, sx), Reflect::Type::FLOAT3, "SX", "SY", "SZ", sx, sy, sz},
 	};
 	return res;
 }

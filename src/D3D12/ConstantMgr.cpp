@@ -86,10 +86,9 @@ void ConstantMgr::UpdatePassConstants()
     else
         temp.JProj = temp.proj;
     
-    if(firstFrame){
-        lightView = glm::lookAt(vec3(10.0, 3374.0, 765.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-        lightProj = glm::ortho(-1000.0, 1000.0, -1000.0, 1000.0, 1.0, 5000.0);
-    }
+    lightView = glm::lookAt(DEngine::GetCamMgr().GetCamera().lightPos, DEngine::GetCamMgr().GetCamera().lightDir, vec3(0.0, 1.0, 0.0));
+        //lightView = glm::lookAt(vec3(-589.0, 220.0, 643.0), vec3(0.0, -985.0, 25.0), vec3(0.0, 1.0, 0.0));
+    lightProj = glm::ortho(-100.0, 100.0, -100.0, 100.0, 1.0, 5000.0);
     temp.SMView = lightView;
     temp.SMProj = lightProj;
     // temp.SMProj = glm::transpose(DEngine::GetCamMgr().GetProjectionTransform());
@@ -124,9 +123,9 @@ void ConstantMgr::UpdateObjConstants()
         temp.mask = obj->mask;
         temp.metallic = obj->metallic;
         temp.roughness = obj->roughness;
-        temp.cx = obj->x;
-        temp.cy = obj->y;
-        temp.cz = obj->z;
+        temp.cx = obj->cx;
+        temp.cy = obj->cy;
+        temp.cz = obj->cz;
         objCB->CopyData(index, temp);
         index++;
 

@@ -76,12 +76,26 @@ void GUIMgr::Update()
         for(Object* obj: objs){
             std::string nodeName = Int2String(objID++);
             if(ImGui::TreeNode(nodeName.c_str())){
-                for(metaData& member: Object::reflection){
-                    float* ptr = (float*)((unsigned long long)obj + member.offset);
-                    std::string value = Float2String(*ptr, 6);
-                    CopyStringToBuffer(value, inBuff[bufferID]);
-                    ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
-                    bufferID++;
+                auto datas = obj->serialize();
+                for(auto data: datas){
+                    if(data.type == Reflect::Type::FLOAT){
+                        float* ptr = (float*)((unsigned long long)obj + data.offset);
+                        std::string value = Float2String(*ptr, 6);
+                        CopyStringToBuffer(value, inBuff[bufferID]);
+                        ImGui::InputFloat(data.name[0].c_str(), ptr);
+                    }
+                    else if(data.type == Reflect::Type::FLOAT3){
+                        float* ptr = (float*)((unsigned long long)obj + data.offset);
+                        std::string wholeName = data.name[0] + ", " + data.name[1] + ", " + data.name[2];
+                        ImGui::InputFloat3(wholeName.c_str(), ptr);
+                    }
+                    else if(data.type == Reflect::Type::INT){
+                        int* ptr = (int*)((unsigned long long)obj + data.offset);
+                        ImGui::InputInt(data.name[0].c_str(), ptr); 
+                    }
+                    else if(data.type == Reflect::Type::STRING){
+
+                    }
                 }
                 ImGui::TreePop();
             }
@@ -126,6 +140,32 @@ void GUIMgr::Update()
         ImGui::Text(Float2String(z,3).c_str());
         ImGui::Text(Float2String(pitch,3).c_str());
         ImGui::Text(Float2String(yaw,3).c_str());
+        ImGui::TreePop();
+    }
+
+    if(ImGui::TreeNode("Camera Info")){
+        auto datas = DEngine::GetCamMgr().GetCamera().serialize();
+        auto obj = &(DEngine::GetCamMgr().GetCamera());
+        for(auto data: datas){
+            if(data.type == Reflect::Type::FLOAT){
+                float* ptr = (float*)((unsigned long long)obj + data.offset);
+                std::string value = Float2String(*ptr, 6);
+                CopyStringToBuffer(value, inBuff[bufferID]);
+                ImGui::InputFloat(data.name[0].c_str(), ptr);
+            }
+            else if(data.type == Reflect::Type::FLOAT3){
+                float* ptr = (float*)((unsigned long long)obj + data.offset);
+                std::string wholeName = data.name[0] + ", " + data.name[1] + ", " + data.name[2];
+                ImGui::InputFloat3(wholeName.c_str(), ptr);
+            }
+            else if(data.type == Reflect::Type::INT){
+                int* ptr = (int*)((unsigned long long)obj + data.offset);
+                ImGui::InputInt(data.name[0].c_str(), ptr); 
+            }
+            else if(data.type == Reflect::Type::STRING){
+
+            }
+        }
         ImGui::TreePop();
     }
 

@@ -34,6 +34,12 @@ public:
 	float z;
 	float metallic;
 	float roughness;
+	float cx;
+	float cy;
+	float cz;
+	float sx;
+	float sy;
+	float sz;
 public:
 	// render data
 	int mask;

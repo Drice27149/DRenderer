@@ -163,10 +163,8 @@ PixelOut PS(VertexOut pin)
 		normal = tangentToWorldNormal(normal, pin.N, pin.T);
 	}
 	if(!(_mask & 2)){
-		baseColor = float3(1.0, 1.0, 1.0);
+		baseColor = float3(_cx, _cy, _cz);
 	}
-	if(baseColor.r > 0.9 && baseColor.g < 0.1 && baseColor.b < 0.1)
-		baseColor = float3(1.0, 1.0, 1.0);
 	if(!(_mask & 64)){
 		roughness = _roughness;
 		metallic = _metallic;
