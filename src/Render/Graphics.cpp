@@ -21,7 +21,6 @@ Graphics::Graphics(HINSTANCE hInstance)
 
 Graphics::~Graphics()
 {
-    
 }
 
 bool Graphics::Initialize()
@@ -457,6 +456,26 @@ void Graphics::AddLightPass()
             ShaderData{ std::string("../assets/shaders/DeferredShading/lightPass.hlsl"), ShaderEnum::PS },
             ShaderData{ std::string("../assets/shaders/DeferredShading/lightPass.hlsl"), ShaderEnum::VS },
         };
+
+        // set up voxelization constant
+        struct VoxelPass {
+            int width;
+            int height;
+            int depth;
+            int sizeX;
+            int sizeY;
+            int sizeZ;
+            glm::mat4 ortho;
+        };
+        VoxelPass voxelPassConstant = VoxelPass {
+            (int)voxelX, // block count
+            (int)voxelY,
+            (int)voxelZ,
+            2048,   // actual length
+            2048,
+            2048,
+        };
+        Renderer::GDevice->SetShaderConstant("VoxelPassConstant", &voxelPassConstant);
     },
     [=](){
         float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
@@ -470,7 +489,7 @@ void Graphics::AddLightPass()
         LightDesc l0[4];
         l0[0] = LightDesc {1.0, 1.0, 1.0, 0.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource0", &(l0[0]));
-        l0[1] = LightDesc {-1.0, 1.0, 1.0, 8.0, 1};
+        l0[1] = LightDesc {-1.0, 1.0, 1.0, 4.0, 1};
         Renderer::GDevice->SetShaderConstant("LightSource1", &(l0[1]));
         l0[2] = LightDesc {0.0, 1.0, 1.0, 0.0, 0};
         Renderer::GDevice->SetShaderConstant("LightSource2", &(l0[2]));
@@ -666,15 +685,15 @@ void Graphics::Draw(const GameTimer& gt)
 
     AddShadowPass();
 
-    VoxelizeScene(voxelX, voxelY, voxelZ);
-    MipmapVoxel(voxelX, voxelY, voxelZ);
-    Mipmap::ProcessMipmap(voxelX);
+    //VoxelizeScene(voxelX, voxelY, voxelZ);
+    //MipmapVoxel(voxelX, voxelY, voxelZ);
+    //Mipmap::ProcessMipmap(voxelX);
 
     AddGBufferMainPass();
     AddLightPass();
 
     //RenderVoxel(voxelX, voxelY, voxelZ);
-    //DrawSkyBox();
+    DrawSkyBox();
 
     if(acFrame == 1)
         AddCopyPass("ColorBuffer", "HistoryBuffer");
