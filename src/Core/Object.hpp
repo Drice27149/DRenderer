@@ -4,13 +4,15 @@
 #include "Mesh.hpp"
 #include "Struct.hpp"
 #include "Reflect.hpp"
+#include "WorldTriangle.hpp"
 
 enum DrawType {
     Normal,
     WhiteLines,
     RedLines,
 	SpotLgiht, 	// frustum
-	PointLight	// sphere
+	PointLight,	// sphere
+	Debug,
 };
 
 class Object {
@@ -22,6 +24,7 @@ public:
 	mat4 GetModelTransform();
 	void deserialize(std::vector<Reflect::Data> datas);
 	std::vector<Reflect::Data> serialize();
+	std::vector<WorldTriangle> GetTriangleList();
 public:
 	// transform data
 	string fn;
@@ -29,14 +32,17 @@ public:
 	float pitch;
 	float yaw;
 	float roll;
+	// position
 	float x;
 	float y;
 	float z;
 	float metallic;
 	float roughness;
+	// color
 	float cx;
 	float cy;
 	float cz;
+	// scale
 	float sx;
 	float sy;
 	float sz;
@@ -46,8 +52,6 @@ public:
 	// @TODO: shading model
 	// @TODO: material data
 	vector<Mesh> meshes;
-	// @TODO: reflection 
-	static std::vector<metaData> reflection;
 public:
 	mat4 model;
 	DrawType drawType;

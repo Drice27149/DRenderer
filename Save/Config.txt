@@ -62,16 +62,16 @@ f3
 0.00 180.00 0.00
 f1
 68
-0.50
+0.10
 f1
 72
-0.50
+0.10
 s
 0
 ../assets/models/primitives/Rectangle.obj
 f3
 76
-0.00 0.00 1.00
+1.00 1.00 1.00
 f3
 88
 4.80 0.20 4.00
@@ -123,7 +123,7 @@ s
 ../assets/models/primitives/Rectangle.obj
 f3
 76
-1.00 1.00 1.00
+0.00 0.00 1.00
 f3
 88
 4.70 1.30 0.20

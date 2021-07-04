@@ -36,7 +36,8 @@ void DEngine::Exit()
     // save object config
     std::vector<Reflect::Element> datas;
     for(Object* obj: gobjs){
-        datas.push_back(Reflect::Element{obj->serialize()});
+        if(obj->drawType!=DrawType::Debug)
+            datas.push_back(Reflect::Element{obj->serialize()});
     }
     ConfigLoader::SaveConfig("../Save/Config.txt", datas);
     // save camera config

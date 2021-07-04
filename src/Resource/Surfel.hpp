@@ -28,5 +28,6 @@ public:
 
 class SurfelCluster {   
 public:
-    vector<Surfel> surfels;
+    int offset;
+    int count;
 };

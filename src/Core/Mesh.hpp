@@ -33,3 +33,13 @@ class Frustum: public Mesh {
 public:
     Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, int zCnt);
 };
+
+class Cube: public Mesh {
+public:
+    Cube(vec3 center);
+};
+
+class Disk: public Mesh {
+public:
+    Disk(vec3 center, vec3 normal);
+};

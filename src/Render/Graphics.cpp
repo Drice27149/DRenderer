@@ -413,7 +413,7 @@ void Graphics::AddGBufferMainPass()
                     }
                     // issue the draw call
                     int idSize = mesh.ids.size();
-                    if(obj->drawType == DrawType::Normal) 
+                    if(obj->drawType == DrawType::Normal || obj->drawType == DrawType::Debug) 
                         Context::GetContext()->DrawIndexedInstanced(idSize, 1, idOffset, vsOffset, 0);
                     idOffset += mesh.ids.size();
                     vsOffset += mesh.vs.size();

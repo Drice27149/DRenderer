@@ -4,17 +4,13 @@
 
 Mesh::Mesh()
 {
+    mask = 0;
 }
 
 Mesh::Mesh(vector<Vertex>vs, vector<unsigned int> ids):
 vs(vs), ids(ids)
 {
-    // texs.resize(aiTextureType_UNKNOWN + 1);
-    // for (int it = aiTextureType_NONE; it <= aiTextureType_UNKNOWN; it++) {
-    //     if (mask & (1 << it)) {
-    //         texs[it] = DEngine::GetTexMgr().GetTextureByFileName(texns[it]);
-    //     }
-    // }
+    
 }
 
 Grid::Grid(vec2  a, vec2 b, vec2 c, vec2 d, int lines)
@@ -149,6 +145,67 @@ Frustum::Frustum(float fov, float aspect, float n, float f, int xCnt, int yCnt, 
             curX += stepX;
         }
     }
+}
+
+Cube::Cube(vec3 center)
+{
+    float ver[] = {
+        -1.0f,-1.0f,-1.0f, // triangle 1 : begin
+        -1.0f,-1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, // triangle 1 : end
+
+        1.0f, 1.0f,-1.0f, // triangle 2 : begin
+        -1.0f,-1.0f,-1.0f,
+        -1.0f, 1.0f,-1.0f, // triangle 2 : end
+
+        1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f,-1.0f,
+        1.0f,-1.0f,-1.0f,
+
+        1.0f, 1.0f,-1.0f,
+        1.0f,-1.0f,-1.0f,
+        -1.0f,-1.0f,-1.0f,
+
+        -1.0f,-1.0f,-1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f,-1.0f,
+
+        1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f, 1.0f,
+        -1.0f,-1.0f,-1.0f,
+
+        -1.0f, 1.0f, 1.0f,
+        -1.0f,-1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f,-1.0f,
+        1.0f, 1.0f,-1.0f,
+
+        1.0f,-1.0f,-1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f,-1.0f,
+        -1.0f, 1.0f,-1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f,-1.0f,
+        -1.0f, 1.0f, 1.0f,
+
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f,-1.0f, 1.0f
+    };
+    for(int i = 0; i < 36; i++){
+        vs.push_back(Vertex(glm::vec3(ver[i*3],ver[i*3+1],ver[i*3+2]) + center));
+    }
+    for(int i = 0; i < 36; i++) ids.push_back(i);
+}
+
+Disk::Disk(vec3 center, vec3 normal)
+{
 }
 
 

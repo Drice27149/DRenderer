@@ -24,7 +24,6 @@ public:
 public:
     static DEngine* instance;
     static vector<Object*> gobjs;
-    static vector<Mesh*> meshes;
     CamMgr camMgr;
     InputMgr inputMgr;
     SceneMgr sceneMgr;

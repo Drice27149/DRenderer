@@ -103,32 +103,6 @@ void GUIMgr::Update()
         ImGui::TreePop();
     }
 
-    // @TODO: decouple
-
-    if(ImGui::TreeNode("Scene Info")){
-        std::shared_ptr<SceneInfo> sceneInfo = Graphics::constantMgr->GetSceneInfo();
-        SceneInfo* addr = sceneInfo.get();
-
-        for(metaData& member: SceneInfo::reflections){
-            if(member.type == 1){
-                float* ptr = (float*)((unsigned long long)addr + member.offset);
-                std::string value = Float2String(*ptr, 6);
-                CopyStringToBuffer(value, inBuff[bufferID]);
-                ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
-                bufferID++;
-            }
-            else{
-                int* ptr = (int*)((unsigned long long)addr + member.offset);
-                std::string value = Int2String(*ptr);
-                CopyStringToBuffer(value, inBuff[bufferID]);
-                ImGui::InputText(member.name.c_str(), inBuff[bufferID], 64, ImGuiInputTextFlags_CallbackCompletion, callback, ptr);
-                bufferID++;
-            }
-        }
-
-        ImGui::TreePop();
-    }
-
     if(ImGui::TreeNode("debug cam")){
         float x = DEngine::GetCamMgr().GetCamera().position.x;
         float y = DEngine::GetCamMgr().GetCamera().position.y; 

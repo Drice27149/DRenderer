@@ -7,6 +7,7 @@ Object::Object()
 	model = mat4(1.0);
 	drawType = DrawType::Normal;
 
+	mask = 0;
 	scale = 1.0;
 	x = y = z = 0.0;
 	pitch = roll = yaw = 0.0;
@@ -33,20 +34,6 @@ void Object::Scale(float rate)
 void Object::MergeMesh(Mesh& mesh)
 {
 	meshes.push_back(mesh);
-	/*
-	if(meshes.size() == 0) 
-		meshes.push_back(mesh);
-	else{
-		Mesh& org = meshes[0];
-		int offvs = org.vs.size();
-		int offids = org.ids.size();
-		for(Vertex v: mesh.vs){
-			org.vs.push_back(v);
-		}
-		for(unsigned int id: mesh.ids){
-			org.ids.push_back(offvs + id);
-		}
-	}*/
 }
 
 mat4 Object::GetModelTransform()
@@ -109,5 +96,25 @@ std::vector<Reflect::Data> Object::serialize()
 		Reflect::Data{offsetof(Object, cx), Reflect::Type::FLOAT3, "CX", "CY", "CZ", cx, cy, cz},
 		Reflect::Data{offsetof(Object, sx), Reflect::Type::FLOAT3, "SX", "SY", "SZ", sx, sy, sz},
 	};
+	return res;
+}
+
+std::vector<WorldTriangle> Object::GetTriangleList()
+{
+	auto transform = GetModelTransform();
+	std::vector<WorldTriangle> res;
+	for(auto& mesh: meshes){
+		for(int i = 0; i < (int)mesh.ids.size(); i+=3){
+			glm::vec3 v[3];
+			for(int j = 0; j < 3; j++){
+				auto vert = mesh.vs[mesh.ids[i+j]].vertex;
+				glm::vec4 vert4 = transform * glm::vec4(vert, 1.0f);
+				for(int k = 0; k < 3; k++) vert[k] = vert4[k];
+				v[j] = vert;
+			}
+			WorldTriangle t = WorldTriangle(v[0], v[1], v[2]);
+			res.push_back(t);
+		}
+	}
 	return res;
 }
