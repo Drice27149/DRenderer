@@ -20,7 +20,5 @@ assets/models/*
 *.tgz
 *.tar
 *.hdr
-*.png
-*.JPG
 *.obj
 *.mtl
