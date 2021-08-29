@@ -14,7 +14,10 @@ DirectX12 简易3D渲染器
 <img src="log/pic/ms2_SM_CM_RT.png" width="50%" height="50%">
 
 * 基于图像的照明
-<img src="log/pic/taa_tonemapping.png" width="50%" height="50%">
+<img src="log/pic/IBL_0.png" width="50%" height="50%">
 
 * 后处理与抗锯齿
 <img src="log/pic/section00.png" width="50%" height="50%">
+
+* 基于物理的渲染, metallic-roughness work flow
+<img src="log/pic/final.png" width="70%" height="70%">
